@@ -1,6 +1,10 @@
-# LivingNPC
+<p align="center">
+  <img src="assets/LivingNPC_README.png"
+       alt="LivingNPC"
+       width="720">
+</p>
 
-**A visual novel engine where every NPC lives their own life.**
+<p align="center"><b>A visual novel engine where every NPC lives their own life.</b></p>
 
 > ⚠️ **Alpha – version 0.1.0-alpha.** LivingNPC works and is fun to build with, but it is young: expect rough edges,
 > missing features and changes to the file formats between versions. Feedback, bug reports and contributions are very
