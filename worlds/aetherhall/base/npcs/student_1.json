@@ -1,0 +1,28 @@
+{
+  "id": "student_1",
+  "name": "John",
+  "places": {
+    "home": "stanza_da_letto_npc_1",
+    "work": "biblioteca_1"
+  },
+  "routine": [
+    {
+      "days": "all",
+      "from": "23:00",
+      "to": "09:00",
+      "at": "$home",
+      "priority": 10,
+      "activity": "sleep",
+      "id": "dorme"
+    }
+  ],
+  "description": "First-year student",
+  "images": {
+    "default": {
+      "file": "people/boy_pajamas.png",
+      "x": 12,
+      "y": 15,
+      "width": 30
+    }
+  }
+}

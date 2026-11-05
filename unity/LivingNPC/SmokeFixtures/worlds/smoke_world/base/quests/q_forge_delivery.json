@@ -1,0 +1,43 @@
+{
+  "id": "q_forge_delivery",
+  "title": "Consegna dalla forgia",
+  "giver": "bruno",
+  "stages": [
+    {
+      "id": "deliver",
+      "text": "Porta il pacco di Bruno a Sira, all'emporio delle pozioni. Entro il quarto giorno.",
+      "fail": {
+        "type": "date",
+        "fromDay": 4
+      },
+      "onFail": [
+        {
+          "do": "modStat",
+          "target": "bruno",
+          "stat": "happiness",
+          "delta": -15
+        }
+      ]
+    },
+    {
+      "id": "report",
+      "text": "Torna da Bruno e dagli la ricevuta firmata da Sira.",
+      "fail": {
+        "type": "date",
+        "fromDay": 6
+      }
+    }
+  ],
+  "onComplete": [
+    {
+      "do": "modStat",
+      "target": "bruno",
+      "stat": "happiness",
+      "delta": 15
+    },
+    {
+      "do": "message",
+      "text": "Bruno ti stringe la mano con forza: «Ottimo lavoro.»"
+    }
+  ]
+}

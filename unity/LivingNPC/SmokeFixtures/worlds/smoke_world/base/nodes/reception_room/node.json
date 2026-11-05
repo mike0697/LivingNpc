@@ -1,0 +1,33 @@
+{
+  "id": "reception_room",
+  "title": "Salone di Ricevimento",
+  "text": "Il salone collega gli ambienti della casa. Le porte conducono verso la zona giorno e l’uscita.",
+  "backgrounds": {
+    "night": "night.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png",
+    "night_light": "night_light.png"
+  },
+  "links": [
+    {
+      "id": "reception_room_to_big_house",
+      "target": "big_house",
+      "label": "Esci dalla residenza",
+      "x": 57.27173518363905,
+      "y": 18.030400323099414,
+      "width": 17,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "reception_room_to_living_room",
+      "target": "living_room",
+      "label": "Soggiorno",
+      "x": 78,
+      "y": 58,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

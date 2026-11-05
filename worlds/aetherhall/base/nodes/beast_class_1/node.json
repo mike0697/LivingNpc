@@ -1,0 +1,19 @@
+{
+  "id": "beast_class_1",
+  "title": "Magical Beasts Classroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvy889lm_zqxj",
+      "target": "corridoio_ovest_1",
+      "label": "West Corridor",
+      "x": 20.26344015146234,
+      "y": 26.89197626577375,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

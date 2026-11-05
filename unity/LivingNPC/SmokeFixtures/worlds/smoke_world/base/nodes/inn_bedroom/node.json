@@ -1,0 +1,26 @@
+{
+  "id": "inn_bedroom",
+  "title": "Camera della Locanda",
+  "text": "Una stanza semplice e tranquilla. Dalla finestra arrivano i suoni ovattati della città.",
+  "backgrounds": {
+    "night_light": "night_light.png",
+    "night": "night.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "inn_bedroom_to_inn",
+      "target": "inn",
+      "label": "Scendi alla locanda",
+      "x": 85.49259786302068,
+      "y": 47.008403980076324,
+      "width": 16.35,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ],
+  "tags": [
+    "bed"
+  ]
+}

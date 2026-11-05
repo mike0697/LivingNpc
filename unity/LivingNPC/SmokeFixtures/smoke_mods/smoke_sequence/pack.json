@@ -1,0 +1,1 @@
+{ "id": "smoke_sequence", "name": "Smoke test: commands in sequence", "author": "test", "version": "1.0", "priority": 100, "dependsOn": ["base"] }

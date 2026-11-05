@@ -1,0 +1,37 @@
+{
+  "id": "bruno",
+  "name": "Bruno il fabbro",
+  "description": "Un uomo massiccio dalle mani callose.",
+  "places": {
+    "home": "blacksmith",
+    "work": "blacksmith"
+  },
+  "routine": [
+    "sleep_night",
+    "work_day",
+    "evening_tavern",
+    "church_service"
+  ],
+  "stats": {
+    "happiness": 50
+  },
+  "inventory": {
+    "bread": 1
+  },
+  "images": {
+    "talk": {
+      "default": {
+        "file": "npcs/NPC_02_The_Blacksmith/Full_Body_Happy.png",
+        "x": 27,
+        "y": 13,
+        "width": 30
+      }
+    },
+    "default": {
+      "file": "npcs/NPC_02_The_Blacksmith/Full_Body_Neutral.png",
+      "x": 27,
+      "y": 13,
+      "width": 30
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "alchimia_1",
+  "title": "Alchemy Classroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvxrem3z_80c5",
+      "target": "corridoio_1",
+      "label": "East Corridor",
+      "x": 17.93576176597985,
+      "y": 7.939840499272297,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

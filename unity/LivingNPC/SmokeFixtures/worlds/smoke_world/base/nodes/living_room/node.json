@@ -1,0 +1,63 @@
+{
+  "id": "living_room",
+  "title": "Soggiorno",
+  "text": "Un ambiente accogliente per leggere, parlare o progettare la prossima avventura.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "living_room_to_reception_room",
+      "target": "reception_room",
+      "label": "Salone",
+      "x": 25.08119757097264,
+      "y": 36.52975177524061,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "living_room_to_kitchen",
+      "target": "kitchen",
+      "label": "Cucina",
+      "x": 39.66076920814981,
+      "y": 30.449548977453905,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "living_room_to_dining_room",
+      "target": "dining_room",
+      "label": "Sala da pranzo",
+      "x": 65.86069865759002,
+      "y": 19.582794521759368,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "living_room_to_bedroom",
+      "target": "bedroom",
+      "label": "Camera da letto",
+      "x": 82,
+      "y": 49,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "living_room_to_bathroom",
+      "target": "bathroom",
+      "label": "Bagno",
+      "x": 83.25513410608552,
+      "y": 28.379688400932267,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

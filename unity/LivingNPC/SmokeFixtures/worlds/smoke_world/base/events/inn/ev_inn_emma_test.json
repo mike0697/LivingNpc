@@ -1,0 +1,66 @@
+{
+  "id": "ev_inn_emma_test",
+  "trigger": "enterNode",
+  "node": "inn",
+  "priority": 50,
+  "when": {
+    "type": "flag",
+    "key": "emma_invited",
+    "op": "!=",
+    "value": 1
+  },
+  "script": [
+    {
+      "show": "EmmaImage",
+      "file": "EmmaFull.png",
+      "x": 0,
+      "y": 0,
+      "width": 100
+    },
+    {
+      "say": "Oh, sei arrivato! Ti aspettavo.",
+      "who": "Emma"
+    },
+    {
+      "say": "La locanda è tranquilla stasera."
+    },
+    {
+      "say": "Vuoi sederti con me?",
+      "who": "Emma"
+    },
+    {
+      "hide": "EmmaImage"
+    },
+    {
+      "say": "Emma si allontana verso il camino."
+    }
+  ],
+  "choices": [
+    {
+      "text": "Volentieri",
+      "effects": [
+        {
+          "do": "message",
+          "text": "Emma ti sorride: «Allora vieni a trovarmi a casa mia, nel Vicolo dei Sussurri. Ti aspetto.»"
+        },
+        {
+          "do": "setFlag",
+          "key": "emma_invited"
+        },
+        {
+          "do": "showLink",
+          "link": "link_mvty55n9_8uu6"
+        }
+      ]
+    },
+    {
+      "text": "Magari dopo",
+      "effects": [
+        {
+          "do": "message",
+          "text": "Emma annuisce: «Come vuoi. Sono qui se cambi idea.»"
+        }
+      ]
+    }
+  ]
+}

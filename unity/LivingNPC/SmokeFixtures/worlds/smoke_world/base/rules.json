@@ -1,0 +1,135 @@
+{
+  "tickMinutes": 5,
+  "startMinute": 485,
+  "startDayOfWeek": 0,
+  "defaultLinkMinutes": 10,
+  "language": "it",
+  "stats": [
+    {
+      "id": "happiness",
+      "name": {
+        "it": "Felicità",
+        "en": "Happiness"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 60,
+      "driftPerHour": 0.05
+    },
+    {
+      "id": "energy",
+      "name": {
+        "it": "Energia",
+        "en": "Energy"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 70,
+      "driftPerHour": 0,
+      "constantPerHour": -2
+    },
+    {
+      "id": "cruelty",
+      "name": {
+        "it": "Cattiveria",
+        "en": "Cruelty"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 0,
+      "driftPerHour": 0
+    },
+    {
+      "id": "corruption",
+      "name": {
+        "it": "Corruzione",
+        "en": "Corruption"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 0,
+      "driftPerHour": 0
+    }
+  ],
+  "activities": [
+    {
+      "id": "sleep",
+      "name": "Dorme",
+      "effects": {
+        "energy": 12,
+        "happiness": 0.5
+      }
+    },
+    {
+      "id": "work",
+      "name": "Lavora",
+      "effects": {
+        "energy": -1.5,
+        "happiness": -0.3
+      }
+    },
+    {
+      "id": "study",
+      "name": "Studia",
+      "effects": {
+        "energy": -1,
+        "happiness": -0.5
+      }
+    },
+    {
+      "id": "relax",
+      "name": "Si rilassa",
+      "effects": {
+        "energy": 3,
+        "happiness": 1.5
+      }
+    },
+    {
+      "id": "socialize",
+      "name": "Chiacchiera",
+      "effects": {
+        "happiness": 3
+      }
+    }
+  ],
+  "dayParts": [
+    {
+      "id": "morning",
+      "from": "06:00",
+      "to": "16:00",
+      "background": "day"
+    },
+    {
+      "id": "afternoon",
+      "from": "16:00",
+      "to": "19:00",
+      "background": "afternoon"
+    },
+    {
+      "id": "evening",
+      "from": "19:00",
+      "to": "23:00",
+      "background": "night_light"
+    },
+    {
+      "id": "night",
+      "from": "23:00",
+      "to": "06:00",
+      "background": "night"
+    }
+  ],
+  "playerInventory": {
+    "bread": 2
+  },
+  "sleep": {
+    "from": "20:00",
+    "wakeAt": "07:00",
+    "effects": [
+      {
+        "do": "setStat",
+        "stat": "energy",
+        "value": 100
+      }
+    ]
+  }
+}

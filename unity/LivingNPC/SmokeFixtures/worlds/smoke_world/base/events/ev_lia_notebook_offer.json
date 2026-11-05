@@ -1,0 +1,43 @@
+{
+  "id": "ev_lia_notebook_offer",
+  "trigger": "talk",
+  "npc": "lia",
+  "priority": 10,
+  "when": {
+    "all": [
+      {
+        "type": "quest",
+        "quest": "q_lost_notebook",
+        "status": "notStarted"
+      },
+      {
+        "type": "time",
+        "from": "16:00",
+        "to": "22:00"
+      }
+    ]
+  },
+  "text": "{npc} sembra agitata: «Ho perso il mio quaderno degli appunti! Domani c'è l'interrogazione... Puoi aiutarmi a cercarlo?»",
+  "choices": [
+    {
+      "text": "Certo, ti aiuto.",
+      "effects": [
+        {
+          "do": "startQuest",
+          "quest": "q_lost_notebook"
+        }
+      ]
+    },
+    {
+      "text": "Mi dispiace, ora non posso.",
+      "effects": [
+        {
+          "do": "modStat",
+          "target": "lia",
+          "stat": "happiness",
+          "delta": -3
+        }
+      ]
+    }
+  ]
+}

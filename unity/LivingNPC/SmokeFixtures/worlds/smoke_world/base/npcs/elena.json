@@ -1,0 +1,20 @@
+{
+  "id": "elena",
+  "name": "Maestra Elena",
+  "description": "Insegna alla Gilda degli Avventurieri.",
+  "places": {
+    "home": "reception_room",
+    "school": "nuovo_ambiente_25",
+    "work": "nuovo_ambiente_25"
+  },
+  "routine": [
+    "sleep_night",
+    {
+      "schedule": "school_timetable"
+    },
+    "evening_tavern"
+  ],
+  "stats": {
+    "happiness": 60
+  }
+}

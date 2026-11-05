@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_38",
+  "title": "Princess_beedroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvvfv8u9_0u3s",
+      "target": "throne_room",
+      "label": "Sala",
+      "x": 48.53843270929238,
+      "y": 29.285252094727664,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

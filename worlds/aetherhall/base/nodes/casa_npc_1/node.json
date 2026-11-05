@@ -1,0 +1,28 @@
+{
+  "id": "casa_npc_1",
+  "title": "Teachers' House",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvy2j70z_llbs",
+      "target": "giardino_retro_1",
+      "label": "Back Garden",
+      "x": 51.35329652061071,
+      "y": 12.597023095252148,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvy2nr4b_5wvd",
+      "target": "stanza_da_letto_npc_1",
+      "label": "Students' Bedroom",
+      "x": 83.39949513288141,
+      "y": 25.40426413061523,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

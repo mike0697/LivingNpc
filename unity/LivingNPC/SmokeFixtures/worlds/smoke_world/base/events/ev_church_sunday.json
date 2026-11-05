@@ -1,0 +1,34 @@
+{
+  "id": "ev_church_sunday",
+  "trigger": "enterNode",
+  "node": "church",
+  "when": {
+    "all": [
+      {
+        "type": "day",
+        "days": [
+          "sun"
+        ]
+      },
+      {
+        "type": "time",
+        "from": "09:00",
+        "to": "11:00"
+      },
+      {
+        "type": "npcAt",
+        "npc": "anselmo"
+      }
+    ]
+  },
+  "cooldownMinutes": 600,
+  "effects": [
+    {
+      "do": "modStat",
+      "target": "player",
+      "stat": "happiness",
+      "delta": 5
+    }
+  ],
+  "text": "Il coro intona un canto dolce. Padre Anselmo ti accoglie con un cenno."
+}

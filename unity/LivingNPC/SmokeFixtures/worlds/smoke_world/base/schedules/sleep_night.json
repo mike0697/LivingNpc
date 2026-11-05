@@ -1,0 +1,13 @@
+{
+  "id": "sleep_night",
+  "blocks": [
+    {
+      "days": "all",
+      "from": "22:30",
+      "to": "06:30",
+      "at": "$home",
+      "activity": "sleep",
+      "priority": 5
+    }
+  ]
+}

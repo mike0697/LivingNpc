@@ -1,0 +1,46 @@
+{
+  "id": "nuovo_ambiente_31",
+  "title": "Entrata X",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu19xws_asg5",
+      "target": "nuovo_ambiente_28",
+      "label": "Quartiere X",
+      "x": 10.755150299506106,
+      "y": 36.734781627825996,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu1iq5y_o3xy",
+      "target": "nuovo_ambiente_32",
+      "label": "Ristorante",
+      "x": 65.36041075821429,
+      "y": 25.96806384087574,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu1k93k_3vvv",
+      "target": "nuovo_ambiente_33",
+      "label": "Palco",
+      "x": 41.561789408986435,
+      "y": 28.02868028703869,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu1s97k_83au",
+      "target": "nuovo_ambiente_34",
+      "label": "BedX",
+      "x": 72.45423738223433,
+      "y": 10.71949899501872,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

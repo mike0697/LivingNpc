@@ -1,0 +1,45 @@
+{
+  "id": "chest_bed",
+  "trigger": "enterNode",
+  "node": "bed_1",
+  "once": true,
+  "when": {
+    "type": "always"
+  },
+  "script": [
+    {
+      "say": "There is an old chest in the bedroom."
+    },
+    {
+      "say": "Should I open it?"
+    },
+    {
+      "choices": [
+        {
+          "text": "Open it",
+          "then": [
+            {
+              "sound": "door.mp3"
+            },
+            {
+              "say": "You found 100 coins."
+            },
+            {
+              "do": "giveItem",
+              "item": "gold_coin",
+              "count": 100
+            },
+            {
+              "do": "playSound",
+              "file": "freesound_gamestudio-drop-coin-384921.mp3"
+            }
+          ]
+        },
+        {
+          "text": "Leave it",
+          "then": []
+        }
+      ]
+    }
+  ]
+}

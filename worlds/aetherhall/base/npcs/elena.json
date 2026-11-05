@@ -1,0 +1,36 @@
+{
+  "id": "elena",
+  "name": "Elena",
+  "places": {
+    "home": "stanza_da_letto_npc_1"
+  },
+  "routine": [
+    {
+      "days": "all",
+      "from": "21:00",
+      "to": "07:00",
+      "at": "stanza_da_letto_npc_1",
+      "priority": 15,
+      "activity": "sleep",
+      "id": "dorme"
+    },
+    {
+      "days": "weekdays",
+      "from": "08:00",
+      "to": "16:00",
+      "at": "alchimia_1",
+      "priority": 20,
+      "activity": "work",
+      "id": "insegna_pozioni"
+    }
+  ],
+  "images": {
+    "default": {
+      "file": "people/potions_teacher.png",
+      "x": 21,
+      "y": 14,
+      "width": 30
+    }
+  },
+  "description": "Potions teacher"
+}

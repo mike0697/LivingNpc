@@ -1,0 +1,23 @@
+{
+  "id": "church",
+  "title": "Chiesa della Luce",
+  "text": "Il silenzio della navata invita a fermarsi. Candele e vetrate colorate vegliano sulla piazza.",
+  "backgrounds": {
+    "afternoon": "afternoon.png",
+    "night": "night.png",
+    "day": "bg.png",
+    "night_light": "night_light.png"
+  },
+  "links": [
+    {
+      "id": "church_to_square_fountain",
+      "target": "square_fountain",
+      "label": "Piazza della Fontana",
+      "x": 83.61601464667507,
+      "y": 52.70051439685444,
+      "width": 17,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

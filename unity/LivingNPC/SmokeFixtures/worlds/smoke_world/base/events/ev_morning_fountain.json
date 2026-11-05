@@ -1,0 +1,15 @@
+{
+  "id": "ev_morning_fountain",
+  "trigger": "enterNode",
+  "node": "square_fountain",
+  "when": {
+    "type": "time",
+    "from": "06:00",
+    "to": "09:00"
+  },
+  "cooldownMinutes": 1440,
+  "text": {
+    "it": "Le campane del mattino risuonano sulla piazza e i primi mercanti montano i banchi.",
+    "en": "Morning bells ring across the square as the first merchants set up their stalls."
+  }
+}

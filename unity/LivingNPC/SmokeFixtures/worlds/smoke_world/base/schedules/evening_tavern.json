@@ -1,0 +1,16 @@
+{
+  "id": "evening_tavern",
+  "blocks": [
+    {
+      "days": [
+        "fri",
+        "sat"
+      ],
+      "from": "19:30",
+      "to": "22:30",
+      "at": "tavern",
+      "activity": "socialize",
+      "priority": 8
+    }
+  ]
+}

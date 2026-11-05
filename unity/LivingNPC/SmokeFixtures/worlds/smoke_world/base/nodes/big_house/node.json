@@ -1,0 +1,33 @@
+{
+  "id": "big_house",
+  "title": "Residenza del Quartiere Alto",
+  "text": "Una casa spaziosa affaccia sulla città. La porta d’ingresso conduce al salone di ricevimento.",
+  "backgrounds": {
+    "night_light": "night_light.png",
+    "night": "night.png",
+    "day": "bg.png",
+    "afternoon": "afternoon.png"
+  },
+  "links": [
+    {
+      "id": "big_house_to_square_fountain",
+      "target": "square_fountain",
+      "label": "Piazza della Fontana",
+      "x": 24.8646670439789,
+      "y": 26.309832759335745,
+      "width": 17,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "big_house_to_reception_room",
+      "target": "reception_room",
+      "label": "Entra nella residenza",
+      "x": 52,
+      "y": 55,
+      "width": 17.65,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

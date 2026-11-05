@@ -1,0 +1,213 @@
+{
+  "tickMinutes": 5,
+  "startMinute": 485,
+  "startDayOfWeek": 0,
+  "defaultLinkMinutes": 10,
+  "language": "en",
+  "stats": [
+    {
+      "id": "happiness",
+      "name": {
+        "it": "Felicità",
+        "en": "Happiness"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 60,
+      "driftPerHour": 0.05
+    },
+    {
+      "id": "energy",
+      "name": {
+        "it": "Energia",
+        "en": "Energy"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 70,
+      "driftPerHour": 0,
+      "constantPerHour": -2
+    },
+    {
+      "id": "charisma",
+      "name": {
+        "it": "Carisma",
+        "en": "Charisma"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 10,
+      "driftPerHour": 0
+    },
+    {
+      "id": "intelligence",
+      "name": {
+        "it": "Intelligenza",
+        "en": "Intelligence"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 10,
+      "driftPerHour": 0
+    },
+    {
+      "id": "reputation",
+      "name": {
+        "it": "Reputazione",
+        "en": "Reputation"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 0,
+      "driftPerHour": 0
+    },
+    {
+      "id": "hp",
+      "name": {
+        "it": "HP",
+        "en": "HP"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 100,
+      "driftPerHour": 0
+    },
+    {
+      "id": "mp",
+      "name": {
+        "it": "MP",
+        "en": "MP"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 50,
+      "driftPerHour": 0
+    },
+    {
+      "id": "attack",
+      "name": {
+        "it": "Attacco",
+        "en": "Attack"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 10,
+      "driftPerHour": 0
+    },
+    {
+      "id": "defense",
+      "name": {
+        "it": "Difesa",
+        "en": "Defense"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 10,
+      "driftPerHour": 0
+    },
+    {
+      "id": "speed",
+      "name": {
+        "it": "Velocità",
+        "en": "Speed"
+      },
+      "min": 0,
+      "max": 100,
+      "baseline": 10,
+      "driftPerHour": 0
+    },
+    {
+      "id": "level",
+      "name": {
+        "it": "Livello",
+        "en": "Level"
+      },
+      "min": 1,
+      "max": 99,
+      "baseline": 1,
+      "driftPerHour": 0
+    }
+  ],
+  "activities": [
+    {
+      "id": "sleep",
+      "name": "Sleeping",
+      "effects": {
+        "energy": 12,
+        "happiness": 0.5
+      }
+    },
+    {
+      "id": "work",
+      "name": "Working",
+      "effects": {
+        "energy": -1.5,
+        "happiness": -0.3
+      }
+    },
+    {
+      "id": "study",
+      "name": "Studying",
+      "effects": {
+        "energy": -1,
+        "happiness": -0.5
+      }
+    },
+    {
+      "id": "relax",
+      "name": "Relaxing",
+      "effects": {
+        "energy": 3,
+        "happiness": 1.5
+      }
+    },
+    {
+      "id": "socialize",
+      "name": "Chatting",
+      "effects": {
+        "happiness": 3
+      }
+    }
+  ],
+  "dayParts": [
+    {
+      "id": "morning",
+      "from": "06:00",
+      "to": "16:00",
+      "background": "day"
+    },
+    {
+      "id": "afternoon",
+      "from": "16:00",
+      "to": "19:00",
+      "background": "afternoon"
+    },
+    {
+      "id": "evening",
+      "from": "19:00",
+      "to": "23:00",
+      "background": "night_light"
+    },
+    {
+      "id": "night",
+      "from": "23:00",
+      "to": "06:00",
+      "background": "night"
+    }
+  ],
+  "sleep": {
+    "from": "20:00",
+    "wakeAt": "07:00",
+    "effects": [
+      {
+        "do": "setStat",
+        "stat": "energy",
+        "value": 100
+      }
+    ]
+  },
+  "playerInventory": {
+    "bread": 2,
+    "gold_coin": 100
+  }
+}

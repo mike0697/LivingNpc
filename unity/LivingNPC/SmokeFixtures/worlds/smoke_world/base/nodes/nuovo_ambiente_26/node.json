@@ -1,0 +1,28 @@
+{
+  "id": "nuovo_ambiente_26",
+  "title": "Casa Emma",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvty266p_oczr",
+      "target": "alley",
+      "label": "Vicolo dei Sussurri",
+      "x": 55.61500496126208,
+      "y": 24.293200101033737,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvty2xka_hfwe",
+      "target": "nuovo_ambiente_27",
+      "label": "Letto",
+      "x": 26.487916294140867,
+      "y": 29.296376672607806,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

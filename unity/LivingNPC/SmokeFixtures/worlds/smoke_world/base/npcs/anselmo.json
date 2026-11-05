@@ -1,0 +1,43 @@
+{
+  "id": "anselmo",
+  "name": "Padre Anselmo",
+  "description": "Il sacerdote della Chiesa della Luce.",
+  "places": {
+    "home": "church",
+    "work": "church"
+  },
+  "routine": [
+    "sleep_night",
+    {
+      "days": "all",
+      "from": "07:00",
+      "to": "12:00",
+      "at": "$work",
+      "activity": "work",
+      "priority": 10
+    },
+    "church_service"
+  ],
+  "stats": {
+    "happiness": 75
+  },
+  "inventory": {
+    "potion_health": 2
+  },
+  "images": {
+    "talk": {
+      "default": {
+        "file": "npcs/NPC_16_The_Village_Priest/Full_Body_Happy.png",
+        "x": 12,
+        "y": 19,
+        "width": 30
+      }
+    },
+    "default": {
+      "file": "npcs/NPC_16_The_Village_Priest/Full_Body_Neutral.png",
+      "x": 14,
+      "y": 19,
+      "width": 30
+    }
+  }
+}

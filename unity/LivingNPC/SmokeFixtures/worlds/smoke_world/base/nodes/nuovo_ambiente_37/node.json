@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_37",
+  "title": "king_beedroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvvfrfgr_1dj4",
+      "target": "throne_room",
+      "label": "Sala",
+      "x": 47.383610574125825,
+      "y": 24.369341244742085,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

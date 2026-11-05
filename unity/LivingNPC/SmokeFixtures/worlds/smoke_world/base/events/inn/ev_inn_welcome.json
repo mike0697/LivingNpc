@@ -1,0 +1,6 @@
+{
+  "id": "ev_inn_welcome",
+  "trigger": "enterNode",
+  "node": "inn",
+  "text": "Il profumo di stufato e il crepitio del camino ti accolgono."
+}

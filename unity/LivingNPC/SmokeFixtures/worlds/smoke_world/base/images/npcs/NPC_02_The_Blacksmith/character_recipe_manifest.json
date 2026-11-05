@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_02",
+  "character_name": "The Blacksmith",
+  "role": "Blacksmith",
+  "gender": "Male",
+  "age_range": "30s-40s",
+  "base_description": "muscular broad-shouldered blacksmith man in his late 30s, thick dark beard, soot smudges on cheekbones and forearms, intense focused brown eyes, wearing a heavy dark leather protective smithing apron over a rugged short-sleeve linen shirt, sturdy work trousers, and thick work boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing firmly facing camera with arms loosely crossed over broad chest, neutral steady professional gaze, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a booming hearty toothy laugh and broad proud grin, one hand on hip, warm friendly demeanor"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with a weary strained tired expression, wiping brow with back of hand, heavy sigh, exhausted after long forge work"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with fierce stern scowl, furrowed thick brow, jaw clenched tightly in warning authoritative anger"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

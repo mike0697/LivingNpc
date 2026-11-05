@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_17",
+  "character_name": "The Traveling Bard",
+  "role": "Traveling Bard",
+  "gender": "Male",
+  "age_range": "20s",
+  "base_description": "charismatic flamboyant wandering bard man in his mid 20s, wavy chestnut locks beneath a jaunty velvet cap with a pheasant feather, sparkling mischievous amber eyes, wearing a colorful teal and saffron laced doublet, leather shoulder strap for a lute, fitted breeches, and stylish folded-cuff travel boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing in poised theatrical stance, charismatic relaxed neutral expression, one hand on hip, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a dashing charming wink and wide performer grin, charismatic entertainer flair"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing in melodramatic theatrical gasp, hand on heart with wide mock-shocked eyes at an insult"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with dramatic exaggerated sulking pout, crossed arms, offended that nobody clapped for his ballad"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

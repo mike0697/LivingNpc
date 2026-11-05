@@ -1,0 +1,13 @@
+{
+  "id": "q_smoke_sound",
+  "title": "Prova suoni",
+  "onStart": [
+    { "do": "startMusic", "file": "theme.wav", "volume": 0.5, "fade": 2 },
+    { "do": "startAmbient", "sound": "rain", "file": "rain.wav", "volume": 0.4 },
+    { "do": "playSound", "file": "click.wav" }
+  ],
+  "stages": [
+    { "id": "s1", "text": "1", "onComplete": [ { "do": "startMusic", "file": "theme2.wav" }, { "do": "stopAmbient", "sound": "rain" } ] },
+    { "id": "s2", "text": "2" }
+  ]
+}

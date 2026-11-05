@@ -1,0 +1,28 @@
+{
+  "id": "nuovo_ambiente_29",
+  "title": "vicolo_povero",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu14a8i_trsg",
+      "target": "nuovo_ambiente_28",
+      "label": "QuartiereX",
+      "x": 55.06292810046498,
+      "y": 22.052889448914957,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu17k3t_jryn",
+      "target": "nuovo_ambiente_30",
+      "label": "Neogizo Povero",
+      "x": 88.98741437990701,
+      "y": 35.70447340474452,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

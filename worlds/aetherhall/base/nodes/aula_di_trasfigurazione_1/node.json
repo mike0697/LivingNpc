@@ -1,0 +1,19 @@
+{
+  "id": "aula_di_trasfigurazione_1",
+  "title": "Transfiguration Classroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvxqqv8s_oxpn",
+      "target": "cortile_1",
+      "label": "Courtyard",
+      "x": 12.66690367073263,
+      "y": 39.6345352376354,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

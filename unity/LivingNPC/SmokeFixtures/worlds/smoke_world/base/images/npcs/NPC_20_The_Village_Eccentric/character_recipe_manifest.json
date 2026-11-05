@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_20",
+  "character_name": "The Village Eccentric",
+  "role": "Village Eccentric & Hermit",
+  "gender": "Male",
+  "age_range": "60s",
+  "base_description": "wild whimsical eccentric hermit man in his 60s, bushy unkempt cloud of silver-white hair and untamed beard, wide eccentric twinkling pale blue eyes, wearing a long ragged patchwork overcoat adorned with miscellaneous brass keys and strange trinkets, mismatched layered tunics, and worn scuffed boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing in quirky animated stance, head cocked inquisitively to one side, eccentric neutral curiosity, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a wild gleeful cackling grin and manic dancing eyes, thrilled by strange magical rumors"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with wide bug-eyed startled shock, hands flailing in theatrical panic over impending prophecies"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing hunched forward with a cantankerous grumpy scowl, squinting suspiciously at curious townspeople"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

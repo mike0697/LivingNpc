@@ -1,0 +1,10 @@
+{
+  "id": "ev_smoke_sound_script",
+  "trigger": "enterNode",
+  "when": { "not": { "type": "always" } },
+  "text": "prova",
+  "script": [
+    { "sound": "click.wav", "say": "uno" },
+    { "say": "due", "sound": "click.wav", "volume": 0.5 }
+  ]
+}

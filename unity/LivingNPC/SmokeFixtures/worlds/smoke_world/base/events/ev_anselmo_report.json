@@ -1,0 +1,24 @@
+{
+  "id": "ev_anselmo_report",
+  "trigger": "talk",
+  "npc": "anselmo",
+  "priority": 20,
+  "when": {
+    "type": "quest",
+    "quest": "q_tavern_whispers",
+    "stage": "report"
+  },
+  "text": "{npc} ascolta in silenzio, poi sussurra: «Terrò gli occhi aperti. Grazie, figliolo.»",
+  "effects": [
+    {
+      "do": "modStat",
+      "target": "anselmo",
+      "stat": "happiness",
+      "delta": -5
+    },
+    {
+      "do": "advanceQuest",
+      "quest": "q_tavern_whispers"
+    }
+  ]
+}

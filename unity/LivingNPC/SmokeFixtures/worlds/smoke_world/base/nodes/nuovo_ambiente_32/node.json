@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_32",
+  "title": "Ristorante X",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu1h828_xmcx",
+      "target": "nuovo_ambiente_31",
+      "label": "Entrata",
+      "x": 40.21739234806659,
+      "y": 38.79539807398895,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

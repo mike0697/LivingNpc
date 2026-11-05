@@ -1,0 +1,28 @@
+{
+  "id": "casa_1",
+  "title": "Home",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvwzvkqe_hl3a",
+      "target": "bed_1",
+      "label": "Bedroom",
+      "x": 50.65852668810679,
+      "y": 24.601208302702275,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvxr07wk_5nu7",
+      "target": "entrata_1",
+      "label": "Entrance Hall",
+      "x": 22.146374257317806,
+      "y": 32.070492547402075,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

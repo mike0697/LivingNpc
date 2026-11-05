@@ -1,0 +1,23 @@
+{
+  "id": "ev_smoke_sequence",
+  "trigger": "enterNode",
+  "when": { "not": { "type": "always" } },
+  "script": [
+    { "say": "uno" },
+    { "do": "giveItem", "item": "bread", "count": 1 },
+    {
+      "if": { "type": "flag", "key": "smoke_seq", "op": ">=", "value": 1 },
+      "then": [ { "say": "flag si" } ],
+      "else": [ { "say": "flag no" } ]
+    },
+    { "say": "scegli" },
+    {
+      "choices": [
+        { "text": "A", "then": [ { "do": "setFlag", "key": "smoke_seq_pick", "value": 1 }, { "say": "hai scelto A" } ] },
+        { "text": "B", "then": [ { "do": "setFlag", "key": "smoke_seq_pick", "value": 2 } ] },
+        { "text": "nascosta", "when": { "not": { "type": "always" } }, "then": [] }
+      ]
+    },
+    { "say": "fine" }
+  ]
+}

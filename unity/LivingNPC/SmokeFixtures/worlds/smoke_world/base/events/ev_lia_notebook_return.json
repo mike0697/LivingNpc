@@ -1,0 +1,24 @@
+{
+  "id": "ev_lia_notebook_return",
+  "trigger": "talk",
+  "npc": "lia",
+  "priority": 20,
+  "when": {
+    "type": "quest",
+    "quest": "q_lost_notebook",
+    "stage": "return"
+  },
+  "text": "{npc} stringe il quaderno al petto: «Grazie, grazie, grazie!»",
+  "effects": [
+    {
+      "do": "modStat",
+      "target": "lia",
+      "stat": "happiness",
+      "delta": 25
+    },
+    {
+      "do": "advanceQuest",
+      "quest": "q_lost_notebook"
+    }
+  ]
+}

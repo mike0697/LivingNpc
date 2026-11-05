@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_10",
+  "character_name": "The Baker",
+  "role": "Baker",
+  "gender": "Female",
+  "age_range": "40s",
+  "base_description": "cheerful stout village baker woman in her 40s, round friendly rosy face, gentle smile, faint flour dust on cheeks and nose, hair neatly tucked inside a clean white linen cloth wrap, wearing a warm golden-yellow dress under a flour-dusted white baking apron, and comfortable shoes, standing in front 3/4 view, full body shot from head to shoes, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing with warm approachable neutral stance, hands resting on apron, hospitable baker demeanor, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with beaming proud smile and joyful rosy cheeks, delighted with freshly baked pastries"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with crestfallen disappointed pout, mouth downturned in sadness over burnt bread batch"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with wide startled eyes and hands raised to cheeks in comical gasping surprise"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

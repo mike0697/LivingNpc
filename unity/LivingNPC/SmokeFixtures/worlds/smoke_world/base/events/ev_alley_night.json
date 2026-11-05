@@ -1,0 +1,32 @@
+{
+  "id": "ev_alley_night",
+  "trigger": "enterNode",
+  "node": "alley",
+  "when": {
+    "type": "time",
+    "from": "23:00",
+    "to": "05:00"
+  },
+  "cooldownMinutes": 720,
+  "text": "Nel buio del vicolo senti dei passi dietro di te. Qualcuno ti sta seguendo?",
+  "choices": [
+    {
+      "text": "Prosegui con cautela",
+      "effects": [
+        {
+          "do": "message",
+          "text": "Acceleri il passo; i passi si allontanano."
+        }
+      ]
+    },
+    {
+      "text": "Torna alla piazza",
+      "effects": [
+        {
+          "do": "teleportPlayer",
+          "node": "square_fountain"
+        }
+      ]
+    }
+  ]
+}

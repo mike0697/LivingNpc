@@ -1,0 +1,56 @@
+{
+  "id": "q_lost_notebook",
+  "title": "Il quaderno smarrito",
+  "summary": "Lia ha perso il suo quaderno di appunti. Qualcuno nel vicolo potrebbe saperne di più.",
+  "giver": "lia",
+  "stages": [
+    {
+      "id": "search",
+      "text": "Lia pensa di aver perso il quaderno vicino al Vicolo dei Sussurri. Passa là di sera, quando Tomas è in giro.",
+      "complete": {
+        "all": [
+          {
+            "type": "playerAt",
+            "node": "alley"
+          },
+          {
+            "type": "time",
+            "from": "19:00",
+            "to": "23:30"
+          },
+          {
+            "type": "npcAt",
+            "npc": "tomas",
+            "node": "alley"
+          }
+        ]
+      },
+      "onComplete": [
+        {
+          "do": "message",
+          "text": "Nel vicolo sorprendi Tomas con il quaderno di Lia tra le mani. Con un sospiro te lo consegna."
+        },
+        {
+          "do": "setFlag",
+          "key": "notebook_found"
+        },
+        {
+          "do": "modStat",
+          "target": "tomas",
+          "stat": "happiness",
+          "delta": -10
+        }
+      ]
+    },
+    {
+      "id": "return",
+      "text": "Riporta il quaderno a Lia."
+    }
+  ],
+  "onComplete": [
+    {
+      "do": "message",
+      "text": "Lia ti ringrazia con un enorme sorriso."
+    }
+  ]
+}

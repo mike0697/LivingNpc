@@ -1,0 +1,22 @@
+{
+  "id": "bed_1",
+  "title": "Bedroom",
+  "text": "The protagonist's bedroom.",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvwzvt7k_1jpb",
+      "target": "casa_1",
+      "label": "Home",
+      "x": 49.13699379095385,
+      "y": 29.22505069542779,
+      "width": 20,
+      "height": 6.5
+    }
+  ],
+  "tags": [
+    "bed"
+  ]
+}

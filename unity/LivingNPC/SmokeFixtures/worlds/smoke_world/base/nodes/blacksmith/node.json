@@ -1,0 +1,23 @@
+{
+  "id": "blacksmith",
+  "title": "Fucina del Fabbro",
+  "text": "Il ritmo del martello sull’incudine riempie l’aria. Armi e armature attendono nuovi proprietari.",
+  "backgrounds": {
+    "night": "night.png",
+    "day": "bg.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png"
+  },
+  "links": [
+    {
+      "id": "blacksmith_to_commercial_area",
+      "target": "commercial_area",
+      "label": "Quartiere commerciale",
+      "x": 42.04258297868076,
+      "y": 46.879039853073465,
+      "width": 17.65,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

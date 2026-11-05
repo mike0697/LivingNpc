@@ -1,0 +1,9 @@
+{
+  "id": "smoke_worker",
+  "name": "Operaio di prova",
+  "places": { "home": "inn_bedroom", "work": "blacksmith" },
+  "routine": [
+    "work_day",
+    { "id": "evening", "days": "all", "from": "18:00", "to": "22:00", "at": "tavern", "priority": 10 }
+  ]
+}

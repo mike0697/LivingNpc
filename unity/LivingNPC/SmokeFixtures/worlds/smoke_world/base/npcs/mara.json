@@ -1,0 +1,23 @@
+{
+  "id": "mara",
+  "name": "Mara la locandiera",
+  "description": "Gestisce la Locanda del Viandante con mano ferma.",
+  "places": {
+    "home": "inn_bedroom",
+    "work": "inn"
+  },
+  "routine": [
+    "sleep_night",
+    {
+      "days": "all",
+      "from": "07:00",
+      "to": "22:30",
+      "at": "$work",
+      "activity": "work",
+      "priority": 20
+    }
+  ],
+  "stats": {
+    "happiness": 60
+  }
+}

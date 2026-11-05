@@ -1,0 +1,30 @@
+{
+  "id": "nuovo_ambiente_24",
+  "title": "Corridoio",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvtosb2e_rdnh",
+      "target": "nuovo_ambiente_23",
+      "label": "Entrata",
+      "x": 88.88487274192228,
+      "y": 43.38615907474497,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "link_mvtot7f9_9uu4",
+      "target": "nuovo_ambiente_25",
+      "label": "Classe 1",
+      "x": 51.64200756100239,
+      "y": 29.414616221730526,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

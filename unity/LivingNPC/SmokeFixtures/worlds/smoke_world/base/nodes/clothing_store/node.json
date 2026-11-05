@@ -1,0 +1,23 @@
+{
+  "id": "clothing_store",
+  "title": "Sartoria",
+  "text": "Tessuti, mantelli e abiti da viaggio sono ordinati con cura. Ogni stoffa racconta una terra lontana.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "day": "bg.png",
+    "afternoon": "afternoon.png"
+  },
+  "links": [
+    {
+      "id": "clothing_store_to_commercial_area",
+      "target": "commercial_area",
+      "label": "Quartiere commerciale",
+      "x": 47.888841128311164,
+      "y": 15.831175619574914,
+      "width": 17.65,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

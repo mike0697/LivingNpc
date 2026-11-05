@@ -1,0 +1,18 @@
+{
+  "id": "lia",
+  "name": "Lia",
+  "description": "Una giovane studentessa della Gilda, sempre con la testa tra i libri.",
+  "places": {
+    "home": "bedroom",
+    "school": "nuovo_ambiente_25",
+    "hangout": "square_fountain"
+  },
+  "routine": [
+    "sleep_night",
+    "school_timetable",
+    "free_time_young"
+  ],
+  "stats": {
+    "happiness": 65
+  }
+}

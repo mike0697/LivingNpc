@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_13",
+  "character_name": "The Scholar",
+  "role": "Scholar & Scribe",
+  "gender": "Male",
+  "age_range": "20s-30s",
+  "base_description": "pale slender scholarly scribe man in his late 20s, messy dark ink-smudged hair, wire-rimmed reading spectacles, ink stains on fingertips, tired intelligent dark eyes, wearing an inky deep-blue scholar robe with voluminous sleeves and parchment scroll holders, dark trousers, and soft indoor slippers, standing in front 3/4 view, full body shot from head to slippers, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing in slightly awkward bookish posture, thoughtful neutral studious gaze, empty hands loosely clasped"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with an awkward shy bookish grin, adjusting spectacles nervously with one finger, pleased discovery"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with hands gripping head in frantic stressed panic, wide terrified eyes over lost ancient scrolls"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with furrowed brow and finger on temples in deep intense analytical philosophical contemplation"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

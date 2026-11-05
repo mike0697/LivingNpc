@@ -1,0 +1,39 @@
+{
+  "id": "ev_bruno_offer",
+  "trigger": "talk",
+  "npc": "bruno",
+  "priority": 10,
+  "when": {
+    "all": [
+      {
+        "type": "quest",
+        "quest": "q_forge_delivery",
+        "status": "notStarted"
+      },
+      {
+        "type": "day",
+        "days": "weekdays"
+      },
+      {
+        "type": "time",
+        "from": "08:00",
+        "to": "18:00"
+      }
+    ]
+  },
+  "text": "{npc} ti mostra un pacco avvolto in tela: «Devo consegnarlo a Sira, ma la forgia non può restare sola. Lo porteresti tu?»",
+  "choices": [
+    {
+      "text": "Lo porto io.",
+      "effects": [
+        {
+          "do": "startQuest",
+          "quest": "q_forge_delivery"
+        }
+      ]
+    },
+    {
+      "text": "Magari un'altra volta."
+    }
+  ]
+}

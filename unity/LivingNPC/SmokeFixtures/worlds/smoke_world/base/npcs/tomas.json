@@ -1,0 +1,18 @@
+{
+  "id": "tomas",
+  "name": "Tomas",
+  "description": "Studente svogliato, conosce ogni angolo della città.",
+  "places": {
+    "home": "store_interior",
+    "school": "nuovo_ambiente_25",
+    "hangout": "alley"
+  },
+  "routine": [
+    "sleep_night",
+    "school_timetable",
+    "free_time_young"
+  ],
+  "stats": {
+    "happiness": 55
+  }
+}

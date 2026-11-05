@@ -1,0 +1,17 @@
+{
+  "id": "sira",
+  "name": "Sira",
+  "description": "Alchimista e proprietaria dell'emporio delle pozioni.",
+  "places": {
+    "home": "potion_store",
+    "work": "potion_store"
+  },
+  "routine": [
+    "sleep_night",
+    "work_day",
+    "church_service"
+  ],
+  "stats": {
+    "happiness": 70
+  }
+}

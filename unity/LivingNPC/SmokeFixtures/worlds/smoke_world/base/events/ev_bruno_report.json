@@ -1,0 +1,18 @@
+{
+  "id": "ev_bruno_report",
+  "trigger": "talk",
+  "npc": "bruno",
+  "priority": 20,
+  "when": {
+    "type": "quest",
+    "quest": "q_forge_delivery",
+    "stage": "report"
+  },
+  "text": "{npc} legge la ricevuta e annuisce soddisfatto.",
+  "effects": [
+    {
+      "do": "advanceQuest",
+      "quest": "q_forge_delivery"
+    }
+  ]
+}

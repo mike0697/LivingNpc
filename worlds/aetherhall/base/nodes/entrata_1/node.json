@@ -1,0 +1,37 @@
+{
+  "id": "entrata_1",
+  "title": "Entrance Hall",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvxqxy79_o61y",
+      "target": "cortile_1",
+      "label": "Courtyard",
+      "x": 52.510823297385066,
+      "y": 21.400089302894695,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvxqzpht_ovh4",
+      "target": "casa_1",
+      "label": "Home",
+      "x": 24.3294400846593,
+      "y": 33.9674537820516,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvxr3bsl_spfr",
+      "target": "biblioteca_1",
+      "label": "Library",
+      "x": 78.3106791519314,
+      "y": 34.797373705478066,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

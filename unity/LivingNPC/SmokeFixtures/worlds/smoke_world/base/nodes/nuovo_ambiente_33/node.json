@@ -1,0 +1,28 @@
+{
+  "id": "nuovo_ambiente_33",
+  "title": "Palco X",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu1lb9s_2wj7",
+      "target": "nuovo_ambiente_31",
+      "label": "Entrata",
+      "x": 39.78833057066037,
+      "y": 42.91663096631485,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu1vmz8_tmsl",
+      "target": "nuovo_ambiente_35",
+      "label": "Cella",
+      "x": 78.26086994475149,
+      "y": 25.916545285470495,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

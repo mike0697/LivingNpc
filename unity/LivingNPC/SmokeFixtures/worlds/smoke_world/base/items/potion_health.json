@@ -1,0 +1,7 @@
+{
+  "id": "potion_health",
+  "name": "Healing potion",
+  "description": "A thick red liquid in a small flask.",
+  "type": "consumable",
+  "value": 25
+}

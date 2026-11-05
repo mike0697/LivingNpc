@@ -1,0 +1,14 @@
+{
+  "id": "q_smoke_routine",
+  "title": "Prova routine",
+  "onStart": [ { "do": "setPlace", "npc": "smoke_worker", "place": "work", "node": "tavern" } ],
+  "stages": [
+    { "id": "s1", "text": "1", "onComplete": [ { "do": "setPlace", "npc": "smoke_worker", "place": "home", "node": "church" } ] },
+    { "id": "s2", "text": "2", "onComplete": [ { "do": "addRoutine", "npc": "smoke_worker", "id": "evening", "block": { "from": "18:00", "to": "22:00", "at": "inn", "priority": 10 } } ] },
+    { "id": "s3", "text": "3", "onComplete": [ { "do": "removeRoutine", "npc": "smoke_worker", "id": "work_day" } ] },
+    { "id": "s4", "text": "4", "onComplete": [ { "do": "setRoutine", "npc": "smoke_worker", "routine": [ { "from": "06:00", "to": "07:00", "at": "$work" } ] } ] },
+    { "id": "s5", "text": "5", "onComplete": [
+        { "do": "setPlace", "npc": "smoke_worker", "place": "job", "node": "guild" },
+        { "do": "addRoutine", "npc": "smoke_worker", "id": "extra", "routine": [ { "from": "12:00", "to": "13:00", "at": "$job" } ] } ] }
+  ]
+}

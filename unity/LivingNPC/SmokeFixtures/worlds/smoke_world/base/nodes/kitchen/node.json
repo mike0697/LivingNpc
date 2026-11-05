@@ -1,0 +1,33 @@
+{
+  "id": "kitchen",
+  "title": "Cucina",
+  "text": "Pentole, spezie e ingredienti freschi occupano i ripiani. Tutto è pronto per il prossimo pasto.",
+  "backgrounds": {
+    "afternoon": "afternoon.png",
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "kitchen_to_living_room",
+      "target": "living_room",
+      "label": "Soggiorno",
+      "x": 25.369897598164233,
+      "y": 27.08602739120316,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "kitchen_to_dining_room",
+      "target": "dining_room",
+      "label": "Sala da pranzo",
+      "x": 72.50089840179744,
+      "y": 26.69793007526945,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

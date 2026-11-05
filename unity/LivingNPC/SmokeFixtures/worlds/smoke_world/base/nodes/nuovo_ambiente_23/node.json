@@ -1,0 +1,30 @@
+{
+  "id": "nuovo_ambiente_23",
+  "title": "Entrata scuola",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvtoeher_0ede",
+      "target": "nuovo_ambiente_22",
+      "label": "Viale",
+      "x": 87.94658113374948,
+      "y": 9.233506443926519,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "link_mvtosq9w_q9sl",
+      "target": "nuovo_ambiente_24",
+      "label": "Corridoio",
+      "x": 48.863222993182944,
+      "y": 40.119663051208924,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

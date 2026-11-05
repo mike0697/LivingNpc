@@ -1,0 +1,8 @@
+{
+  "id": "base",
+  "name": "Aetherhall",
+  "author": "LivingNPC",
+  "version": "1.0",
+  "priority": 100,
+  "description": "Example world: a school of magic where every character follows their own day."
+}

@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_07",
+  "character_name": "The Village Mayor",
+  "role": "Village Mayor",
+  "gender": "Male",
+  "age_range": "60s",
+  "base_description": "distinguished aristocratic village mayor man in his 60s, trimmed neat white beard and mustache, refined dignified posture, sharp discerning blue eyes, wearing a rich burgundy velvet embroidered tunic, heavy ornate gold mayoral medallion chain, tailored trousers, and polished black leather dress boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing tall in formal stately posture, composed dignified neutral expression, hands resting behind back, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a patronizing benevolent dignified smile, nod of approval, warm diplomatic statesman demeanor"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with severe grim worry, hand pressed against temple, burdened troubled expression regarding town crisis"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with harsh commanding glare, brow deeply knitted in severe authoritative anger and outrage"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

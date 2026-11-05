@@ -1,0 +1,19 @@
+{
+  "id": "biblioteca_1",
+  "title": "Library",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvxr4zgc_n6i4",
+      "target": "entrata_1",
+      "label": "Entrance Hall",
+      "x": 48.04846987233382,
+      "y": 27.489762237210197,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

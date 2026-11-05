@@ -1,0 +1,19 @@
+{
+  "id": "aula_divinazione_2",
+  "title": "Divination Classroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvy2f2h7_vxgb",
+      "target": "corridoio_1",
+      "label": "East Corridor",
+      "x": 43.197394100647216,
+      "y": 19.065328143897677,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

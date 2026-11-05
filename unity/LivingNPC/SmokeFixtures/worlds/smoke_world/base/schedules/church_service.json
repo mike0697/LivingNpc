@@ -1,0 +1,13 @@
+{
+  "id": "church_service",
+  "blocks": [
+    {
+      "days": "sun",
+      "from": "09:00",
+      "to": "11:00",
+      "at": "church",
+      "activity": "socialize",
+      "priority": 30
+    }
+  ]
+}

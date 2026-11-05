@@ -1,0 +1,56 @@
+# --- Unity (unity/LivingNPC) ---
+unity/LivingNPC/[Ll]ibrary/
+unity/LivingNPC/[Tt]emp/
+unity/LivingNPC/[Oo]bj/
+unity/LivingNPC/[Bb]uild/
+unity/LivingNPC/[Bb]uilds/
+unity/LivingNPC/[Ll]ogs/
+unity/LivingNPC/[Uu]ser[Ss]ettings/
+unity/LivingNPC/[Mm]emoryCaptures/
+unity/LivingNPC/[Rr]ecordings/
+unity/LivingNPC/.utmp/
+unity/LivingNPC/*.csproj
+unity/LivingNPC/*.unityproj
+unity/LivingNPC/*.sln
+unity/LivingNPC/*.slnx
+unity/LivingNPC/*.suo
+unity/LivingNPC/*.user
+unity/LivingNPC/*.pidb
+unity/LivingNPC/*.booproj
+unity/LivingNPC/*.svd
+unity/LivingNPC/*.pdb
+unity/LivingNPC/*.mdb
+unity/LivingNPC/*.opendb
+unity/LivingNPC/*.VC.db
+unity/LivingNPC/*.apk
+unity/LivingNPC/*.aab
+unity/LivingNPC/*.unitypackage
+unity/LivingNPC/crashlytics-build.properties
+unity/LivingNPC/.consulo/
+unity/LivingNPC/.gradle/
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+
+# --- Node (studio, map-editor) ---
+node_modules/
+map-editor/dist/
+map-editor/.vite/
+map-editor/.cache/
+map-editor/.uploads/
+npm-debug.log*
+
+# --- Editors and OS ---
+.vs/
+.vscode/
+.idea/
+.claude/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Packages built by tools/build-editors.ps1 ---
+release/
+unity/LivingNPC/ProjectSettings/Packages/com.unity.pipeline/

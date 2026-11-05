@@ -1,0 +1,33 @@
+{
+  "id": "tavern",
+  "title": "Taverna del Cinghiale",
+  "text": "Tra brindisi e racconti, la taverna è il luogo ideale per raccogliere indiscrezioni.",
+  "backgrounds": {
+    "afternoon": "afternoon.png",
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "tavern_to_inn",
+      "target": "inn",
+      "label": "Locanda",
+      "x": 49.548893817663036,
+      "y": 47.13777797692942,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "tavern_to_guild",
+      "target": "guild",
+      "label": "Gilda",
+      "x": 88.66834221492854,
+      "y": 51.924319764987025,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

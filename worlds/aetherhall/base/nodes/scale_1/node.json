@@ -1,0 +1,46 @@
+{
+  "id": "scale_1",
+  "title": "Grand Staircase",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvxp7p6o_yhec",
+      "target": "corridoio_1",
+      "label": "East Corridor",
+      "x": 21.25586163808356,
+      "y": 10.915264769589333,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvxqkedy_ucpy",
+      "target": "cortile_1",
+      "label": "Courtyard",
+      "x": 89.60663382310136,
+      "y": 31.096374547393342,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvxrbfnk_8gxl",
+      "target": "corridoio_ovest_1",
+      "label": "West Corridor",
+      "x": 74.95488167252624,
+      "y": 11.950192590387596,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvy2cv1w_b08y",
+      "target": "giardino_retro_1",
+      "label": "Back Garden",
+      "x": 12.1616731165473,
+      "y": 27.215391518206022,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

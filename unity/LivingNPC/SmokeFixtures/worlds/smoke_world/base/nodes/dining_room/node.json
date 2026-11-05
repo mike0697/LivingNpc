@@ -1,0 +1,33 @@
+{
+  "id": "dining_room",
+  "title": "Sala da Pranzo",
+  "text": "La tavola apparecchiata domina la stanza. Le finestre portano la luce della città.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "dining_room_to_living_room",
+      "target": "living_room",
+      "label": "Soggiorno",
+      "x": 61.602301670713466,
+      "y": 22.17011654121758,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "dining_room_to_kitchen",
+      "target": "kitchen",
+      "label": "Cucina",
+      "x": 26.01948917914545,
+      "y": 22.040752414214715,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

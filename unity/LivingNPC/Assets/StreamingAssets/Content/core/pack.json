@@ -1,0 +1,8 @@
+{
+  "id": "core",
+  "name": "Core (engine defaults)",
+  "author": "LivingNPC",
+  "version": "1.0",
+  "priority": 0,
+  "description": "Minimal pack shipped with the game: only the defaults. The real content is in the worlds (worlds folder)."
+}

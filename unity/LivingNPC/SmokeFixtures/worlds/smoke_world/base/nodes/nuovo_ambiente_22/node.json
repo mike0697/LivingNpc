@@ -1,0 +1,30 @@
+{
+  "id": "nuovo_ambiente_22",
+  "title": "viale",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvtoa95a_tjn4",
+      "target": "alley",
+      "label": "Vicolo",
+      "x": 24.070725449401888,
+      "y": 8.71604006606483,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "link_mvtoeygv_r9io",
+      "target": "nuovo_ambiente_23",
+      "label": "Entrata scuola",
+      "x": 49.62107433106098,
+      "y": 12.985125346110973,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

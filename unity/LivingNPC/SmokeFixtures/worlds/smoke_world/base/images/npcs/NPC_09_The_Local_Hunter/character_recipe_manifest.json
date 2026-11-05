@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_09",
+  "character_name": "The Local Hunter",
+  "role": "Local Hunter",
+  "gender": "Female",
+  "age_range": "20s-30s",
+  "base_description": "stealthy fit wilderness hunter woman in her late 20s, sharp perceptive green eyes, dark raven hair tied back tightly in a warrior braid, sun-kissed skin, wearing a fitted forest-green and earth-toned studded leather jerkin, hood resting around shoulders, bracers on forearms, and knee-high tracking boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing in low-profile balanced predator stance, calm observant focused neutral expression, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a sharp confident smirking grin, one eyebrow raised in self-assured swagger"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with intense narrowed eyes and serious focused gaze, assessing dangerous wilderness tracks"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with somber grim downcast look, bitter sorrowful eyes after a grim discovery in the woods"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

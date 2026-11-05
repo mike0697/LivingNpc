@@ -1,0 +1,21 @@
+{
+  "id": "free_time_young",
+  "blocks": [
+    {
+      "days": "all",
+      "from": "16:30",
+      "to": "21:30",
+      "at": "$hangout",
+      "activity": "socialize",
+      "priority": 6
+    },
+    {
+      "days": "all",
+      "from": "21:30",
+      "to": "22:30",
+      "at": "$home",
+      "activity": "relax",
+      "priority": 6
+    }
+  ]
+}

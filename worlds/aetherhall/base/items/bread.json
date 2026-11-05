@@ -1,0 +1,7 @@
+{
+  "id": "bread",
+  "name": "Bread",
+  "description": "A still-warm loaf.",
+  "type": "consumable",
+  "value": 2
+}

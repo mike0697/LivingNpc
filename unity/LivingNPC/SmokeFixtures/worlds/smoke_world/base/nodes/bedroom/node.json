@@ -1,0 +1,33 @@
+{
+  "id": "bedroom",
+  "title": "Camera da Letto",
+  "text": "La camera privata della residenza è ordinata e silenziosa, un rifugio lontano dalla strada.",
+  "backgrounds": {
+    "day": "bg.png",
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png"
+  },
+  "links": [
+    {
+      "id": "bedroom_to_living_room",
+      "target": "living_room",
+      "label": "Soggiorno",
+      "x": 51.71417706120024,
+      "y": 22.299480668220443,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "bedroom_to_bathroom",
+      "target": "bathroom",
+      "label": "Bagno",
+      "x": 82,
+      "y": 61,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

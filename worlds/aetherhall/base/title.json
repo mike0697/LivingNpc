@@ -1,0 +1,17 @@
+{
+  "drawTitle": true,
+  "buttons": {
+    "normal": "buttons/normal.png",
+    "hover": "buttons/hover.png",
+    "border": 240,
+    "textColor": "#4a2516"
+  },
+  "menuButtons": {
+    "normal": "buttons/normal.png",
+    "hover": "buttons/menu_hover.png",
+    "border": 240,
+    "textColor": "#4a2516"
+  },
+  "image": "places/secret_passage.png",
+  "music": "magic-mystery.mp3"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_36",
+  "title": "Bed_povero",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu24nmc_6cm5",
+      "target": "nuovo_ambiente_30",
+      "label": "Negozio",
+      "x": 52.54576916472884,
+      "y": 28.234738787403817,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

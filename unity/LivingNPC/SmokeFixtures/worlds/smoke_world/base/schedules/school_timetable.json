@@ -1,0 +1,25 @@
+{
+  "id": "school_timetable",
+  "blocks": [
+    {
+      "days": "weekdays",
+      "from": "08:30",
+      "to": "12:30",
+      "at": "$school",
+      "activity": "study",
+      "priority": 20
+    },
+    {
+      "days": [
+        "mon",
+        "wed",
+        "fri"
+      ],
+      "from": "14:00",
+      "to": "16:00",
+      "at": "$school",
+      "activity": "study",
+      "priority": 20
+    }
+  ]
+}

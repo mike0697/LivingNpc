@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_06",
+  "character_name": "The Tavern Maid",
+  "role": "Tavern Maid",
+  "gender": "Female",
+  "age_range": "20s",
+  "base_description": "cheerful energetic young tavern maid woman in her early 20s, honey-blonde hair in a playful side braid, bright blue eyes, wearing a classic medieval tavern dress with laced brown corset bodice, ruffled white peasant blouse, knee-length crimson skirt, and leather flats, standing in front 3/4 view, full body shot from head to shoes, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing in approachable active stance, pleasant neutral expression, arms naturally relaxed, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing beaming with infectious joyful laughter, eyes curved happily, cheerful tavern greeting"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with heavy tired sigh, shoulders drooping, wiping forehead, exhausted after a chaotic tavern rush"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with hands on hips, cute indignant pouting frown, annoyed by rude tavern guests"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

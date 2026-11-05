@@ -1,0 +1,33 @@
+{
+  "id": "ev_tavern_listen",
+  "trigger": "tick",
+  "node": "tavern",
+  "priority": 10,
+  "when": {
+    "all": [
+      {
+        "type": "quest",
+        "quest": "q_tavern_whispers",
+        "stage": "listen"
+      },
+      {
+        "type": "npcAt",
+        "npc": "voss",
+        "node": "tavern"
+      }
+    ]
+  },
+  "once": true,
+  "text": "Mentre sorseggi, ti arrivano frammenti di conversazione: «...i carichi spariscono prima di arrivare al castello...»",
+  "choices": [
+    {
+      "text": "Continua ad ascoltare.",
+      "effects": [
+        {
+          "do": "advanceQuest",
+          "quest": "q_tavern_whispers"
+        }
+      ]
+    }
+  ]
+}

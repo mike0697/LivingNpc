@@ -1,0 +1,24 @@
+{
+  "id": "voss",
+  "name": "Capitano Voss",
+  "description": "Comanda la guardia del castello.",
+  "places": {
+    "home": "castle_entrance",
+    "work": "castle_entrance"
+  },
+  "routine": [
+    "sleep_night",
+    {
+      "days": "all",
+      "from": "07:00",
+      "to": "20:00",
+      "at": "$work",
+      "activity": "work",
+      "priority": 20
+    },
+    "evening_tavern"
+  ],
+  "stats": {
+    "happiness": 45
+  }
+}

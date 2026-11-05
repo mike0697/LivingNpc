@@ -1,0 +1,24 @@
+{
+  "id": "ev_sira_delivery",
+  "trigger": "talk",
+  "npc": "sira",
+  "priority": 20,
+  "when": {
+    "type": "quest",
+    "quest": "q_forge_delivery",
+    "stage": "deliver"
+  },
+  "text": "{npc} controlla il contenuto e firma una ricevuta: «Dì a Bruno che è tutto in ordine.»",
+  "effects": [
+    {
+      "do": "modStat",
+      "target": "sira",
+      "stat": "happiness",
+      "delta": 8
+    },
+    {
+      "do": "advanceQuest",
+      "quest": "q_forge_delivery"
+    }
+  ]
+}

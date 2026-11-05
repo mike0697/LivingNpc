@@ -1,0 +1,28 @@
+{
+  "id": "nuovo_ambiente_30",
+  "title": "Negozio povero",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu15o27_rvi9",
+      "target": "nuovo_ambiente_29",
+      "label": "Vicolo Povero",
+      "x": 38.01487173233431,
+      "y": 10.513440494653594,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu25auz_sjuz",
+      "target": "nuovo_ambiente_36",
+      "label": "Camera da letto",
+      "x": 62.61441363695762,
+      "y": 8.246757687497592,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

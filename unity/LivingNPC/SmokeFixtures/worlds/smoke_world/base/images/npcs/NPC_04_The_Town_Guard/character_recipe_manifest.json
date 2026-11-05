@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_04",
+  "character_name": "The Town Guard",
+  "role": "Town Guard",
+  "gender": "Male",
+  "age_range": "20s-30s",
+  "base_description": "athletic alert young town guard man in his late 20s, clean-shaven square jaw, short dark hair, vigilant gray eyes, wearing polished steel chestplate over chainmail hauberk, leather breeches, and sturdy combat boots, no helmet, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing at disciplined attention, neutral alert gaze, hands resting casually on utility belt, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing in relaxed casual guard stance with a confident playful smirk and wink, easygoing friendly demeanor"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with wide eyes and open mouth in sudden shock and disbelief, taken aback in surprise"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing in intimidating firm guard posture, stern menacing scowl, authoritative scolding expression"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

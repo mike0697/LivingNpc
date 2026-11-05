@@ -1,0 +1,22 @@
+{
+  "id": "stanza_da_letto_npc_1",
+  "title": "Students' Bedroom",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvy2nh3z_qr61",
+      "target": "casa_npc_1",
+      "label": "Teachers' House",
+      "x": 54.637311642615494,
+      "y": 15.087319551995654,
+      "width": 20,
+      "height": 6.5
+    }
+  ],
+  "tags": [
+    "bed"
+  ]
+}

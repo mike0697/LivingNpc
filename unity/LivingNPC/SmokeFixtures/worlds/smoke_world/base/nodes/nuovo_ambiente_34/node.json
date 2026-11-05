@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_34",
+  "title": "BedX",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu1r7c7_12an",
+      "target": "nuovo_ambiente_31",
+      "label": "Ingresso",
+      "x": 70.96681972884573,
+      "y": 10.71949899501872,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

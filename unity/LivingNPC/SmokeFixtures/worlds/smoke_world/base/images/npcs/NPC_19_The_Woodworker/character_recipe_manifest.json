@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_19",
+  "character_name": "The Woodworker",
+  "role": "Woodworker & Carpenter",
+  "gender": "Male",
+  "age_range": "30s",
+  "base_description": "sturdy capable carpenter craftsman man in his 30s, broad muscular shoulders, tanned skin, unruly dark brown hair with specks of cedar sawdust, earnest green eyes, wearing a heavy split-leather workshop apron with tool loops and a wooden ruler, over a tough rolled-sleeve work shirt, sturdy denim-colored trousers, and reinforced work boots, standing in front 3/4 view, full body shot from head to boots, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing with grounded reliable posture, calm steady neutral craftsman expression, hands resting on apron, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a hearty toothy grin of craftsman satisfaction, hands proudly on hips admiring finished woodwork"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing scratching head with confused puzzled frown, squinting at complex building schematics"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with irritated scowl and furrowed brow, annoyed by warped crooked timber planks"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

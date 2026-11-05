@@ -1,0 +1,51 @@
+{
+  "id": "q_tavern_whispers",
+  "title": "Voci in taverna",
+  "summary": "Si avvia da sola se sei alla Taverna del Cinghiale nelle sere di venerdì o sabato, quando Voss e Bruno sono entrambi presenti.",
+  "autoStart": {
+    "all": [
+      {
+        "type": "playerAt",
+        "node": "tavern"
+      },
+      {
+        "type": "time",
+        "from": "20:00",
+        "to": "22:30"
+      },
+      {
+        "type": "day",
+        "days": [
+          "fri",
+          "sat"
+        ]
+      },
+      {
+        "type": "npcAt",
+        "npc": "voss",
+        "node": "tavern"
+      },
+      {
+        "type": "npcAt",
+        "npc": "bruno",
+        "node": "tavern"
+      }
+    ]
+  },
+  "onStart": [
+    {
+      "do": "message",
+      "text": "Voss e Bruno parlano a bassa voce e smettono appena ti vedono arrivare."
+    }
+  ],
+  "stages": [
+    {
+      "id": "listen",
+      "text": "Il capitano e il fabbro nascondono qualcosa. Resta nella taverna e ascolta."
+    },
+    {
+      "id": "report",
+      "text": "Racconta a Padre Anselmo ciò che hai sentito."
+    }
+  ]
+}

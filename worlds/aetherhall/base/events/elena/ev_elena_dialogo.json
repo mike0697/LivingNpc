@@ -1,0 +1,19 @@
+{
+  "id": "ev_elena_dialogo",
+  "trigger": "talk",
+  "npc": "elena",
+  "popup": true,
+  "text": "Hi! I'm in the middle of a lesson.",
+  "when": {
+    "type": "npcAt",
+    "npc": "elena",
+    "node": "alchimia_1"
+  },
+  "effects": [
+    {
+      "do": "modStat",
+      "stat": "happiness",
+      "delta": 1
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LivingNPC Studio</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <strong class="brand">LivingNPC Studio</strong>
+    <label class="world">World <select id="world"></select></label>
+    <nav class="tabs">
+      <button class="tab active" type="button" data-view="quests">Quests &amp; messages</button>
+      <button class="tab" type="button" data-view="npc">Characters</button>
+      <button class="tab" type="button" data-view="item">Items</button>
+      <button class="tab" type="button" data-view="rules">Rules</button>
+      <button class="tab" type="button" data-view="system">System</button>
+    </nav>
+    <span id="status" class="status"></span>
+    <button id="help" type="button" class="ghost">Guide</button>
+    <button id="save" type="button" class="primary" title="Save (Ctrl+S)">Save</button>
+  </header>
+
+  <main class="layout" id="quests-view">
+    <aside class="docs">
+      <div class="docs-head">
+        <button id="new-quest" type="button">+ Quest</button>
+        <button id="new-event" type="button">+ Message</button>
+      </div>
+      <div id="doc-list" class="doc-list"></div>
+    </aside>
+
+    <section class="center">
+      <div class="doc-title"><span id="doc-title"></span><span id="doc-files" class="muted"></span><span class="spacer"></span><button type="button" id="delete-doc" class="ghost danger" title="Delete the quest (or the message) and all its files">Delete</button></div>
+      <div id="editor" class="code"></div>
+      <div class="panel">
+        <div class="panel-tabs">
+          <button type="button" class="ptab active" data-tab="problems">Problems <span id="problem-count"></span></button>
+          <button type="button" class="ptab" data-tab="json">JSON to be saved</button>
+        </div>
+        <div id="problems" class="panel-body"></div>
+        <pre id="json" class="panel-body json" hidden></pre>
+      </div>
+    </section>
+
+    <aside class="palette">
+      <input id="filter" type="search" placeholder="Search a command…">
+      <p class="hint">Put the cursor in the code where you want the command, then press a button.</p>
+      <div id="palette"></div>
+    </aside>
+  </main>
+
+  <main class="layout records" id="records-view" hidden>
+    <aside class="docs">
+      <div class="docs-head" id="rec-new-buttons"></div>
+      <div id="rec-list" class="doc-list"></div>
+    </aside>
+    <section class="center">
+      <div class="doc-title">
+        <span id="rec-title"></span><span id="rec-file" class="muted"></span>
+        <span class="spacer"></span>
+        <span class="seg">
+          <button type="button" class="rec-mode active" data-mode="form">Form</button>
+          <button type="button" class="rec-mode" data-mode="json">JSON</button>
+        </span>
+        <button type="button" id="rec-delete" class="ghost danger">Delete</button>
+      </div>
+      <div id="rec-form" class="rec-form"></div>
+    </section>
+    <aside class="palette side">
+      <h4>Problems</h4>
+      <div id="rec-problems"></div>
+      <div id="rec-usages-wrap">
+        <h4>Where it is used</h4>
+        <div id="rec-usages"></div>
+      </div>
+      <h4>JSON to be saved</h4>
+      <pre id="rec-json" class="json small"></pre>
+    </aside>
+  </main>
+
+  <dialog id="rec-new" class="form">
+    <form method="dialog">
+      <h2 id="rec-new-title"></h2>
+      <div class="fields">
+        <label><span class="req">Id (letters, digits and _, it becomes the file name)</span><input id="rec-new-id" type="text"></label>
+        <label id="rec-new-name-wrap"><span>Name</span><input id="rec-new-name" type="text"></label>
+      </div>
+      <p id="rec-new-error" class="error"></p>
+      <div class="actions">
+        <button value="ok" type="submit" class="primary">Create</button>
+        <button value="cancel" type="submit" class="ghost" formnovalidate>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="form" class="form">
+    <form method="dialog">
+      <h2 id="form-title"></h2>
+      <p id="form-help" class="muted"></p>
+      <div id="form-fields" class="fields"></div>
+      <p id="form-error" class="error"></p>
+      <div class="actions">
+        <button id="form-ok" value="ok" type="submit" class="primary">Insert</button>
+        <button value="cancel" type="submit" class="ghost" formnovalidate>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="guide" class="guide">
+    <form method="dialog">
+      <h2>How to write</h2>
+      <p>Every file is made of <code>quest</code> blocks (the mission and its stages) and <code>event</code> blocks (the messages: what happens and what is said). Every line is one of these:</p>
+      <ul>
+        <li><b>property</b>: <code>title = "The chest"</code>, <code>trigger = talk</code>, <code>npc = elena</code></li>
+        <li><b>dialogue line</b>: <code>elena: "Hello!"</code> · with a pose <code>elena [happy]: "How nice!"</code> · without a name <code>say("You hear a noise.")</code></li>
+        <li><b>command</b>: <code>giveItem(gold_coin, 100)</code>, <code>show(chest, "chest.png", x=40, y=30)</code></li>
+        <li><b>block</b>: ends with <code>:</code> and holds the lines indented by 4 spaces below it</li>
+      </ul>
+      <p>The commands of a message run <b>in order</b>, from top to bottom. Useful blocks:</p>
+<pre>event ev_chest:
+    trigger = enterNode        # when it starts: enterNode, talk, tick, wake
+    node = bedroom
+    once = true                # only once
+    when:                      # start conditions (all true)
+        quest(q_chest, active)
+
+    say("There is an old chest.")
+    show(chest, "chest.png", x=40, y=30)
+    choice:
+        option "Open it":
+            hide(chest)
+            giveItem(gold_coin, 100)
+            completeQuest(q_chest)
+        option "Leave it" if flag(scared):
+            pass               # nothing to do
+    if hasItem(key):
+        say("The key fits the lock.")
+    else:
+        say("You need a key.")</pre>
+      <p>A quest has stages (<code>stage</code>) with the journal text and the <code>complete:</code> / <code>fail:</code> conditions; the <code>onStart:</code>, <code>onComplete:</code>, <code>onFail:</code> blocks accept only game commands (no dialogue lines: those go in a message).</p>
+      <p><code>#</code> starts a comment (it is not saved). The text is saved in the game's JSON files: <b>Save</b> (Ctrl+S) writes them, and the “JSON to be saved” panel shows them first.</p>
+      <h2>The other tabs</h2>
+      <ul>
+        <li><b>Characters</b>: the characters (NPCs) with their places, their weekly routine (with a chart of where they are at every hour), stats, inventory and images; and the routines shared by several characters.</li>
+        <li><b>Items</b>: name, description, type and value of every item.</li>
+        <li><b>Rules</b>: start time and day, starting inventory, stats, activities, dayparts and sleep (<code>rules.json</code>).</li>
+        <li><b>System</b>: the game title, the main menu of the game (background image, title, music) and the images of the game and menu buttons, with a preview (<code>title.json</code>).</li>
+      </ul>
+      <p>Every tab has a <b>Form</b> and the <b>JSON</b> view with the file as it is. On the right you find the problems, where it is used and the JSON to be saved.</p>
+      <div class="actions"><button class="primary">Close</button></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

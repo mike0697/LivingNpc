@@ -1,0 +1,21 @@
+{
+  "id": "work_day",
+  "blocks": [
+    {
+      "days": "weekdays",
+      "from": "08:00",
+      "to": "18:00",
+      "at": "$work",
+      "activity": "work",
+      "priority": 20
+    },
+    {
+      "days": "sat",
+      "from": "09:00",
+      "to": "13:00",
+      "at": "$work",
+      "activity": "work",
+      "priority": 20
+    }
+  ]
+}

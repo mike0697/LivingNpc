@@ -1,0 +1,19 @@
+{
+  "id": "nuovo_ambiente_35",
+  "title": "Cella",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu1v9co_msju",
+      "target": "nuovo_ambiente_33",
+      "label": "Palco",
+      "x": 68.56407552122774,
+      "y": 22.87713917163131,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

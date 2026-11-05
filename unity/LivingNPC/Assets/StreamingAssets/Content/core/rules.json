@@ -1,0 +1,7 @@
+{
+  "tickMinutes": 5,
+  "startMinute": 480,
+  "startDayOfWeek": 0,
+  "defaultLinkMinutes": 10,
+  "language": "en"
+}

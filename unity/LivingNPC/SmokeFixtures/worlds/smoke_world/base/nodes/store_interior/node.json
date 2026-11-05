@@ -1,0 +1,23 @@
+{
+  "id": "store_interior",
+  "title": "Emporio",
+  "text": "Un po’ di tutto trova posto tra questi scaffali: provviste, attrezzi e piccoli oggetti curiosi.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "store_interior_to_commercial_area",
+      "target": "commercial_area",
+      "label": "Quartiere commerciale",
+      "x": 49.83760485805472,
+      "y": 14.925616860704633,
+      "width": 17.65,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

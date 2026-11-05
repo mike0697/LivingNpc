@@ -1,0 +1,33 @@
+{
+  "id": "bathroom",
+  "title": "Bagno",
+  "text": "Una stanza luminosa con ampie superfici chiare e ogni comfort per rinfrescarsi dopo un lungo viaggio.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "bathroom_to_living_room",
+      "target": "living_room",
+      "label": "Soggiorno",
+      "x": 49.11584377687565,
+      "y": 19.970891837693078,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    },
+    {
+      "id": "bathroom_to_bedroom",
+      "target": "bedroom",
+      "label": "Camera da letto",
+      "x": 90.83362545846575,
+      "y": 43.90362545260666,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 3
+    }
+  ]
+}

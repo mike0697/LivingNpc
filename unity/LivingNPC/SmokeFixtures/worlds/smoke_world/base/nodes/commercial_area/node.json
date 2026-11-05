@@ -1,0 +1,63 @@
+{
+  "id": "commercial_area",
+  "title": "Quartiere Commerciale",
+  "text": "Tra banchi colorati e richiami dei mercanti, ogni bottega promette un oggetto indispensabile per il prossimo viaggio.",
+  "backgrounds": {
+    "day": "bg.png",
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png"
+  },
+  "links": [
+    {
+      "id": "commercial_area_to_square_fountain",
+      "target": "square_fountain",
+      "label": "Piazza della Fontana",
+      "x": 48.39408269569658,
+      "y": 70.03557390119451,
+      "width": 17,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "commercial_area_to_blacksmith",
+      "target": "blacksmith",
+      "label": "Fabbro",
+      "x": 18,
+      "y": 54,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "commercial_area_to_clothing_store",
+      "target": "clothing_store",
+      "label": "Sartoria",
+      "x": 42,
+      "y": 52,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "commercial_area_to_potion_store",
+      "target": "potion_store",
+      "label": "Pozioni",
+      "x": 66,
+      "y": 51,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "commercial_area_to_store_interior",
+      "target": "store_interior",
+      "label": "Emporio",
+      "x": 84,
+      "y": 55,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}

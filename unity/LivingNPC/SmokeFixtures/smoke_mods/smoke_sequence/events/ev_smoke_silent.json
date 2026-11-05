@@ -1,0 +1,8 @@
+{
+  "id": "ev_smoke_silent",
+  "trigger": "enterNode",
+  "when": { "not": { "type": "always" } },
+  "script": [
+    { "if": { "type": "always" }, "then": [ { "do": "setFlag", "key": "smoke_silent", "value": 1 } ] }
+  ]
+}

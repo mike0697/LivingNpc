@@ -1,0 +1,41 @@
+{
+  "id": "throne_room",
+  "title": "Sala del Trono",
+  "text": "La luce filtra dalle alte vetrate e disegna riflessi dorati sul pavimento. Il trono si trova in fondo alla sala.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "throne_room_to_castle_entrance",
+      "target": "castle_entrance",
+      "label": "Esci dal castello",
+      "x": 86.07000893060396,
+      "y": 44.55045595747121,
+      "width": 15.05,
+      "height": 6.5,
+      "minutes": 5
+    },
+    {
+      "id": "link_mvvft506_ijg2",
+      "target": "nuovo_ambiente_37",
+      "label": "Beedroooom King",
+      "x": 26.38036971973498,
+      "y": 26.180463697407763,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvvfvvip_sd6f",
+      "target": "nuovo_ambiente_38",
+      "label": "Princess Bedroom",
+      "x": 17.50270621859242,
+      "y": 39.50517604555765,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_05",
+  "character_name": "The Apothecary",
+  "role": "Apothecary",
+  "gender": "Female",
+  "age_range": "60s",
+  "base_description": "gentle wise elderly apothecary woman in her 60s, silver-gray hair in a neat bun, small round reading spectacles perched on nose, kind wrinkled eyes, wearing an earthy sage-green long robe with deep pockets, leather herb-gathering pouch at waist, and comfortable flat shoes, standing in front 3/4 view, full body shot from head to shoes, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing calmly with a gentle neutral patient expression, hands loosely folded in front of waist, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a warm grandmotherly beaming smile, eyes crinkling kindly behind glasses, comforting demeanor"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing with brow furrowed in sorrow and concern, head tilted in sympathetic worried expression"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing with finger on chin in deep pensive diagnostic thought, analytical squinting focused gaze"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

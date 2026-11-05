@@ -1,0 +1,62 @@
+{
+  "id": "alley",
+  "title": "Vicolo dei Sussurri",
+  "text": "Un passaggio stretto collega la piazza alle botteghe. Le ombre rendono questo luogo diverso dopo il tramonto.",
+  "backgrounds": {
+    "afternoon": "afternoon.png",
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "alley_to_square_fountain",
+      "target": "square_fountain",
+      "label": "Piazza della Fontana",
+      "x": 74.7383621587326,
+      "y": 44.03298957960952,
+      "width": 17,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "alley_to_commercial_area",
+      "target": "commercial_area",
+      "label": "Quartiere commerciale",
+      "x": 27.60736135509938,
+      "y": 53.08861664771326,
+      "width": 17.65,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "link_mvtockrj_dnoo",
+      "target": "nuovo_ambiente_22",
+      "label": "Viale",
+      "x": 48.82713273648397,
+      "y": 24.498705371744947,
+      "width": 20,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "link_mvty55n9_8uu6",
+      "target": "nuovo_ambiente_26",
+      "label": "Casa Emma",
+      "x": 13.592641744920018,
+      "y": 34.77604625099845,
+      "width": 20,
+      "height": 6.5,
+      "visible": false
+    },
+    {
+      "id": "link_mvu16k9a_qah9",
+      "target": "nuovo_ambiente_28",
+      "label": "QuartiereX",
+      "x": 73.54119039328306,
+      "y": 26.431699397011233,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

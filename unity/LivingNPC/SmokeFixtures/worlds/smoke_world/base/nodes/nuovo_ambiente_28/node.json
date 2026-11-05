@@ -1,0 +1,37 @@
+{
+  "id": "nuovo_ambiente_28",
+  "title": "quartiere_x",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "link_mvu11kro_ccrf",
+      "target": "alley",
+      "label": "Vicolo dei sussurri",
+      "x": 18.764303477755558,
+      "y": 31.840817568188985,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu12kp0_qaxc",
+      "target": "nuovo_ambiente_31",
+      "label": "entra",
+      "x": 61.52746062590888,
+      "y": 38.53782101821858,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mvu2moa5_rgnl",
+      "target": "nuovo_ambiente_29",
+      "label": "Vicolo povero",
+      "x": 87.22482005257041,
+      "y": 33.81306562877954,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "character_id": "NPC_11",
+  "character_name": "The Village Elder",
+  "role": "Village Elder",
+  "gender": "Female",
+  "age_range": "70s+",
+  "base_description": "venerable frail village matriarch woman in her late 70s, deeply wrinkled weathered kind face, long silver-white hair flowing past shoulders, pale clouded wise eyes, slightly hunched posture, wearing a warm hand-knitted traditional patterned wool shawl draped over a dark woven long dress, and soft slippers, standing in front 3/4 view, full body shot from head to slippers, solid light gray background",
+  "style_preset": "Clean 2D Anime / Webtoon Art (Visual Novel style)",
+  "style_injection": "clean 2D anime illustration, vibrant webtoon digital art, crisp fine line art, high quality anime character sprite, cel shading, neutral solid light gray background, full body shot",
+  "specs": {
+    "full_body_dimensions": "2000x3000",
+    "waist_up_dimensions": "1400x2100",
+    "lineup_dimensions": "1920x1080",
+    "dpi": 300,
+    "color_profile": "sRGB",
+    "baseline_anchor_y": 2800,
+    "center_anchor_x": 1000
+  },
+  "deliverables": [
+    {
+      "expression": "Neutral",
+      "full_body": "Full_Body_Neutral.png",
+      "waist_up": "Waist_Up_Neutral.png",
+      "prompt_directive": "standing with calm venerable poise, serene neutral peaceful expression, hands gently clasped in front, empty hands"
+    },
+    {
+      "expression": "Happy",
+      "full_body": "Full_Body_Happy.png",
+      "waist_up": "Waist_Up_Happy.png",
+      "prompt_directive": "standing with a radiant serene transcendent smile, crinkled loving eyes, nodding in blessing"
+    },
+    {
+      "expression": "Sad",
+      "full_body": "Full_Body_Sad.png",
+      "waist_up": "Waist_Up_Sad.png",
+      "prompt_directive": "standing looking downward with heavy melancholic sorrow, tearful compassionate grieving expression"
+    },
+    {
+      "expression": "Angry",
+      "full_body": "Full_Body_Angry.png",
+      "waist_up": "Waist_Up_Angry.png",
+      "prompt_directive": "standing drawing self up to full height with severe scolding grandmotherly glare, wagging finger in reprimand"
+    }
+  ],
+  "lineup_sheet": "Lineup_Sheet.jpg"
+}

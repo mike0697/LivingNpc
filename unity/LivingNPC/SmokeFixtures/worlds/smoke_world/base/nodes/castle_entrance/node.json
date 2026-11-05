@@ -1,0 +1,33 @@
+{
+  "id": "castle_entrance",
+  "title": "Ingresso del Castello",
+  "text": "Il portale del castello domina il viale. Oltre le guardie, la sala del trono attende visitatori e avventurieri.",
+  "backgrounds": {
+    "night": "night.png",
+    "night_light": "night_light.png",
+    "afternoon": "afternoon.png",
+    "day": "bg.png"
+  },
+  "links": [
+    {
+      "id": "castle_entrance_to_square_fountain",
+      "target": "square_fountain",
+      "label": "Torna in piazza",
+      "x": 89.10140326891603,
+      "y": 56.969599676900586,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 15
+    },
+    {
+      "id": "castle_entrance_to_throne_room",
+      "target": "throne_room",
+      "label": "Sala del trono",
+      "x": 63.767584914250676,
+      "y": 33.03687099691212,
+      "width": 14,
+      "height": 6.5,
+      "minutes": 5
+    }
+  ]
+}
