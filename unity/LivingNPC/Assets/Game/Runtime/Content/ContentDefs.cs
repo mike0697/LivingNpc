@@ -27,7 +27,7 @@ namespace LivingNPC.Content
         public string Id;
         public string Target;
         public JToken Label;
-        public float X, Y, Width = 15, Height = 6.5f;
+        public float X, Y, Width = 18, Height = 6.5f; // X, Y = centre (as in the map editor)
         public int? Minutes;
         public JToken Requires;
         public JToken LockedText;

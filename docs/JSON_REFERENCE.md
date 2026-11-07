@@ -74,7 +74,8 @@ a world by folder name.
 - **Days:** `"mon" "tue" "wed" "thu" "fri" "sat" "sun"`, or `"weekdays"`, `"weekend"`, `"all"`, or a list:
   `["mon", "wed"]`. The game starts on day 0 (shown as "Day 1"), whose weekday is `rules.startDayOfWeek`.
 - **Positions** of links and pictures are **percentages** of the map area, from the top-left corner:
-  `x`, `y`, `width`, `height`. When `height` is omitted, a picture keeps its proportions.
+  `x`, `y`, `width`, `height`. For a picture `x`, `y` are its top-left corner; for a link button they are its
+  **centre** (as placed in the map editor). When `height` is omitted, a picture keeps its proportions.
 - **Files** are paths relative to the folder they belong to (`images/`, `music/`, `sfx/`, or the place's folder),
   and can include subfolders: `"people/elena.png"`.
 - Field names are not case-sensitive, unknown fields are ignored, and missing fields get their default.

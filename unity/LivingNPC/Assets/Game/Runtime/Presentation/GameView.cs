@@ -406,8 +406,9 @@ namespace LivingNPC.Presentation
                     var b = UiKit.Button(_linkLayer, "Link_" + l.Id, string.IsNullOrEmpty(label) ? l.Target : label, 26, () => Send(CommandType.Travel, linkId),
                         new Color(0.1f, 0.12f, 0.18f, 0.72f));
                     var rt = (RectTransform)b.transform;
-                    rt.anchorMin = new Vector2(l.X / 100f, 1f - (l.Y + l.Height) / 100f);
-                    rt.anchorMax = new Vector2((l.X + l.Width) / 100f, 1f - l.Y / 100f);
+                    // like the map editor: x / y are the CENTRE of the button, in % of the 16:9 scene
+                    rt.anchorMin = new Vector2((l.X - l.Width / 2f) / 100f, 1f - (l.Y + l.Height / 2f) / 100f);
+                    rt.anchorMax = new Vector2((l.X + l.Width / 2f) / 100f, 1f - (l.Y - l.Height / 2f) / 100f);
                     rt.offsetMin = rt.offsetMax = Vector2.zero;
                     _lockables.Add(b);
                     _linkButtons.Add((b.gameObject, l));
