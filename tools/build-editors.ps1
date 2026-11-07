@@ -8,12 +8,12 @@
 #   release/LivingNPC-Editors-<version>-win-x64.zip
 #
 # Usage (from the repository root, Windows PowerShell 5.1 or PowerShell 7):
-#   powershell -ExecutionPolicy Bypass -File tools\build-editors.ps1 [-Version 0.1.0-alpha]
+#   powershell -ExecutionPolicy Bypass -File tools\build-editors.ps1 [-Version 0.1.1-alpha]
 #
 # Needs: Node.js 20+ and npm on PATH (the node.exe found there is the one bundled), internet for npm and the Node.js
 # license, and the C# compiler of .NET Framework 4 (present on every Windows 10/11).
 
-param([string]$Version = "0.1.0-alpha")
+param([string]$Version = "0.1.1-alpha")
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot

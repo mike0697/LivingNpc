@@ -7,10 +7,10 @@
 #   release/LivingNPC-Game-<version>-win-x64.zip
 #
 # Usage (from the repository root, with Unity closed on this project):
-#   powershell -ExecutionPolicy Bypass -File tools\build-game.ps1 [-Version 0.1.0-alpha] [-World aetherhall] [-Unity <Unity.exe>]
+#   powershell -ExecutionPolicy Bypass -File tools\build-game.ps1 [-Version 0.1.1-alpha] [-World aetherhall] [-Unity <Unity.exe>]
 
 param(
-    [string]$Version = "0.1.0-alpha",
+    [string]$Version = "0.1.1-alpha",
     [string]$World = "aetherhall",
     [string]$Unity = "C:\Program Files\Unity\Hub\Editor\6000.3.19f1\Editor\Unity.exe"
 )
