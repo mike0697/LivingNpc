@@ -522,6 +522,8 @@ namespace LivingNPC.Simulation
         public void RunEvent(int eventIndex)
         {
             ref var ev = ref Rules.Value.Events[eventIndex];
+            // an event with no line and no choice never opens the dialogue: it must not touch one another event opened
+            if (ev.HasDialog == 0) { RunSilent(eventIndex); return; }
             var ws = Em.GetComponentData<WorldState>(World);
             ws.DialogEvent = ev.Id; ws.DialogEventIdx = eventIndex; ws.DialogNpc = ev.NpcForDialog;
             ws.DialogText = 0; ws.DialogWho = 0; ws.DialogStep = -1;
@@ -529,6 +531,27 @@ namespace LivingNPC.Simulation
             Em.GetBuffer<DialogImage>(World).Clear();
             Em.GetBuffer<DialogChoice>(World).Clear();
             Run(eventIndex, ev.ScriptStart);
+        }
+
+        /// <summary>The program of an event without dialogue: effects, sounds and conditions, leaving the dialogue state alone.</summary>
+        void RunSilent(int eventIndex)
+        {
+            int pc = Rules.Value.Events[eventIndex].ScriptStart;
+            int end = pc + Rules.Value.Events[eventIndex].ScriptCount;
+            for (int guard = 0; pc < end && guard < 100000; guard++)
+            {
+                var s = Rules.Value.Script[pc];
+                switch (s.Kind)
+                {
+                    case StepKind.Sound: PushCue(s.Sound); break;
+                    case StepKind.Fx: Apply(s.Start, s.Count); break;
+                    case StepKind.If:
+                        if (!Eval(s.Cond)) { pc = s.Target; continue; }
+                        break;
+                    case StepKind.Jump: pc = s.Target; continue;
+                }
+                pc++;
+            }
         }
 
         /// <summary>Runs the program of the event from <paramref name="pc"/> until a line or a choice waits for the player, or the end closes the dialogue.</summary>
