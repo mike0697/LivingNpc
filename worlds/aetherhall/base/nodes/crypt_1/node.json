@@ -1,0 +1,19 @@
+{
+  "id": "crypt_1",
+  "title": "crypt",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.webp"
+  },
+  "links": [
+    {
+      "id": "link_mw67z7dt_lzrk",
+      "target": "underground_1",
+      "label": "Back",
+      "x": 12.471397409130988,
+      "y": 6.598266102692815,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

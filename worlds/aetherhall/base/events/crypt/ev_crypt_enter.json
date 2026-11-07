@@ -1,0 +1,28 @@
+{
+  "id": "ev_crypt_enter",
+  "trigger": "enterNode",
+  "node": "crypt_1",
+  "once": true,
+  "priority": 50,
+  "when": {
+    "type": "quest",
+    "quest": "crypt",
+    "status": "active",
+    "stage": "explore"
+  },
+  "script": [
+    {
+      "say": "The air is cold and still. Rows of old tombs line the walls."
+    },
+    {
+      "say": "On the floor, fresh footprints lead to a broken tomb. Someone has been here, and not long ago."
+    },
+    {
+      "say": "Elena needs to know about this."
+    },
+    {
+      "do": "advanceQuest",
+      "quest": "crypt"
+    }
+  ]
+}

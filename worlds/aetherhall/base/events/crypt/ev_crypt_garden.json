@@ -1,0 +1,60 @@
+{
+  "id": "ev_crypt_garden",
+  "trigger": "enterNode",
+  "node": "giardino_retro_1",
+  "priority": 50,
+  "when": {
+    "type": "quest",
+    "quest": "crypt",
+    "status": "active",
+    "stage": "find_passage"
+  },
+  "script": [
+    {
+      "say": "Behind the ivy, near the old wall, you notice a stone slab that looks out of place."
+    },
+    {
+      "choices": [
+        {
+          "text": "Investigate",
+          "then": [
+            {
+              "say": "You push the slab aside: narrow steps lead down into the dark."
+            },
+            {
+              "do": "setFlag",
+              "key": "hidden",
+              "value": 1
+            },
+            {
+              "do": "showImage",
+              "image": "secret_passage",
+              "file": "places/secret_passage.png",
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "layer": 1
+            },
+            {
+              "do": "setFlag",
+              "key": "secret_flag",
+              "value": 1
+            },
+            {
+              "do": "showLink",
+              "link": "link_mw67thfp_ogy0"
+            },
+            {
+              "do": "advanceQuest",
+              "quest": "crypt"
+            }
+          ]
+        },
+        {
+          "text": "Leave it",
+          "then": []
+        }
+      ]
+    }
+  ]
+}

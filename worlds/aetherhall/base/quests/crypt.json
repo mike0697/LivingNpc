@@ -1,0 +1,20 @@
+{
+  "id": "crypt",
+  "title": "The Crypt",
+  "summary": "Elena asked me to investigate the old crypt under the school.",
+  "giver": "elena",
+  "stages": [
+    {
+      "id": "find_passage",
+      "text": "Elena asked me to investigate the crypt. Search the back garden for a way down."
+    },
+    {
+      "id": "explore",
+      "text": "Take the underground passage from the back garden and reach the crypt."
+    },
+    {
+      "id": "report",
+      "text": "Go back to Elena and tell her what you found in the crypt."
+    }
+  ]
+}

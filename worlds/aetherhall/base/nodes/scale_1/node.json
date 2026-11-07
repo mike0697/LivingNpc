@@ -10,8 +10,8 @@
       "id": "link_mvxp7p6o_yhec",
       "target": "corridoio_1",
       "label": "East Corridor",
-      "x": 21.25586163808356,
-      "y": 10.915264769589333,
+      "x": 19.451458935135886,
+      "y": 16.866103440373177,
       "width": 20,
       "height": 6.5
     },
@@ -19,8 +19,8 @@
       "id": "link_mvxqkedy_ucpy",
       "target": "cortile_1",
       "label": "Courtyard",
-      "x": 89.60663382310136,
-      "y": 31.096374547393342,
+      "x": 88.95705325532023,
+      "y": 24.628069498747813,
       "width": 20,
       "height": 6.5
     },
@@ -28,8 +28,8 @@
       "id": "link_mvxrbfnk_8gxl",
       "target": "corridoio_ovest_1",
       "label": "West Corridor",
-      "x": 74.95488167252624,
-      "y": 11.950192590387596,
+      "x": 75.46012323991165,
+      "y": 17.512933945237727,
       "width": 20,
       "height": 6.5
     },

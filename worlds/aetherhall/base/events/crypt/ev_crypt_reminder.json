@@ -1,0 +1,28 @@
+{
+  "id": "ev_crypt_reminder",
+  "trigger": "talk",
+  "npc": "elena",
+  "priority": 50,
+  "when": {
+    "any": [
+      {
+        "type": "quest",
+        "quest": "crypt",
+        "status": "active",
+        "stage": "find_passage"
+      },
+      {
+        "type": "quest",
+        "quest": "crypt",
+        "status": "active",
+        "stage": "explore"
+      }
+    ]
+  },
+  "script": [
+    {
+      "say": "Have you been to the crypt yet? Look for the way down in the back garden.",
+      "who": "elena"
+    }
+  ]
+}

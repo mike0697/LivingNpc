@@ -1,0 +1,42 @@
+{
+  "id": "ev_crypt_offer",
+  "trigger": "talk",
+  "npc": "elena",
+  "priority": 50,
+  "when": {
+    "type": "quest",
+    "quest": "crypt",
+    "status": "notStarted"
+  },
+  "script": [
+    {
+      "say": "I have a job for you. Will you help me?",
+      "who": "elena"
+    },
+    {
+      "choices": [
+        {
+          "text": "Yes, I will help",
+          "then": [
+            {
+              "do": "startQuest",
+              "quest": "crypt"
+            },
+            {
+              "say": "There is an old crypt under the school. Strange noises have been coming from it at night.",
+              "who": "elena"
+            },
+            {
+              "say": "Go and investigate. The way down should be somewhere in the back garden.",
+              "who": "elena"
+            }
+          ]
+        },
+        {
+          "text": "Not now",
+          "then": []
+        }
+      ]
+    }
+  ]
+}

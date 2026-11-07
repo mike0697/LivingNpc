@@ -10,8 +10,8 @@
       "id": "link_mvy2ddgg_k7vc",
       "target": "scale_1",
       "label": "Grand Staircase",
-      "x": 81.6672619301316,
-      "y": 51.14812019819449,
+      "x": 89.17358378231397,
+      "y": 13.373217727119565,
       "width": 20,
       "height": 6.5
     },
@@ -21,6 +21,16 @@
       "label": "Teachers' House",
       "x": 17.358350698396578,
       "y": 10.527162518730508,
+      "width": 20,
+      "height": 6.5,
+      "visible": false
+    },
+    {
+      "id": "link_mw67thfp_ogy0",
+      "target": "underground_1",
+      "label": "Underground",
+      "x": 68.0981514013251,
+      "y": 13.631950916050409,
       "width": 20,
       "height": 6.5,
       "visible": false

@@ -1,0 +1,28 @@
+{
+  "id": "underground_1",
+  "title": "Underground",
+  "text": "",
+  "backgrounds": {
+    "day": "bg.webp"
+  },
+  "links": [
+    {
+      "id": "link_mw67skfl_js63",
+      "target": "giardino_retro_1",
+      "label": "Back",
+      "x": 15.842653529240541,
+      "y": 7.163645867404879,
+      "width": 20,
+      "height": 6.5
+    },
+    {
+      "id": "link_mw67zjxj_n7j9",
+      "target": "crypt_1",
+      "label": "Crypt",
+      "x": 85.98398193806347,
+      "y": 8.401305493085399,
+      "width": 20,
+      "height": 6.5
+    }
+  ]
+}

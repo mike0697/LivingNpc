@@ -1,0 +1,29 @@
+{
+  "id": "ev_crypt_report",
+  "trigger": "talk",
+  "npc": "elena",
+  "priority": 50,
+  "when": {
+    "type": "quest",
+    "quest": "crypt",
+    "status": "active",
+    "stage": "report"
+  },
+  "script": [
+    {
+      "say": "You're back! What did you find down there?",
+      "who": "elena"
+    },
+    {
+      "say": "You tell her about the broken tomb and the fresh footprints."
+    },
+    {
+      "say": "So someone really is going down there... Thank you. I'll take it from here.",
+      "who": "elena"
+    },
+    {
+      "do": "completeQuest",
+      "quest": "crypt"
+    }
+  ]
+}
