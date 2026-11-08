@@ -57,6 +57,7 @@ code { font-family: var(--code-font); background: var(--accent-soft); padding: 0
 .doc small { display: block; color: var(--muted); font-size: 12px; }
 .doc .badge { display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 6px; background: #e8e1f7; color: #5b3fa8; }
 .doc .badge.m { background: #dff1e6; color: #23824a; }
+.doc .badge.a { background: #fdebd8; color: #a3530f; }
 .doc.unsaved { font-style: italic; }
 
 .doc-title { padding: 8px 14px; display: flex; gap: 10px; align-items: baseline; border-bottom: 1px solid var(--line); background: var(--panel); }

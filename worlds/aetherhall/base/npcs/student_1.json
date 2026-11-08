@@ -1,6 +1,10 @@
 {
   "id": "student_1",
   "name": "John",
+  "firstName": "John",
+  "lastName": "Hale",
+  "age": 15,
+  "sex": "m",
   "places": {
     "home": "stanza_da_letto_npc_1",
     "work": "biblioteca_1"
@@ -24,5 +28,10 @@
       "y": 15,
       "width": 30
     }
+  },
+  "autoQuests": true,
+  "goal": "learn",
+  "relations": {
+    "elena": 40
   }
 }

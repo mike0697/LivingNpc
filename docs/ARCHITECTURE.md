@@ -93,7 +93,7 @@ the editor). Every line gives the file, the id and the problem, so it can be han
 |---|---|---|
 | Global state | the "world" entity: `ClockState`, `WorldState`, buffers `FlagValue`, `QuestState`, `EventState`, `GameMessage`, `GameCommand`, `DialogChoice`, `EntityRef` | one entity = easy saving |
 | Player | `PlayerState` + `StatValue[]` | `Node == 0` while travelling |
-| Characters | `NpcTag`, `NpcLocation`, `ScheduleBlock[]`, `NpcPlace[]`, `StatValue[]` | one entity per character |
+| Characters | `NpcTag`, `NpcLocation`, `NpcInfo` (age, sex), `NpcAuto`, `ScheduleBlock[]`, `NpcPlace[]`, `StatValue[]`, `RelationValue[]`, `NpcMemory[]` | one entity per character |
 | Inventory | `DynamicBuffer<InventorySlot>` `{Item, Count}` on the player and on every character; definitions in `RuleBlob.Items` | API: `RuleRuntime.GetItemCount / AddItem` |
 | Static data | `NavGraphBlob`, `RuleBlob` (BlobAsset) | read by Burst jobs |
 
@@ -110,11 +110,12 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   replaced or removed; blocks added by effects are compiled into `RuleBlob.RoutineBlocks / RoutineSets`.
 - **Conditions** (`RuleRuntime.Eval`): a flattened tree, evaluated iteratively (no recursion, Burst-friendly). Types:
   `all/any/not`, `always`, `time`, `day`, `date`, `after`, `elapsed`, `playerAt`, `npcAt`, `npcWithPlayer`, `stat`,
-  `flag`, `quest`, `activity`, `hasItem`.
+  `flag`, `quest`, `activity`, `hasItem`, `relation`, `goal`, `age`, `sex`, `chance`, `doing`, `did`.
 - **Effects** (`RuleRuntime.Apply`): `message`, `setFlag/addFlag`, `startQuest/advanceQuest/completeQuest/failQuest`,
   `modStat/setStat`, `giveItem/takeItem`, `moveNpc`, `setPlace/addRoutine/removeRoutine/setRoutine`,
   `advanceTime/advanceTimeTo`, `teleportPlayer`, `showLink/hideLink/openLink/closeLink`, `showImage/hideImage`,
-  `playSound/startMusic/stopMusic/startAmbient/stopAmbient`.
+  `playSound/startMusic/stopMusic/startAmbient/stopAmbient`, `tell`, `modRelation/setRelation`, `setGoal`,
+  `setAutoQuests/startAuto/stopAuto`.
 - **Persistent pictures and sounds** are flags, like links: `Ids.ImageKey(name)` holds *image index + 1* while the
   picture is shown (0 = hidden) and `GameView.RefreshOverlays` draws them; music and ambient loops use
   `Ids.MusicKey()` / `Ids.AmbientKey(name)` = *index in `CompiledContent.Sounds` + 1*, passed by
@@ -124,14 +125,27 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   branch. A stage without `complete` only advances with `advanceQuest`.
 - **Messages** (events): triggers `enterNode`, `tick`, `talk`, `wake`; `when`, `once`, `cooldownMinutes`, `priority`
   and a `script` of steps (lines, pictures, sounds, effects, `if`, `choices`) compiled into `ScriptStep`s.
-- **Texts** (`TextTable`): a string or `{ "en": "...", "it": "..." }`; ECS only keeps the integer id. Placeholder
-  `{npc}`.
+- **Texts** (`TextTable`): a string or `{ "en": "...", "it": "..." }`; ECS only keeps the integer id. Placeholders
+  are replaced by the view (`CompiledContent.Format`): `{npc}` (with `.first`, `.last`, `.full`, `.age` and the forms
+  `{npc:he|she|they}`), and `{#k}` = value k of the automatic quest that wrote the line (`GameMessage.Bind`; the
+  compiler turns `{self}` and the slot names into `{#0}`, `{#1}`…).
+- **Automatic quests** (`AutoQuests.cs`, `ContentCompiler.Auto.cs`): templates (`TemplateRule`) an npc picks by
+  itself. Every `AutoCheckMinutes` (`RuleRuntime.CheckAutoQuests`, on a tick) each free npc with `NpcAuto.Enabled`, past
+  its pause, scores the templates: `when` with self bound, slots filled at random (`FillSlots`: candidates that pass
+  the slot's condition with the candidate bound to it), `WeightTerm`s; one is drawn weighted by score (at most
+  `AutoMaxActive` run at once). The instance lives in `NpcAuto` (template, stage, `Bind` = [self, slots...], `Roll`
+  for `chance`, `Seed`); `EvaluateAuto` runs its stages like quests'. Conditions and effects of a template store
+  `BindRef` values (`int.MinValue + k`, a range `Ids.Hash` never returns) in place of ids; `RuleRuntime.R()` replaces
+  them with the instance's values (`RuleRuntime.Bind`, set by `Enter` / `RestoreCtx`). Texts are groups of variants
+  (`TextGroupRule` / `TextVariantRule`), said by `tell` into the log (`MsgKind.Npc`) or when the player talks to a
+  busy npc (`TalkAuto`). When it ends the npc remembers it (`NpcMemory`, last 16) and rests (`NextAt`).
 
 ## Saves (`Assets/Game/Runtime/Simulation/Save`)
 
 JSON files in `<persistentDataPath>/saves/<world>/<slot>.json` (plus `.bak` of the previous save and `<slot>.png`, the
 screenshot at the moment of saving): a summary (`meta`: game time, place, packs) and **one section per kind of state**:
-`clock`, `flags`, `links`, `images`, `sounds`, `quests`, `events`, `messages`, `player`, `npcs`. Rules (details in
+`clock`, `flags`, `links`, `images`, `sounds`, `quests`, `events`, `messages`, `player`, `npcs` (with the relations,
+the memory and the running automatic quest of each npc: template and stage by id, slots by id). Rules (details in
 `ISaveSection`):
 
 - everything is stored **by text id** (`"q_lost_notebook"`, stage `"return"`), never hashes or indices: renamed or

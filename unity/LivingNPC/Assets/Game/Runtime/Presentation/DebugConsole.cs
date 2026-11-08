@@ -64,6 +64,12 @@ namespace LivingNPC.Presentation
             ["hideLink"] = (new[] { "link" }, new string[] { }),
             ["openLink"] = (new[] { "link" }, new string[] { }),
             ["closeLink"] = (new[] { "link" }, new string[] { }),
+            ["modRelation"] = (new[] { "from", "to", "delta" }, new string[] { }),
+            ["setRelation"] = (new[] { "from", "to", "value" }, new string[] { }),
+            ["setGoal"] = (new[] { "npc", "goal" }, new string[] { }),
+            ["setAutoQuests"] = (new[] { "npc", "on" }, new string[] { }),
+            ["startAuto"] = (new[] { "npc", "template" }, new string[] { }),
+            ["stopAuto"] = (new[] { "npc" }, new string[] { }),
         };
 
         /// <summary>The console's own commands, for help.</summary>
@@ -232,8 +238,33 @@ namespace LivingNPC.Presentation
                     }
                 case FxType.TeleportPlayer: return $"player at {Place(fx.A)}";
                 case FxType.SetPlace: return $"{Who(fx.A)}: {Ids.Name(fx.B)} → {Place(fx.C)}";
+                case FxType.ModRelation:
+                case FxType.SetRelation:
+                    return $"{Who(fx.A)} → {Who(fx.B)}: relation {rt.GetRelation(fx.A, fx.B):0.##}";
+                case FxType.SetGoal:
+                case FxType.SetAutoQuests:
+                case FxType.StartAuto:
+                case FxType.StopAuto:
+                    return AutoText(fx.A);
                 default: return $"{(string)o["do"]}: done";
             }
+        }
+
+        /// <summary>The automatic quests of an npc now: on / off, goal, what it runs.</summary>
+        string AutoText(int npc)
+        {
+            var e = Rt.FindNpc(npc);
+            if (e == Entity.Null || !_em.HasComponent<NpcAuto>(e)) return $"{Who(npc)}: not in the world";
+            var a = _em.GetComponentData<NpcAuto>(e);
+            ref var rules = ref _compiled.Rules.Value;
+            string goal = a.Goal != 0 ? Ids.Name(a.Goal) : "none";
+            string doing = "free";
+            if (a.Template > 0 && a.Template <= rules.Templates.Length)
+            {
+                var t = rules.Templates[a.Template - 1];
+                doing = $"doing {Ids.Name(t.Id)}, stage {Ids.Name(rules.Stages[t.StageStart + a.Stage].Id)}";
+            }
+            return $"{Who(npc)}: automatic quests {(a.Enabled != 0 ? "on" : "off")}, goal {goal}, {doing}";
         }
 
         string QuestText(int qi)
@@ -480,6 +511,22 @@ namespace LivingNPC.Presentation
             {
                 case "npc":
                     foreach (var n in db.NpcList) yield return n.Id;
+                    break;
+                case "from":
+                case "to":
+                    foreach (var n in db.NpcList) yield return n.Id;
+                    yield return "player";
+                    break;
+                case "goal":
+                    foreach (var g in db.Rules.Goals) if (!string.IsNullOrEmpty(g?.Id)) yield return g.Id;
+                    yield return "none";
+                    break;
+                case "template":
+                    foreach (var t in db.TemplateList) yield return t.Id;
+                    break;
+                case "on":
+                    yield return "true";
+                    yield return "false";
                     break;
                 case "target":
                     foreach (var n in db.NpcList) yield return n.Id;

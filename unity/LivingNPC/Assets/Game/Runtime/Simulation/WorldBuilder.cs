@@ -49,6 +49,7 @@ namespace LivingNPC.Simulation
             foreach (var s in c.StatRules) pStats.Add(new StatValue { Stat = s.Id, Value = s.Baseline });
             var pItems = em.AddBuffer<InventorySlot>(player);
             foreach (var it in c.PlayerItems) pItems.Add(it);
+            em.AddBuffer<RelationValue>(player);
 
             // ---- nodes (one entity per map: handy for tooling/inspection and future per-node data)
             foreach (var m in c.Db.MapList)
@@ -68,6 +69,10 @@ namespace LivingNPC.Simulation
                 em.AddBuffer<NpcPlace>(e);
                 em.AddBuffer<StatValue>(e);
                 em.AddBuffer<InventorySlot>(e);
+                em.AddComponentData(e, new NpcInfo { Age = npc.Age, Sex = npc.Sex });
+                em.AddComponentData(e, new NpcAuto { Enabled = (byte)(npc.AutoQuests ? 1 : 0), Goal = npc.Goal });
+                em.AddBuffer<RelationValue>(e);
+                em.AddBuffer<NpcMemory>(e);
                 var sched = em.GetBuffer<ScheduleBlock>(e);
                 foreach (var b in npc.Blocks) sched.Add(b);
                 var places = em.GetBuffer<NpcPlace>(e);
@@ -76,6 +81,8 @@ namespace LivingNPC.Simulation
                 foreach (var s in npc.Stats) stats.Add(s);
                 var items = em.GetBuffer<InventorySlot>(e);
                 foreach (var it in npc.Items) items.Add(it);
+                var relations = em.GetBuffer<RelationValue>(e);
+                foreach (var r in npc.Relations) relations.Add(r);
 
                 NpcLogic.Resolve(sched, places, rules.StartMinute, rules.StartDayOfWeek, npc.Home, out int node, out int act);
                 em.SetComponentData(e, new NpcLocation { Node = node, Goal = node, HomeNode = npc.Home, Activity = act });

@@ -25,7 +25,7 @@ async function readJson(abs) {
 
 const textOf = (v) => (typeof v === 'string' ? v : v && typeof v === 'object' ? (v.it ?? Object.values(v)[0] ?? '') : '');
 
-/** The documents of a pack: [{ id, kind: 'quest' | 'folder' | 'event', title, files: [rel], eventDir }]. */
+/** The documents of a pack: [{ id, kind: 'quest' | 'template' | 'lines' | 'folder' | 'event', title, files: [rel], eventDir }]. */
 export async function listDocs(pack) {
   const docs = [];
   const questIds = new Set();
@@ -36,6 +36,13 @@ export async function listDocs(pack) {
     const events = await walk(join(pack, 'events', id), isJson);
     docs.push({ id: `quest:${id}`, kind: 'quest', title: textOf(json?.title) || id, name: id, files: [rel(pack, abs), ...events.map((e) => rel(pack, e))], eventDir: `events/${id}` });
   }
+  for (const abs of await walk(join(pack, 'templates'), isJson)) {
+    const json = await readJson(abs);
+    const id = json?.id || abs.split(sep).pop().replace(/\.json$/i, '');
+    docs.push({ id: `template:${id}`, kind: 'template', title: textOf(json?.title) || id, name: id, files: [rel(pack, abs)], eventDir: 'events' });
+  }
+  const lineFiles = await walk(join(pack, 'lines'), isJson);
+  if (lineFiles.length) docs.push({ id: 'lines:', kind: 'lines', title: 'Shared lines', name: 'lines', files: lineFiles.map((f) => rel(pack, f)), eventDir: 'events' });
   const eventsDir = join(pack, 'events');
   if (existsSync(eventsDir)) {
     for (const e of (await readdir(eventsDir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -63,9 +70,9 @@ export async function readDoc(pack, doc) {
   return out;
 }
 
-/** Only the JSON files the program edits (quests/, events/, npcs/, schedules/, items/, rules.json, title.json), never above the pack. */
+/** Only the JSON files the program edits (quests/, events/, templates/, lines/, npcs/, schedules/, items/, rules.json, title.json), never above the pack. */
 export function safePath(pack, r) {
-  const ok = typeof r === 'string' && (r === 'rules.json' || r === 'title.json' || /^(quests|events|npcs|schedules|items)\/[A-Za-z0-9_.\-/]+\.json$/.test(r));
+  const ok = typeof r === 'string' && (r === 'rules.json' || r === 'title.json' || /^(quests|events|templates|lines|npcs|schedules|items)\/[A-Za-z0-9_.\-/]+\.json$/.test(r));
   if (!ok || r.split('/').includes('..')) throw new Error(`path not allowed: ${r}`);
   return join(pack, ...r.split('/'));
 }
@@ -160,7 +167,7 @@ export async function setWorldName(pack, name) {
 /** Every JSON file that can use an id (for "where is it used"): [{ rel, json }]. */
 export async function allJson(pack) {
   const out = [];
-  for (const dir of ['quests', 'events', 'npcs', 'schedules', 'items']) for (const abs of await walk(join(pack, dir), isJson)) {
+  for (const dir of ['quests', 'events', 'templates', 'lines', 'npcs', 'schedules', 'items']) for (const abs of await walk(join(pack, dir), isJson)) {
     const json = await readJson(abs);
     if (json !== null) out.push({ rel: rel(pack, abs), json });
   }
@@ -192,7 +199,7 @@ export async function saveFiles(pack, write, remove) {
   return changed;
 }
 
-/** The ids of the pack, for the buttons and the checks: { npc, node, link, item, quest, stage: {quest: [...]}, event, stat, activity, flag, images, sfx, music }. */
+/** The ids of the pack, for the buttons and the checks: { npc, node, link, item, quest, stage: {quest: [...]}, event, stat, activity, goal, template, tstage: {template: [...]}, lines, flag, images, sfx, music }. */
 export async function refs(pack) {
   const ids = async (dir) => (await Promise.all((await walk(join(pack, dir), isJson)).map(readJson))).filter(Boolean);
   const files = async (dir) => (await walk(join(pack, dir))).map((f) => relative(join(pack, dir), f).split(sep).join('/'));
@@ -200,6 +207,7 @@ export async function refs(pack) {
   for (const abs of await walk(join(pack, 'nodes'), (n) => n === 'node.json')) { const j = await readJson(abs); if (j) nodes.push(j); }
   const quests = await ids('quests');
   const events = await ids('events');
+  const templates = await ids('templates');
   const rules = (await readJson(join(pack, 'rules.json'))) || {};
   const flags = new Set();
   const scan = (v) => {
@@ -208,7 +216,7 @@ export async function refs(pack) {
     if ((v.do === 'setFlag' || v.do === 'addFlag' || v.type === 'flag') && typeof v.key === 'string') flags.add(v.key);
     Object.values(v).forEach(scan);
   };
-  quests.forEach(scan); events.forEach(scan);
+  quests.forEach(scan); events.forEach(scan); templates.forEach(scan);
   const sorted = (a) => [...new Set(a.filter(Boolean))].sort();
   return {
     npc: sorted((await ids('npcs')).map((n) => n.id)),
@@ -221,6 +229,10 @@ export async function refs(pack) {
     event: sorted(events.map((e) => e.id)),
     stat: sorted((rules.stats || []).map((s) => s.id)),
     activity: sorted((rules.activities || []).map((a) => (typeof a === 'string' ? a : a.id))),
+    goal: sorted((Array.isArray(rules.goals) ? rules.goals : []).map((g) => g?.id)),
+    template: sorted(templates.map((t) => t.id)),
+    tstage: Object.fromEntries(templates.map((t) => [t.id, (t.stages || []).map((s, i) => s.id || `stage${i}`)])),
+    lines: sorted((await ids('lines')).map((l) => l.id)),
     flag: sorted([...flags]),
     images: await files('images'),
     sfx: await files('sfx'),

@@ -321,7 +321,7 @@ namespace LivingNPC.Simulation
         }
     }
 
-    // ====================================================================== rules (quests + events)
+    // ====================================================================== rules (quests + events + automatic quests)
 
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -365,7 +365,8 @@ namespace LivingNPC.Simulation
                 em.SetComponentData(player, p);
 
                 if (woke) rt.Apply(rt.Rules.Value.SleepFxStart, rt.Rules.Value.SleepFxCount);
-                for (int i = 0; i < 4; i++) if (!rt.EvaluateQuests()) break;
+                if (ticked) rt.CheckAutoQuests();
+                for (int i = 0; i < 4; i++) if (!rt.EvaluateQuests() & !rt.EvaluateAuto()) break;
 
                 bool dialogOpened = false, talkHandled = false;
                 int eventCount = rt.Rules.Value.Events.Length;
@@ -396,9 +397,9 @@ namespace LivingNPC.Simulation
                     if (em.GetComponentData<WorldState>(world).DialogOpen != 0) dialogOpened = true;
                     if (ev.Trigger == TriggerType.Talk) talkHandled = true;
                 }
-                if (talk != 0 && !talkHandled) rt.PushMessage(rt.Rules.Value.DefaultTalkText, MsgKind.Talk, talk);
+                if (talk != 0 && !talkHandled && !rt.TalkAuto(talk)) rt.PushMessage(rt.Rules.Value.DefaultTalkText, MsgKind.Talk, talk);
 
-                for (int i = 0; i < 4; i++) if (!rt.EvaluateQuests()) break;
+                for (int i = 0; i < 4; i++) if (!rt.EvaluateQuests() & !rt.EvaluateAuto()) break;
             }
         }
     }

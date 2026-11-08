@@ -61,10 +61,10 @@ namespace LivingNPC.Simulation
 
     // ------------------------------------------------------------------ rules: conditions / effects / quests / events
 
-    public enum CondType : byte { Always, All, Any, Not, Time, Day, Date, PlayerAt, NpcAt, NpcWithPlayer, Stat, Flag, Quest, Activity, HasItem, Elapsed, After }
+    public enum CondType : byte { Always, All, Any, Not, Time, Day, Date, PlayerAt, NpcAt, NpcWithPlayer, Stat, Flag, Quest, Activity, HasItem, Elapsed, After, Relation, Goal, Age, Sex, Chance, Doing, Did }
     public enum ItemKind : byte { Misc = 0, Consumable = 1, Equipment = 2, Key = 3, Quest = 4 }
     public enum CmpOp : byte { Eq, Ne, Lt, Le, Gt, Ge }
-    public enum FxType : byte { Message, SetFlag, AddFlag, StartQuest, AdvanceQuest, CompleteQuest, FailQuest, ModStat, SetStat, MoveNpc, AdvanceTime, TeleportPlayer, ShowLink, HideLink, OpenLink, CloseLink, GiveItem, TakeItem, ShowImage, HideImage, SetPlace, AddRoutine, RemoveRoutine, SetRoutine, AdvanceTimeTo, PlaySound, StartLoop, StopLoop }
+    public enum FxType : byte { Message, SetFlag, AddFlag, StartQuest, AdvanceQuest, CompleteQuest, FailQuest, ModStat, SetStat, MoveNpc, AdvanceTime, TeleportPlayer, ShowLink, HideLink, OpenLink, CloseLink, GiveItem, TakeItem, ShowImage, HideImage, SetPlace, AddRoutine, RemoveRoutine, SetRoutine, AdvanceTimeTo, PlaySound, StartLoop, StopLoop, Tell, ModRelation, SetRelation, SetGoal, SetAutoQuests, StartAuto, StopAuto }
     public enum TriggerType : byte { EnterNode, Tick, Talk, Wake }
     public enum StepKind : byte { Say, Show, Hide, Sound, Fx, If, Jump, Choice }
 
@@ -102,6 +102,7 @@ namespace LivingNPC.Simulation
     {
         public int Id, TextId;
         public int CompleteCond, FailCond;
+        public int StartFxStart, StartFxCount;      // run when the stage begins
         public int FxStart, FxCount;
         public int FailFxStart, FailFxCount;
         public int Next;                    // stage index, -1 = end of quest
@@ -151,6 +152,68 @@ namespace LivingNPC.Simulation
         public int NpcForDialog;
     }
 
+    // ------------------------------------------------------------------ automatic quests (templates an npc picks and runs by itself)
+
+    /// <summary>
+    /// The arguments of a template's conditions and effects that name its own characters, places and items: "self" (slot 0,
+    /// the npc that runs it) and the template's slots (1..). They are stored in place of the id and replaced at run time by
+    /// the values of the running instance (RuleRuntime.Bind). Ids.Hash never returns a value of this range.
+    /// </summary>
+    public static class BindRef
+    {
+        public const int Base = int.MinValue;
+        /// <summary>At most this many values: self + 6 slots (FixedList32Bytes&lt;int&gt; holds 7).</summary>
+        public const int Max = 7;
+        /// <summary>What an argument bound to nothing becomes: no npc, place or item has this id.</summary>
+        public const int None = Base + 15;
+        public const int Reserved = 16;
+        public static int Of(int slot) => Base + slot;
+        public static bool Is(int v) => v >= Base && v < Base + Max;
+        public static int Slot(int v) => v - Base;
+    }
+
+    public enum SlotKind : byte { Npc, Place, Node, Item }
+
+    /// <summary>
+    /// A slot of a template, filled when an npc picks it. Npc / Node / Item: a random candidate (Node and Item from the list
+    /// [ListStart, +ListCount) of RuleBlob.ListValues, all of them when the list is empty) for which Cond holds, with the
+    /// candidate bound to the slot itself ("it"). Npc: never the npc itself or another slot; Free: not busy with a quest of
+    /// its own nor bound to someone else's. Place: the named place Place of the npc bound to Of.
+    /// </summary>
+    public struct SlotRule
+    {
+        public int Id;
+        public SlotKind Kind;
+        public byte Free;
+        public int Cond;
+        public int Of, Place;
+        public int ListStart, ListCount;
+    }
+
+    public enum WeightKind : byte { Stat, Goal, Relation }
+
+    /// <summary>One term of a template's score: stat of self × K, K when self has the goal Key, relation self → slot Key × K.</summary>
+    public struct WeightTerm { public WeightKind Kind; public int Key; public float K; }
+
+    public struct TemplateRule
+    {
+        public int Id, TitleText;
+        public int Cond;                    // who can pick it (self bound), -1 = anyone
+        public float WeightBase;
+        public int WeightStart, WeightCount;
+        public int SlotStart, SlotCount;
+        public int StartFxStart, StartFxCount;
+        public int CompleteFxStart, CompleteFxCount;
+        public int FailFxStart, FailFxCount;
+        public int StageStart, StageCount;  // into RuleBlob.Stages
+        public int PauseMin;                // pause after it ends; -1 = rules.json autoQuests.pauseDays
+        public int TalkGroup;               // text group said when the player talks to the npc while it runs this, -1 none
+    }
+
+    /// <summary>A group of lines (a template's "texts" entry or a shared "lines" file): the first variant whose condition holds says one of its lines.</summary>
+    public struct TextGroupRule { public int Id; public int VariantStart, VariantCount; }
+    public struct TextVariantRule { public int Cond; public int LineStart, LineCount; }
+
     public struct RuleBlob
     {
         public BlobArray<CondNode> Conds;
@@ -172,5 +235,17 @@ namespace LivingNPC.Simulation
         public int SleepFrom, SleepWake;
         public int SleepFxStart, SleepFxCount;
         public BlobArray<int> BedNodes;         // node ids, sorted ascending
+
+        // automatic quests
+        public BlobArray<TemplateRule> Templates;
+        public BlobArray<SlotRule> Slots;
+        public BlobArray<WeightTerm> Weights;
+        public BlobArray<int> ListValues;
+        public BlobArray<TextGroupRule> TextGroups;
+        public BlobArray<TextVariantRule> TextVariants;
+        public BlobArray<int> TextLines;
+        public int AutoCheckMinutes;            // how often free npcs look for a quest to do
+        public int AutoMaxActive;               // at most this many running at once in the whole world
+        public int AutoPauseMin;                // default pause after a quest ends
     }
 }

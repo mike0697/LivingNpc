@@ -5,7 +5,9 @@
 //
 // A parameter: { name: JSON key, type, label, pos: written without its name (in order), req: required }.
 // Types: text (a sentence, localizable), id:<kind> (an id of the world: npc, node, item, quest, stage, link, stat,
-// activity, flag, target), choice:<a|b|c>, number, time ("HH:mm"), file:<images|sfx|music>, op (comparison), json.
+// activity, flag, target, goal, template, tstage = a stage of the template, lines), choice:<a|b|c>, number, time ("HH:mm"),
+// file:<images|sfx|music>, op (comparison), json. In an automatic quest (template) a character, place or item can also be
+// "self" (the npc that runs it), a slot of the template, or "it" (the slot being filled).
 
 const P = (name, type, label, extra = {}) => ({ name, type, label, ...extra });
 const pos = { pos: true }, req = { pos: true, req: true };
@@ -48,6 +50,13 @@ export const EFFECTS = {
   addRoutine: { cat: 'Characters', label: 'Add to the routine', params: [P('npc', 'id:npc', 'Character', req), P('id', 'text', 'Block name'), P('block', 'json', 'Block (JSON)')] },
   setRoutine: { cat: 'Characters', label: 'Replace the routine', params: [P('npc', 'id:npc', 'Character', req), P('routine', 'json', 'Routine (JSON)', req)] },
   removeRoutine: { cat: 'Characters', label: 'Remove from the routine', params: [P('npc', 'id:npc', 'Character', req), P('id', 'text', 'Block name', req)] },
+  modRelation: { cat: 'Characters', label: 'Change a relation (+/-)', params: [P('from', 'id:target', 'Who', req), P('to', 'id:target', 'Towards whom', req), P('delta', 'number', 'By how much', req)] },
+  setRelation: { cat: 'Characters', label: 'Set a relation', params: [P('from', 'id:target', 'Who', req), P('to', 'id:target', 'Towards whom', req), P('value', 'number', 'Value (-100 to 100)', req)] },
+  setGoal: { cat: 'Automatic quests', label: 'Change the goal of a character', params: [P('npc', 'id:npc', 'Character', req), P('goal', 'id:goal', 'Goal (empty = none)', pos)] },
+  setAutoQuests: { cat: 'Automatic quests', label: 'Automatic quests on / off', params: [P('npc', 'id:npc', 'Character', req), P('on', 'choice:true|false', 'On', pos)] },
+  startAuto: { cat: 'Automatic quests', label: 'Start an automatic quest', params: [P('npc', 'id:npc', 'Character', req), P('template', 'id:template', 'Automatic quest', req)] },
+  stopAuto: { cat: 'Automatic quests', label: 'Stop the automatic quest', params: [P('npc', 'id:npc', 'Character', req)] },
+  tell: { cat: 'Automatic quests', label: 'A character says a line (in the log)', params: [P('lines', 'id:lines', 'Lines (a text group)', req), P('npc', 'id:npc', 'Who says it (empty = self)'), P('everywhere', 'choice:true|false', 'Also when the player is not there')] },
 };
 
 /** Script steps: only inside an event (they need the dialogue). JSON: the step's own key holds the first parameter. */
@@ -74,6 +83,13 @@ export const CONDITIONS = {
   day: { label: 'Days of the week', params: [P('days', 'json', 'Days (e.g. ["mon","tue"])', req)] },
   date: { label: 'Days of the game', params: [P('fromDay', 'number', 'From day (0 = first)'), P('toDay', 'number', 'To day')] },
   after: { label: 'After a given moment', params: [P('day', 'number', 'Day (0 = first)', req), P('time', 'time', 'Time', pos)] },
+  relation: { label: 'Relation between two characters', params: [P('from', 'id:target', 'Who', req), P('to', 'id:target', 'Towards whom', req), P('op', 'op', 'Comparison', pos), P('value', 'number', 'Value', pos)] },
+  goal: { label: 'A character has a goal', params: [P('npc', 'id:npc', 'Character', req), P('goal', 'id:goal', 'Goal (empty = any)', pos)] },
+  age: { label: 'Age of a character', params: [P('npc', 'id:npc', 'Character', req), P('op', 'op', 'Comparison', pos), P('value', 'number', 'Years', pos)] },
+  sex: { label: 'Sex of a character', params: [P('npc', 'id:npc', 'Character', req), P('sex', 'choice:m|f|x', 'Sex', req)] },
+  chance: { label: 'Chance (automatic quest stage)', params: [P('percent', 'number', 'Percent', req)] },
+  doing: { label: 'A character is doing an automatic quest', params: [P('npc', 'id:npc', 'Character', req), P('template', 'id:template', 'Automatic quest (empty = any)', pos), P('stage', 'id:tstage', 'Stage', pos)] },
+  did: { label: 'A character did an automatic quest', params: [P('npc', 'id:npc', 'Character', req), P('template', 'id:template', 'Automatic quest (empty = any)', pos), P('status', 'choice:completed|failed|stopped', 'How it ended', pos), P('days', 'number', 'In the last days (empty = ever)')] },
 };
 
 export const GROUPS = ['all', 'any', 'not'];

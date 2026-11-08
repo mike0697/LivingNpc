@@ -9,7 +9,8 @@ simulation, quests, messages, routines, saves and sounds.
 - `smoke_mods`: packs added on top of that world, one per part of the test: `smoke_routine` (routines changed by
   effects), `smoke_sound` (music, ambient sounds and sounds in messages; the `.wav` files are generated tones: the
   test checks the state, not the noise), `smoke_sequence` (commands in sequence: effects between lines, if / else,
-  nested choices).
+  nested choices), `smoke_auto` (automatic quests: first name, age, sex and relations of two characters, a visit
+  template picked by itself, saved and loaded while it runs, `chance`, `startAuto` / `stopAuto`, `did`).
 
 From the Unity project folder (`unity/LivingNPC`), with Unity closed (Git Bash or another POSIX shell):
 

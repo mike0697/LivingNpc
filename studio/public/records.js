@@ -3,7 +3,7 @@
 // The checks (lib/records.js) say what Unity would say when it loads the world.
 
 import {
-  KINDS, ITEM_TYPES, DAY_KEYS, DAY_NAMES, ID_RE, checkRecord, jsonText, textOf, parseTime, clock, dayMask, daysOf,
+  KINDS, ITEM_TYPES, SEXES, DAY_KEYS, DAY_NAMES, ID_RE, checkRecord, jsonText, textOf, parseTime, clock, dayMask, daysOf,
   whereAt, routineBlocks, effectsToText, effectsFromText,
 } from '/lib/records.js';
 
@@ -296,7 +296,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   // ------------------------------------------------------------------------------------------- the form
 
-  const RULE_SECTIONS = [['start', 'Start'], ['inventory', 'Starting inventory'], ['stats', 'Stats'], ['activities', 'Activities'], ['dayparts', 'Dayparts'], ['sleep', 'Sleep']];
+  const RULE_SECTIONS = [['start', 'Start'], ['inventory', 'Starting inventory'], ['stats', 'Stats'], ['activities', 'Activities'], ['dayparts', 'Dayparts'], ['sleep', 'Sleep'], ['goals', 'Goals'], ['auto', 'Automatic quests']];
 
   function renderForm() {
     const box = $('#rec-form');
@@ -350,6 +350,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     let list = r[kind] || [];
     if (kind === 'place') list = [...(r.node || []), ...Object.keys(st.cur?.model?.places || {}).map((p) => `$${p}`)];
     if (kind === 'bg') list = st.data.nodes.map((n) => n.id);
+    if (kind === 'relwho') list = [...(r.npc || []).filter((n) => n !== st.cur?.model?.id), 'player'];
     el.innerHTML = list.map((o) => `<option value="${escapeHtml(o)}">`).join('');
     return id;
   }
@@ -674,7 +675,17 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   function npcForm(box, m) {
     box.append(
-      sec(null, 'Who they are', null, idRow(m), row('Name', locText(['name'])), row('Description', locText(['description'], { long: true })), row('Tags', tags(['tags']))),
+      sec(null, 'Who they are', null, idRow(m),
+        row('First name', locText(['firstName'])), row('Last name', locText(['lastName'])),
+        row('Name', locText(['name']), 'what the game shows; empty = first name and last name'),
+        row('Age', num(['age'], { int: true })), row('Sex', select(['sex'], SEXES, { optional: true }), 'the texts can say {x:him|her|them}'),
+        row('Description', locText(['description'], { long: true })), row('Tags', tags(['tags']))),
+      sec(null, 'Automatic quests', 'A character with automatic quests on picks by itself, when it is free, one of the automatic quests (templates) it can do, weighted by its goal, stats and relations.',
+        row('Automatic quests', check(['autoQuests'], 'picks and does them by itself', false)),
+        row('Goal', text(['goal'], { list: 'goal', placeholder: 'none' }), 'one of the goals of the Rules tab'),
+        h('h4', {}, 'Relations'),
+        h('p', { class: 'hint' }, 'What they think of the others at the start, from -100 (hate) to 100 (love); not written = 0.'),
+        mapEditor(['relations'], { keyLabel: 'Towards', valueLabel: 'Value', keyList: 'relwho', addLabel: '+ Relation', fresh: 10 })),
       sec(null, 'Their places', 'The character\'s own place names (home, work…) that the routine uses as $home, $work. “home” is where they go back when no block applies. A setPlace in the quests can change them.',
         mapEditor(['places'], { keyLabel: 'Name', valueLabel: 'Map place', valueType: 'text', valueList: 'node', addLabel: '+ Place', fresh: '' })),
       sec(null, 'Routine', 'Where they are and what they do during the week. If several blocks apply at once the highest priority wins (on a tie, the higher one in the list). A block that goes past midnight (21:00-07:00) continues the next day.',
@@ -747,7 +758,12 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
       sec('stats', 'Stats', 'Values of the player and of the characters. Every hour a value moves back towards its starting value by “drift per hour” (a fraction) and changes by “constant per hour”.', statsTable(r)),
       sec('activities', 'Activities', 'What a character does in a routine block, with its effect per hour on the stats.', activitiesTable(r)),
       sec('dayparts', 'Dayparts', 'Which background of the places shows at what time (the background name is the one from the map editor: day, night…).', dayPartsTable(r)),
-      sec('sleep', 'Sleep', 'When the player can sleep, what time they wake up and what happens when they sleep.', sleepEditor(r)));
+      sec('sleep', 'Sleep', 'When the player can sleep, what time they wake up and what happens when they sleep.', sleepEditor(r)),
+      sec('goals', 'Goals', 'What a character can want (a character has one goal, quests can change it with setGoal). The automatic quests weigh them.', goalsTable(r)),
+      sec('auto', 'Automatic quests', 'How often the free characters look for an automatic quest, how many can run at once, and how long a character rests after one.',
+        row('Check every', num(['autoQuests', 'checkMinutes'], { int: true, placeholder: '60' }), 'minutes of game time'),
+        row('At most at once', num(['autoQuests', 'maxActive'], { int: true, placeholder: '3' }), 'in the whole world; 0 = none'),
+        row('Pause after one', num(['autoQuests', 'pauseDays'], { placeholder: '1' }), 'days; a template can say its own (pauseDays)')));
   }
 
   function listTable(path, cols, fresh, addLabel) {
@@ -761,6 +777,13 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     });
     box.append(h('button', { type: 'button', class: 'mini link', onclick: () => { const a = getAt(st.cur.model, path) || []; a.push(fresh()); setAt(st.cur.model, path, a); renderForm(); changed(); } }, addLabel));
     return box;
+  }
+
+  function goalsTable() {
+    return listTable(['goals'], [
+      { label: 'Id', w: '180px', cell: (p) => text([...p, 'id'], { optional: false }) },
+      { label: 'Name', w: '1fr', cell: (p) => locText([...p, 'name']) },
+    ], () => ({ id: 'new', name: 'New' }), '+ Goal');
   }
 
   function statsTable() {

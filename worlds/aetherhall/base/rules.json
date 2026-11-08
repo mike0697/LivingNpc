@@ -209,5 +209,26 @@
   "playerInventory": {
     "bread": 2,
     "gold_coin": 100
+  },
+  "goals": [
+    {
+      "id": "help",
+      "name": {
+        "it": "Aiutare gli altri",
+        "en": "Help the others"
+      }
+    },
+    {
+      "id": "learn",
+      "name": {
+        "it": "Imparare",
+        "en": "Learn"
+      }
+    }
+  ],
+  "autoQuests": {
+    "checkMinutes": 60,
+    "maxActive": 2,
+    "pauseDays": 1
   }
 }

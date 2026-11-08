@@ -14,6 +14,19 @@
 //                                               option "Leave it":
 //                                                   pass
 //
+//   template t_bread:                   lines greet:
+//       title = "{self} brings bread"       variant if relation(self, npc, ">", 20):
+//       slot friend:                            "Hello, {npc}!"
+//           type = npc                      variant:
+//       texts:                                  "Hi."
+//           intro:
+//               "I am going to see {friend}."
+//       stage go:
+//           onStart:
+//               moveNpc(self, friend_home, forMinutes=120)
+//           complete:
+//               elapsed(hours=2)
+//
 // Rules: a line is a property (name = value), a command (name(...)), a dialogue line (who: "text") or a block that
 // ends with ":" and holds the indented lines below it. Values are JSON (strings in quotes, numbers, true/false,
 // {...}, [...]); an id can be written without quotes. Names are the JSON names (see specs.js), so nothing is lost.
@@ -24,9 +37,11 @@ import { EFFECTS, STEPS, CONDITIONS, lookup } from './specs.js';
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$.\-]*$/;
 const LITERALS = { true: true, false: false, null: null };
 const IN = '    ';
-const ID_PROPS = new Set(['giver', 'trigger', 'npc', 'node', 'next']);
+const ID_PROPS = new Set(['giver', 'trigger', 'npc', 'node', 'next', 'type', 'of', 'place']);
 const QUEST_BLOCKS = { autoStart: 'cond', onStart: 'fx', onComplete: 'fx' };
-const STAGE_BLOCKS = { complete: 'cond', fail: 'cond', onComplete: 'fx', onFail: 'fx' };
+const STAGE_BLOCKS = { onStart: 'fx', complete: 'cond', fail: 'cond', onComplete: 'fx', onFail: 'fx' };
+const TEMPLATE_BLOCKS = { when: 'cond', onStart: 'fx', onComplete: 'fx', onFail: 'fx' };
+const SLOT_TYPES = ['npc', 'place', 'node', 'item'];
 const LINE_KEYS = new Set(['say', 'who', 'pose', 'show', 'file', 'x', 'y', 'width', 'height', 'layer', 'hide', 'sound', 'volume']);
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -199,6 +214,56 @@ function questLines(q, out) {
   });
 }
 
+/** A text line of a group: a quoted text, or {"it": …, "en": …}. */
+const isLine = (v) => typeof v === 'string' || (isObj(v) && v.lines === undefined && v.when === undefined);
+const lineText = (v) => JSON.stringify(v);
+
+/** The lines of a text group: the lines themselves (one variant that always holds) or variant blocks. */
+function groupLines(variants, ind, out) {
+  const list = Array.isArray(variants) ? variants : variants === undefined || variants === null ? [] : [variants];
+  if (list.length && list.every(isLine)) { for (const l of list) out.push(ind + lineText(l)); return; }
+  for (const v of list) {
+    if (!isObj(v) || !Array.isArray(v.lines) || !v.lines.every(isLine) || !onlyKeys(v, ['when', 'lines'])) { out.push(`${ind}variant:`); out.push(`${ind + IN}${rawText(v)}`); continue; }
+    out.push(`${ind}variant${v.when !== undefined ? ' if ' + condText(v.when) : ''}:`);
+    for (const l of v.lines) out.push(ind + IN + lineText(l));
+    if (!v.lines.length) out.push(`${ind + IN}pass`);
+  }
+}
+
+function templateLines(t, out) {
+  out.push(`template ${valueText(t.id, 'id:')}:`);
+  propLines(t, new Set(['id', 'weight', 'slots', 'texts', 'stages', ...Object.keys(TEMPLATE_BLOCKS)]), IN, out);
+  block('when', 'cond', t.when, IN, out);
+  if (isObj(t.weight)) { out.push(`${IN}weight:`); propLines(t.weight, new Set(), IN + IN, out); if (!Object.keys(t.weight).length) out.push(`${IN + IN}pass`); }
+  for (const sl of list(t.slots)) {
+    if (!isObj(sl)) continue;
+    out.push(`${IN}slot ${valueText(sl.id ?? 'slot', 'id:')}:`);
+    propLines(sl, new Set(['id', 'when']), IN + IN, out);
+    block('when', 'cond', sl.when, IN + IN, out);
+    if (Object.keys(sl).every((k) => k === 'id')) out.push(`${IN + IN}pass`);
+  }
+  if (isObj(t.texts)) {
+    out.push(`${IN}texts:`);
+    for (const [name, variants] of Object.entries(t.texts)) { out.push(`${IN + IN}${name}:`); groupLines(variants, IN + IN + IN, out); }
+    if (!Object.keys(t.texts).length) out.push(`${IN + IN}pass`);
+  }
+  for (const name of ['onStart', 'onComplete', 'onFail']) block(name, 'fx', t[name], IN, out);
+  list(t.stages).forEach((st, i) => {
+    out.push('');
+    out.push(`${IN}stage ${valueText(st.id || `stage${i}`, 'id:')}:`);
+    const ordered = st.text !== undefined ? { text: st.text, ...st } : st;
+    propLines(ordered, new Set(['id', 'next', ...Object.keys(STAGE_BLOCKS)]), IN + IN, out);
+    for (const [name, kind] of Object.entries(STAGE_BLOCKS)) block(name, kind, st[name], IN + IN, out);
+    if (st.next !== undefined) out.push(`${IN + IN}next = ${valueText(st.next, 'id:')}`);
+  });
+}
+
+function linesLines(l, out) {
+  out.push(`lines ${valueText(l.id, 'id:')}:`);
+  propLines(l, new Set(['id', 'variants']), IN, out);
+  groupLines(l.variants, IN, out);
+}
+
 function eventLines(ev, out) {
   out.push(`event ${valueText(ev.id, 'id:')}:`);
   propLines(ev, new Set(['id', 'editor', 'when', 'script', 'effects', 'choices', 'popup']), IN, out);
@@ -212,7 +277,10 @@ export function toScript(units) {
   const out = [];
   for (const u of units) {
     if (out.length) out.push('');
-    if (u.kind === 'quest') questLines(u.json, out); else eventLines(u.json, out);
+    if (u.kind === 'quest') questLines(u.json, out);
+    else if (u.kind === 'template') templateLines(u.json, out);
+    else if (u.kind === 'lines') linesLines(u.json, out);
+    else eventLines(u.json, out);
   }
   return out.join('\n') + '\n';
 }
@@ -405,6 +473,13 @@ export class Parser {
     const has = (arr) => (arr || []).includes(value);
     const [kind, sub] = type.split(':');
     let ok = true, what = '';
+    // in an automatic quest: self, it and the slots stand for its own characters, places and items
+    if (kind === 'id' && this.tpl && ['npc', 'target', 'node', 'item'].includes(sub)) {
+      const want = sub === 'node' ? ['place', 'node'] : sub === 'item' ? ['item'] : ['npc'];
+      if (value === 'self' && want[0] === 'npc') return;
+      if (value === 'it' && this.tpl.it) { if (!want.includes(this.tpl.it)) warn(`“it” is a ${this.tpl.it} slot here, not a ${want[0]}`); return; }
+      if (this.tpl.slots.has(value)) { const t = this.tpl.slots.get(value); if (!want.includes(t)) warn(`the slot “${value}” is a ${t}, not a ${want[0]}`); return; }
+    }
     if (kind === 'file') { ok = has(r[sub]); what = `file in ${sub}/`; }
     else if (kind === 'id') {
       switch (sub) {
@@ -416,6 +491,14 @@ export class Parser {
         case 'link': ok = has(r.link); what = 'link'; break;
         case 'stat': ok = has(r.stat); what = 'stat'; break;
         case 'activity': ok = has(r.activity); what = 'activity'; break;
+        case 'goal': ok = has(r.goal) || value === 'none'; what = 'goal (rules.json)'; break;
+        case 'template': ok = has(r.template) || this.known.templates.has(value); what = 'automatic quest'; break;
+        case 'lines': ok = has(r.lines) || this.known.lines.has(value) || !!this.tpl?.groups?.has(value); what = 'lines (a text group of the automatic quest or a file in lines/)'; break;
+        case 'tstage': {
+          const t = obj.template;
+          const stages = new Set([...(r.tstage?.[t] || []), ...(this.known.tstages.get(t) || [])]);
+          ok = !t || stages.has(value); what = `stage of ${t}`; break;
+        }
         case 'stage': {
           const q = obj.quest || this.curQuest;
           const stages = new Set([...(r.stage?.[q] || []), ...(this.known.stages.get(q) || [])]);
@@ -429,12 +512,14 @@ export class Parser {
 
   /** Ids the script itself defines (a new quest is not in the world's files until it is saved). */
   scanKnown(roots) {
-    this.known = { quests: new Set(), stages: new Map() };
+    this.known = { quests: new Set(), stages: new Map(), templates: new Set(), tstages: new Map(), lines: new Set() };
+    const stagesOf = (n) => n.kids.map((k) => /^stage\s+"?([^\s":]+)"?\s*:$/.exec(k.src)?.[1]).filter(Boolean);
     for (const n of roots) {
-      const m = /^quest\s+"?([^\s":]+)"?\s*:$/.exec(n.src);
+      const m = /^(quest|template|lines)\s+"?([^\s":]+)"?\s*:$/.exec(n.src);
       if (!m) continue;
-      this.known.quests.add(m[1]);
-      this.known.stages.set(m[1], n.kids.map((k) => /^stage\s+"?([^\s":]+)"?\s*:$/.exec(k.src)?.[1]).filter(Boolean));
+      if (m[1] === 'quest') { this.known.quests.add(m[2]); this.known.stages.set(m[2], stagesOf(n)); }
+      else if (m[1] === 'template') { this.known.templates.add(m[2]); this.known.tstages.set(m[2], stagesOf(n)); }
+      else this.known.lines.add(m[2]);
     }
   }
 
@@ -443,7 +528,7 @@ export class Parser {
     if (name === 'trigger' && !['enterNode', 'talk', 'tick', 'wake'].includes(value)) warn(`trigger “${value}” does not exist: enterNode, talk, tick or wake`);
     else if (name === 'npc' || name === 'giver') this.checkId('id:npc', value, warn);
     else if (name === 'node') this.checkId('id:node', value, warn);
-    else if (name === 'next') this.checkId('id:stage', value, warn);
+    else if (name === 'next' && !this.tpl) this.checkId('id:stage', value, warn);
   }
 
   error(line, message) { this.errors.push({ line, message }); }
@@ -613,6 +698,142 @@ export class Parser {
     return s;
   }
 
+  /** A line of a text group: "text" or {"it": …, "en": …}. */
+  textLine(node) {
+    return this.at(node, () => {
+      const tk = new Tokens(tokenize(node.src));
+      if (tk.is('id') && tk.toks.length === 1 && tk.peek().v === 'pass') return null;
+      const v = plain(tk.value());
+      tk.end();
+      if (!isLine(v)) throw new LineError('a line of text goes here: "text" (or {"it": "…", "en": "…"})');
+      return v;
+    }) ?? undefined;
+  }
+
+  /** The kids of a text group: lines (one variant that always holds) or blocks  variant if cond:  /  variant:  with lines inside. */
+  textGroup(node) {
+    const kids = node.kids;
+    if (!kids.length) { this.error(node.no, 'the group has no lines'); return []; }
+    if (kids.every((k) => !k.opens)) {
+      const lines = kids.map((k) => this.textLine(k)).filter((v) => v !== undefined && v !== null);
+      return lines;
+    }
+    const out = [];
+    for (const n of kids) {
+      const v = this.at(n, (warn) => {
+        const line = classify(n);
+        if (line.kind !== 'block' || line.word !== 'variant') throw new LineError('a group holds lines of text, or blocks  variant if <condition>:  and  variant:');
+        const variant = {};
+        if (line.tk.is('id') && line.tk.peek().v === 'if') { line.tk.next(); variant.when = this.cond(line.tk.value(), warn); }
+        line.tk.end();
+        variant.lines = n.kids.map((k) => this.textLine(k)).filter((x) => x !== undefined && x !== null);
+        if (!variant.lines.length) throw new LineError('the variant has no lines');
+        return variant;
+      });
+      if (v) out.push(v);
+    }
+    return out;
+  }
+
+  template(node, id) {
+    const t = { id };
+    this.curQuest = null;
+    // the names of the slots first: every part of the template can use them
+    this.tpl = { slots: new Map(), groups: new Set(), it: null };
+    for (const n of node.kids) {
+      const m = /^slot\s+"?([^\s":]+)"?\s*:$/.exec(n.src);
+      if (!m) continue;
+      const typeLine = n.kids.map((k) => /^type\s*=\s*"?(\w+)"?\s*$/.exec(k.src)?.[1]).find(Boolean) || 'npc';
+      this.tpl.slots.set(m[1], typeLine);
+    }
+    for (const n of node.kids) {
+      if (/^texts\s*:$/.test(n.src)) for (const g of n.kids) { const gm = /^([A-Za-z_][\w\-]*)\s*:$/.exec(g.src); if (gm) this.tpl.groups.add(gm[1]); }
+    }
+    const blocks = {}, stages = [], slots = [];
+    let weight, texts;
+    for (const n of node.kids) {
+      this.at(n, (warn) => {
+        const line = classify(n);
+        if (line.kind === 'prop') { if (line.name === 'id') throw new LineError('the id is written after “template”'); t[line.name] = line.value; return; }
+        if (line.kind !== 'block') throw new LineError('an automatic quest holds properties (title = …), blocks (when:, weight:, texts:, onStart:, onComplete:, onFail:), slots (slot …:) and stages (stage …:)');
+        if (line.word === 'stage') { const sid = line.tk.value(); line.tk.end(); stages.push(this.stage(n, plain(sid))); return; }
+        if (line.word === 'slot') { const sid = line.tk.value(); line.tk.end(); slots.push(this.slot(n, plain(sid))); return; }
+        if (line.word === 'weight') {
+          line.tk.end();
+          weight = {};
+          for (const k of n.kids) this.at(k, () => {
+            const l = classify(k);
+            if (l.kind === 'call' && l.call.name === 'pass') return;
+            if (l.kind !== 'prop') throw new LineError('weight: holds  base = 10,  stats = {"stat": 0.5},  goals = {"goal": 30},  relations = {"slot": 0.2}');
+            weight[l.name] = l.value;
+          });
+          return;
+        }
+        if (line.word === 'texts') {
+          line.tk.end();
+          texts = {};
+          for (const g of n.kids) this.at(g, () => {
+            const l = classify(g);
+            if (l.kind === 'call' && l.call.name === 'pass') return;
+            if (l.kind !== 'block') throw new LineError('texts: holds groups, for example  intro:  with the lines below');
+            l.tk.end();
+            texts[l.word] = this.textGroup(g);
+          });
+          return;
+        }
+        if (!(line.word in TEMPLATE_BLOCKS)) throw new LineError(`block “${line.word}” is not allowed in an automatic quest`);
+        line.tk.end();
+        blocks[line.word] = TEMPLATE_BLOCKS[line.word] === 'cond' ? this.condValue(n) : this.commands(n.kids, false);
+      });
+    }
+    if (blocks.when !== undefined) t.when = blocks.when;
+    if (weight !== undefined) t.weight = weight;
+    if (slots.length) t.slots = slots;
+    if (texts !== undefined) t.texts = texts;
+    for (const k of ['onStart', 'onComplete', 'onFail']) if (blocks[k] !== undefined) t[k] = blocks[k];
+    t.stages = stages;
+    if (!stages.length) this.error(node.no, `the automatic quest “${id}” has no stages (stage …:)`);
+    this.tpl = null;
+    return t;
+  }
+
+  slot(node, id) {
+    const sl = { id };
+    let when;
+    for (const n of node.kids) {
+      this.at(n, (warn) => {
+        const line = classify(n);
+        if (line.kind === 'call' && line.call.name === 'pass') return;
+        if (line.kind === 'prop') {
+          if (line.name === 'id') throw new LineError('the id is written after “slot”');
+          sl[line.name] = line.value;
+          if (line.name === 'type' && !SLOT_TYPES.includes(line.value)) warn(`slot type “${line.value}” does not exist: ${SLOT_TYPES.join(', ')}`);
+          if (line.name === 'nodes' && Array.isArray(line.value)) for (const v of line.value) this.check?.('id:node', v, warn);
+          if (line.name === 'items' && Array.isArray(line.value)) for (const v of line.value) this.check?.('id:item', v, warn);
+          return;
+        }
+        if (line.kind !== 'block' || line.word !== 'when') throw new LineError('a slot holds properties (type = npc | place | node | item, free = true, of = …, place = …, nodes = […], items = […]) and a when: block');
+        line.tk.end();
+        this.tpl.it = sl.type || 'npc';
+        when = this.condValue(n);
+        this.tpl.it = null;
+      });
+    }
+    if (when !== undefined) sl.when = when;
+    return sl;
+  }
+
+  lines(node, id) {
+    const l = { id };
+    this.curQuest = null;
+    this.tpl = { slots: new Map(), groups: new Set(), it: null };      // the shared lines know only self
+    const props = node.kids.filter((k) => /^[A-Za-z_]\w*\s*=/.test(k.src));
+    for (const n of props) this.at(n, () => { const line = classify(n); if (line.name === 'id') throw new LineError('the id is written after “lines”'); l[line.name] = line.value; });
+    l.variants = this.textGroup({ ...node, kids: node.kids.filter((k) => !props.includes(k)) });
+    this.tpl = null;
+    return l;
+  }
+
   event(node, id) {
     const ev = { id };
     this.curQuest = null;
@@ -646,14 +867,15 @@ export class Parser {
     for (const n of roots) {
       const u = this.at(n, () => {
         const line = classify(n);
-        if (line.kind !== 'block' || (line.word !== 'quest' && line.word !== 'event')) throw new LineError('only “quest id:” or “event id:” blocks go at the top of the file');
+        if (line.kind !== 'block' || !['quest', 'event', 'template', 'lines'].includes(line.word)) throw new LineError('only “quest id:”, “event id:”, “template id:” or “lines id:” blocks go at the top of the file');
         const id = plain(line.tk.value());
         line.tk.end();
         if (typeof id !== 'string' || !id) throw new LineError('an id is needed');
         const key = `${line.word}:${id}`;
         if (seen.has(key)) throw new LineError(`“${id}” is already defined above`);
         seen.add(key);
-        return { kind: line.word, line: n.no, json: line.word === 'quest' ? this.quest(n, id) : this.event(n, id) };
+        const json = line.word === 'quest' ? this.quest(n, id) : line.word === 'template' ? this.template(n, id) : line.word === 'lines' ? this.lines(n, id) : this.event(n, id);
+        return { kind: line.word, line: n.no, json };
       });
       if (u) units.push(u);
     }

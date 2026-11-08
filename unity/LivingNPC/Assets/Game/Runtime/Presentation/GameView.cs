@@ -567,7 +567,8 @@ namespace LivingNPC.Presentation
             for (int i = Mathf.Max(0, msgs.Length - 6); i < msgs.Length; i++)
             {
                 var m = msgs[i];
-                string text = TextTable.Get(m.TextId).Replace("{npc}", NpcName(m.Arg));
+                string text = _compiled.Format(TextTable.Get(m.TextId), m.Arg, m.Bind);
+                if (m.Kind == MsgKind.Npc && m.Arg != 0) text = $"<color=#f2c75a>{NpcName(m.Arg)}:</color> {text}";
                 string color = m.Kind switch
                 {
                     MsgKind.QuestStarted => "#f2c75a",
@@ -600,7 +601,7 @@ namespace LivingNPC.Presentation
             string speaker = "";
             if (ws.DialogWho != 0) speaker = $"<color=#f2c75a>{TextTable.Get(ws.DialogWho)}</color>\n";
             else if (ws.DialogNpc != 0) speaker = $"<color=#f2c75a>{NpcName(ws.DialogNpc)}</color>\n";
-            _dialogText.text = speaker + TextTable.Get(ws.DialogText).Replace("{npc}", NpcName(ws.DialogNpc));
+            _dialogText.text = speaker + _compiled.Format(TextTable.Get(ws.DialogText), ws.DialogNpc);
 
             UiKit.Clear(_dialogChoices);
             var choices = _em.GetBuffer<DialogChoice>(_world, true);

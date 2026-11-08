@@ -18,6 +18,7 @@ them and builds the world. You can write them by hand, with the editors, or with
 - [Characters: npcs/&lt;id&gt;.json](#characters-npcsidjson) · [Shared routines: schedules/&lt;id&gt;.json](#shared-routines-schedulesidjson)
 - [Items: items/&lt;id&gt;.json](#items-itemsidjson)
 - [Quests: quests/&lt;id&gt;.json](#quests-questsidjson) · [Messages: events/&lt;id&gt;.json](#messages-eventsidjson)
+- [Automatic quests: templates/&lt;id&gt;.json](#automatic-quests-templatesidjson) · [Shared lines: lines/&lt;id&gt;.json](#shared-lines-linesidjson)
 - [Conditions](#conditions) · [Effects](#effects) · [Script steps](#script-steps)
 - [Patching another pack: $op](#patching-another-pack-op)
 - [Checking your content](#checking-your-content)
@@ -68,7 +69,10 @@ a world by folder name.
   reference (a place in a link, a character in a quest, a stat in an effect…) must point to an id that exists.
 - **Texts** shown to the player are either a string or an object with one entry per language:
   `"Hello"` or `{ "en": "Hello", "it": "Ciao" }`. The language is chosen in `rules.json` (default `en`).
-  `{npc}` inside a message text is replaced with the name of the character the player is talking to.
+  `{npc}` inside a message text is replaced with the name of the character the player is talking to;
+  `{npc.first}`, `{npc.last}`, `{npc.full}` and `{npc.age}` give its first name, last name, both and age, and
+  `{npc:he|she|they}` picks a word by its `sex` (male, female, other; without the third word the first is used).
+  The texts of an [automatic quest](#automatic-quests-templatesidjson) also know `{self}` and the names of its slots.
 - **Times** are `"HH:mm"` on a 24-hour clock; `"24:00"` is allowed as an end. A range whose `to` is earlier than its
   `from` crosses midnight (`"22:30"` → `"06:30"`).
 - **Days:** `"mon" "tue" "wed" "thu" "fri" "sat" "sun"`, or `"weekdays"`, `"weekend"`, `"all"`, or a list:
@@ -136,7 +140,9 @@ The title screen and the look of the buttons. Optional; read from the `base` pac
   "activities": [ { "id": "sleep", "name": "Sleeping", "effects": { "energy": 12, "happiness": 0.5 } } ],
   "dayParts": [ { "id": "evening", "from": "19:00", "to": "23:00", "background": "night_light" } ],
   "sleep": { "from": "20:00", "wakeAt": "07:00",
-             "effects": [ { "do": "setStat", "stat": "energy", "value": 100 } ] } }
+             "effects": [ { "do": "setStat", "stat": "energy", "value": 100 } ] },
+  "goals": [ { "id": "help", "name": { "en": "Help the others" } } ],
+  "autoQuests": { "checkMinutes": 60, "maxActive": 3, "pauseDays": 1 } }
 ```
 
 | Field | Default | Meaning |
@@ -152,6 +158,8 @@ The title screen and the look of the buttons. Optional; read from the `base` pac
 | `activities` | | What characters do in their routine. `effects` = change per hour of each stat while doing it. |
 | `dayParts` | | Which background a place shows at which time: `background` is a key of `node.backgrounds`. |
 | `sleep` | | When the player can sleep: from `from` until `wakeAt` the next morning, in places tagged `bed`. Sleeping skips to `wakeAt` (the world keeps living, no dialogue interrupts it), then runs `effects` and the `wake` messages. |
+| `goals` | `[]` | What a character can want (`npc.goal`, the `setGoal` effect, the `goal` condition). The automatic quests weigh them. |
+| `autoQuests` | | The [automatic quests](#automatic-quests-templatesidjson): every `checkMinutes` (default 60) of game time the free characters with `autoQuests` look for one; at most `maxActive` (default 3) run at the same time in the world; after one a character rests `pauseDays` days (default 1, a template can say its own). |
 
 ## Places: nodes/&lt;id&gt;/node.json
 
@@ -183,7 +191,9 @@ A place is a picture with buttons (links) to other places. Written by the **map 
 ## Characters: npcs/&lt;id&gt;.json
 
 ```json
-{ "id": "lia", "name": "Lia", "description": "A student who loves books.", "tags": [],
+{ "id": "lia", "name": "Lia", "firstName": "Lia", "lastName": "Moretti", "age": 17, "sex": "f",
+  "description": "A student who loves books.", "tags": [],
+  "autoQuests": true, "goal": "learn", "relations": { "tomas": 30, "player": 10 },
   "places": { "home": "bedroom", "school": "guild", "hangout": "square_fountain" },
   "routine": [ "sleep_night", "school_timetable",
                { "id": "evening_walk", "days": "all", "from": "16:30", "to": "21:30", "at": "$hangout",
@@ -200,7 +210,11 @@ A place is a picture with buttons (links) to other places. Written by the **map 
 
 | Field | Meaning |
 |---|---|
-| `name`, `description` | Shown in the game. |
+| `name`, `description` | Shown in the game. Without `name`, the game shows `firstName` and `lastName`. |
+| `firstName`, `lastName`, `age`, `sex` | Who the character is. `sex`: `m`, `f` or `x` (other). The texts use them with `{npc.first}`, `{npc:he|she}`…; the conditions `age` and `sex` test them. |
+| `autoQuests` | `true`: the character picks and does [automatic quests](#automatic-quests-templatesidjson) by itself when it is free (default `false`). The `setAutoQuests` effect turns it on and off. |
+| `goal` | What it wants: an id of `rules.goals`. The `setGoal` effect changes it. |
+| `relations` | What it thinks of the others at the start: `{ npc id or "player": value }`, from -100 to 100 (not written = 0). The `modRelation` / `setRelation` effects change them; they are saved. |
 | `places` | The character's named places. A routine block can say `"at": "$home"` instead of a place id; `setPlace` can move them during the game. `home` is where the character goes when no block is active. |
 | `routine` | A list of **shared routine ids** (from `schedules/`) and **blocks**. |
 | `stats` | Starting values (others start at their `baseline`). |
@@ -268,7 +282,7 @@ to give its blocks another id.
 | `title`, `summary`, `giver` | Journal title, summary, character who gives it. |
 | `autoStart` | Condition: the quest starts by itself when it becomes true. Without it, use the `startQuest` effect. |
 | `onStart`, `onComplete` | Effects. |
-| `stages[]` | Steps in order. `text` = journal text; `complete` / `fail` = conditions; `onComplete` / `onFail` = effects; `next` = next stage id or `"end"` (omitted = the following stage). A stage without `complete` only advances with the `advanceQuest` effect (typically from a conversation). |
+| `stages[]` | Steps in order. `text` = journal text; `complete` / `fail` = conditions; `onStart` / `onComplete` / `onFail` = effects (`onStart` runs when the stage begins); `next` = next stage id or `"end"` (omitted = the following stage). A stage without `complete` only advances with the `advanceQuest` effect (typically from a conversation). |
 
 ## Messages: events/&lt;id&gt;.json
 
@@ -307,6 +321,69 @@ them to `script` when it saves.
 
 When the player talks to a character and no `talk` message applies, the character answers with a default line.
 
+## Automatic quests: templates/&lt;id&gt;.json
+
+A quest that the **characters do by themselves**. Every `rules.autoQuests.checkMinutes`, each character with
+`"autoQuests": true` that is free (and past its pause) looks at the templates: those whose `when` holds and whose slots
+can be filled get a score from `weight`, and one is picked at random (a higher score is picked more often; a score of 0
+or less never). Then its stages run like a quest's, off screen too. The player sees them in the log (`tell`), when the
+character moves (`moveNpc`), and when talking to it (the `talk` texts).
+
+```json
+{ "id": "t_bring_bread", "title": "{self} brings bread to {friend}", "pauseDays": 1,
+  "when": { "type": "hasItem", "item": "bread", "target": "self" },
+  "weight": { "base": 5, "stats": { "happiness": 0.2 }, "goals": { "help": 30 }, "relations": { "friend": 0.5 } },
+  "slots": [
+    { "id": "friend", "type": "npc", "free": true, "when": { "type": "relation", "from": "self", "to": "it", "op": ">=", "value": 10 } },
+    { "id": "house", "type": "place", "of": "friend", "place": "home" } ],
+  "texts": {
+    "intro": [ { "when": { "type": "relation", "from": "self", "to": "friend", "op": ">=", "value": 30 },
+                 "lines": [ "Off to {friend.first}, with a warm loaf!" ] },
+               { "lines": [ "Maybe {friend} would like some bread." ] } ],
+    "talk": [ "Not now: {friend} is waiting for me in {friend:his|her} room." ] },
+  "onStart": [ { "do": "tell", "lines": "intro" } ],
+  "onComplete": [ { "do": "modRelation", "from": "friend", "to": "self", "delta": 10 } ],
+  "stages": [
+    { "id": "go", "text": "{self} walks to {house}",
+      "onStart": [ { "do": "moveNpc", "npc": "self", "node": "house", "forMinutes": 180 } ],
+      "complete": { "type": "npcAt", "npc": "self", "node": "house" },
+      "fail": { "type": "elapsed", "hours": 3 } },
+    { "id": "give",
+      "complete": [ { "type": "elapsed", "minutes": 30 }, { "type": "chance", "percent": 80 } ],
+      "onComplete": [ { "do": "giveItem", "item": "bread", "target": "friend" } ] } ] }
+```
+
+| Field | Meaning |
+|---|---|
+| `title` | Shown in the debug panel. |
+| `when` | Who can pick it (a condition about `self`). |
+| `weight` | The score: `base` (default 10) + each stat of `self` × its number + the number of the goal `self` has + the relation of `self` towards a slot × its number. |
+| `slots[]` | What the quest needs, filled at random when it is picked (at most 6). `type`: `npc` (another character: `free: true` = one that is not busy with an automatic quest of its own or someone else's), `place` (the named place `place` of the character `of`, default `self`), `node` (one of `nodes`, default any place), `item` (one of `items`, default any item). `when` filters the candidates: in it, `it` is the candidate. |
+| `texts` | Groups of lines: a list of variants `{ "when": condition, "lines": [texts] }` (the first variant that holds says one of its lines at random), or just a list of lines. `talk` is said when the player talks to the character while it runs this quest (if no message answers). |
+| `onStart`, `onComplete`, `onFail` | Effects when it starts, is completed, fails (a stage's `fail`). |
+| `stages[]` | As in a quest: `text`, `onStart`, `complete`, `fail`, `onComplete`, `onFail`, `next`. A stage without `complete` or `fail` never ends (only `stopAuto` ends it). |
+| `pauseDays` | Days before the character picks another one (default `rules.autoQuests.pauseDays`). |
+
+Inside a template, every place where an effect or a condition wants a character, a place or an item can say **`self`**
+(the character doing it) or **the name of a slot**; `elapsed` without `quest` counts from the template's own stage (or
+start, with `since: "quest"`), and `chance` is only for its stages. The texts say `{self}`, `{friend}`,
+`{friend.first}`, `{house}`, `{friend:him|her}`.
+
+An automatic quest is saved with the character (template, stage, slots); the character remembers the last 16 it did
+(the `did` condition).
+
+## Shared lines: lines/&lt;id&gt;.json
+
+Lines that many templates say, with `tell(id)`. Here `self` is the character that says them.
+
+```json
+{ "id": "greet", "variants": [
+    { "when": { "type": "relation", "from": "self", "to": "player", "op": ">", "value": 20 }, "lines": [ "Hello, friend!" ] },
+    { "lines": [ "Hello.", "Good day." ] } ] }
+```
+
+`variants` can also be just a list of lines. From a quest or a message (outside a template) `tell` needs `npc`: who says it.
+
 ## Conditions
 
 Used in `when`, `autoStart`, `complete`, `fail`, `requires`, `if` and `choices[].when`.
@@ -327,6 +404,13 @@ Used in `when`, `autoStart`, `complete`, `fail`, `requires`, `if` and `choices[]
 { "type": "day",           "days": ["fri", "sat"] }
 { "type": "date",          "fromDay": 3, "toDay": 10 }
 { "type": "after",         "day": 4, "time": "18:00" }
+{ "type": "relation",      "from": "player|<npc>", "to": "player|<npc>", "op": ">=", "value": 20 }
+{ "type": "goal",          "npc": "lia", "goal": "learn" }                   without "goal" = has any goal
+{ "type": "age",           "npc": "lia", "op": ">=", "value": 18 }
+{ "type": "sex",           "npc": "lia", "sex": "m|f|x" }
+{ "type": "doing",         "npc": "lia", "template": "t_id", "stage": "stage_id" }   template and stage optional
+{ "type": "did",           "npc": "lia", "template": "t_id", "status": "completed|failed|stopped", "days": 7 }
+{ "type": "chance",        "percent": 70 }                                   only in the stages of a template
 ```
 
 - `op` is one of `>=` (default), `>`, `==`, `!=`, `<`, `<=`. `flag` compares with `value` (default 1); a flag that
@@ -337,6 +421,10 @@ Used in `when`, `autoStart`, `complete`, `fail`, `requires`, `if` and `choices[]
   `days + hours + minutes` (decimals allowed). Example, "wait two days": a stage with
   `"complete": { "type": "elapsed", "days": 2 }`.
 - `date` and `after` count days from 0 (the first day, shown as "Day 1"). `after` is a fixed moment of the calendar.
+- `doing`: the character is running an automatic quest (that one, at that stage). `did`: it finished one (that one, that
+  way, in the last `days` days; omitted = ever).
+- `chance`: a number from 0 to 99 is drawn when the stage begins and stays the same for the whole stage, so
+  `"complete": [elapsed, chance 70]` with `"fail": [elapsed, not chance 70]` is a 70% success after that time.
 
 ## Effects
 
@@ -367,7 +455,19 @@ Lists of effects go in `onStart`, `onComplete`, `onFail`, `sleep.effects`, and a
 { "do": "stopMusic" }
 { "do": "startAmbient",  "sound": "rain", "file": "rain.ogg", "volume": 0.4 }
 { "do": "stopAmbient",   "sound": "rain" }
+{ "do": "modRelation",   "from": "player|<npc>", "to": "player|<npc>", "delta": 10 }      -100..100
+{ "do": "setRelation",   "from": "player|<npc>", "to": "player|<npc>", "value": 0 }
+{ "do": "setGoal",       "npc": "lia", "goal": "learn" }                 no goal (or "none") = none
+{ "do": "setAutoQuests", "npc": "lia", "on": true }
+{ "do": "startAuto",     "npc": "lia", "template": "t_id" }              now, if it is free and the slots can be filled
+{ "do": "stopAuto",      "npc": "lia" }                                  drops it, no effects; counts as "stopped"
+{ "do": "tell",          "lines": "intro", "npc": "lia", "everywhere": false }
 ```
+
+**Automatic quests.** `tell` writes one line of a text group in the log, said by `npc` (in a template: by `self`);
+`lines` is a group of the template's `texts` or a file of `lines/`. Without `everywhere: true` it is written only when
+the player is in the same place as the one who speaks. `startAuto` starts a template even if the character would not
+pick it (automatic quests off, pause, `when`, score); `setAutoQuests` off lets the running one finish.
 
 **Routines during the game.** `setPlace` changes a named place of a character: every block written `$place` follows
 it, also in shared routines (moving `work` moves the job; moving `home` moves where it sleeps). `addRoutine` adds
@@ -437,3 +537,5 @@ still loads.
 4. Check time logic: can the quest start and advance at that time and place? Are the characters it needs really there
    at that time (look at their routines)?
 5. After every change, reload (F5) and read `content_report.txt`. Fix every `[Error]`.
+6. In an automatic quest (template) write `self` and the slot names instead of character ids: a template must work
+   for every character that can pick it.

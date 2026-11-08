@@ -1,0 +1,161 @@
+{
+  "id": "t_bring_bread",
+  "title": "{self} brings bread to {friend}",
+  "pauseDays": 1,
+  "when": {
+    "all": [
+      {
+        "type": "hasItem",
+        "item": "bread",
+        "target": "self"
+      },
+      {
+        "not": {
+          "any": [
+            {
+              "type": "activity",
+              "npc": "self",
+              "activity": "sleep"
+            },
+            {
+              "type": "activity",
+              "npc": "self",
+              "activity": "work"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "weight": {
+    "base": 5,
+    "goals": {
+      "help": 30
+    },
+    "relations": {
+      "friend": 0.5
+    }
+  },
+  "slots": [
+    {
+      "id": "friend",
+      "type": "npc",
+      "free": true,
+      "when": {
+        "type": "relation",
+        "from": "self",
+        "to": "it",
+        "op": ">=",
+        "value": 10
+      }
+    },
+    {
+      "id": "house",
+      "type": "place",
+      "of": "friend",
+      "place": "home"
+    }
+  ],
+  "texts": {
+    "intro": [
+      {
+        "when": {
+          "type": "relation",
+          "from": "self",
+          "to": "friend",
+          "op": ">=",
+          "value": 30
+        },
+        "lines": [
+          "I baked too much bread: {friend.first} will love it.",
+          "Off to {friend}, with a warm loaf!"
+        ]
+      },
+      {
+        "lines": [
+          "Maybe {friend} would like some bread."
+        ]
+      }
+    ],
+    "thanks": [
+      "Here, {friend.first}: still warm."
+    ],
+    "talk": [
+      "Not now, dear: I am bringing bread to {friend}.",
+      "Later: {friend.first} is waiting for me in {friend:his|her|their} room."
+    ]
+  },
+  "onStart": [
+    {
+      "do": "tell",
+      "lines": "intro"
+    }
+  ],
+  "stages": [
+    {
+      "id": "go",
+      "text": "{self} walks to the room of {friend}",
+      "onStart": [
+        {
+          "do": "moveNpc",
+          "npc": "self",
+          "node": "house",
+          "forMinutes": 180
+        }
+      ],
+      "complete": {
+        "type": "npcAt",
+        "npc": "self",
+        "node": "house"
+      },
+      "fail": {
+        "type": "elapsed",
+        "hours": 3
+      }
+    },
+    {
+      "id": "give",
+      "text": "{self} gives the bread to {friend}",
+      "onStart": [
+        {
+          "do": "moveNpc",
+          "npc": "self",
+          "node": "house",
+          "forMinutes": 60
+        }
+      ],
+      "complete": {
+        "type": "elapsed",
+        "minutes": 30
+      },
+      "onComplete": [
+        {
+          "do": "tell",
+          "lines": "thanks"
+        },
+        {
+          "do": "takeItem",
+          "item": "bread",
+          "target": "self"
+        },
+        {
+          "do": "giveItem",
+          "item": "bread",
+          "target": "friend"
+        },
+        {
+          "do": "modRelation",
+          "from": "friend",
+          "to": "self",
+          "delta": 10
+        },
+        {
+          "do": "modStat",
+          "stat": "happiness",
+          "delta": 5,
+          "target": "self"
+        }
+      ]
+    }
+  ]
+}

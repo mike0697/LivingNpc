@@ -1,0 +1,22 @@
+{
+  "id": "proud",
+  "variants": [
+    {
+      "when": {
+        "type": "stat",
+        "stat": "intelligence",
+        "op": ">=",
+        "value": 30,
+        "target": "self"
+      },
+      "lines": [
+        "{self.first} closes the book: another chapter mastered."
+      ]
+    },
+    {
+      "lines": [
+        "{self.first} smiles: the spells finally make sense."
+      ]
+    }
+  ]
+}

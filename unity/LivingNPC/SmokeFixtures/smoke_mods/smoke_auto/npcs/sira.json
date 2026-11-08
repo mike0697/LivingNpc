@@ -1,0 +1,11 @@
+{
+  "id": "sira",
+  "$op": "merge",
+  "firstName": "Sira",
+  "lastName": "Vale",
+  "age": 30,
+  "sex": "f",
+  "relations": {
+    "bruno": 5
+  }
+}

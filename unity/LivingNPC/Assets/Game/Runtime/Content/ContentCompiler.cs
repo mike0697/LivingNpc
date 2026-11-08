@@ -47,6 +47,12 @@ namespace LivingNPC.Content
         public CompiledNpcImages Images = new CompiledNpcImages();
         public NpcDef Def;
         public int Id, NameText, Home;
+        public int FirstNameText, LastNameText;     // 0 when not written
+        public int Age;
+        public byte Sex;                            // 0 not said, 1 male, 2 female, 3 other
+        public bool AutoQuests;
+        public int Goal;
+        public List<RelationValue> Relations = new List<RelationValue>();
         public List<ScheduleBlock> Blocks = new List<ScheduleBlock>();
         /// <summary>The npc's named places as the content defines them (setPlace changes them at runtime).</summary>
         public List<NpcPlace> Places = new List<NpcPlace>();
@@ -79,14 +85,16 @@ namespace LivingNPC.Content
     }
 
     /// <summary>Everything the world builder needs: blobs for Burst + per-entity spawn data.</summary>
-    public class CompiledContent
+    public partial class CompiledContent
     {
         public ContentDatabase Db;
         public BlobAssetReference<NavGraphBlob> Nav;
         public BlobAssetReference<RuleBlob> Rules;
         public List<CompiledNpc> Npcs = new List<CompiledNpc>();
         public int StartNode;
-        public int QuestCount, EventCount;
+        public int QuestCount, EventCount, TemplateCount;
+        /// <summary>Goal id -> name as the player reads it (rules.json "goals").</summary>
+        public Dictionary<int, string> GoalNames = new Dictionary<int, string>();
         public List<StatRule> StatRules = new List<StatRule>();
         public List<InventorySlot> PlayerItems = new List<InventorySlot>();
         public List<ItemRule> ItemRules = new List<ItemRule>();
@@ -125,7 +133,7 @@ namespace LivingNPC.Content
     /// (int ids, flat arrays, blobs). Every problem is reported with its source file; broken elements are
     /// skipped (or neutralised: a broken condition becomes "never") so one bad file never breaks the game.
     /// </summary>
-    public class ContentCompiler
+    public partial class ContentCompiler
     {
         readonly ContentDatabase _db;
         readonly ValidationReport _rep;
@@ -204,7 +212,9 @@ namespace LivingNPC.Content
 
             CompileStats(result);
             foreach (var kv in _db.Rules.Activities) { Ids.Hash(kv.Id); }
+            CompileGoals(result);
             CompileItems(result);      // before npcs, quests and events: they refer to items
+            IndexTemplates();          // conditions and effects refer to templates and to shared lines by id
 
             // quests/stages are indexed before any condition is compiled (conditions refer to them)
             for (int i = 0; i < _db.QuestList.Count; i++)
@@ -219,8 +229,11 @@ namespace LivingNPC.Content
 
             result.Nav = CompileNav();
             CompileNpcs(result);
+            CompileLines();
             CompileQuests();
             CompileEvents();
+            CompileTemplates();
+            CompileAutoRules();
             CompileSleep();
             foreach (var (npc, place, src) in _pendingPlaces)
                 if (!_placeSetters.Contains((Ids.Hash(npc), Ids.Hash(place))))
@@ -236,6 +249,7 @@ namespace LivingNPC.Content
             result.Rules = BuildRuleBlob(result);
             result.QuestCount = _quests.Count;
             result.EventCount = _events.Count;
+            result.TemplateCount = _templates.Count;
 
             foreach (var col in Ids.Collisions) _rep.Error("ids", col);
             result.Valid = result.Nav.IsCreated && result.Rules.IsCreated;
@@ -411,7 +425,8 @@ namespace LivingNPC.Content
             foreach (var def in _db.NpcList)
             {
                 var npc = new CompiledNpc { Def = def, Id = Ids.Hash(def.Id) };
-                npc.NameText = TextTable.Register($"npc:{def.Id}:name", def.Name ?? new JValue(def.Id));
+                npc.NameText = TextTable.Register($"npc:{def.Id}:name", def.Name ?? DefaultName(def));
+                CompileNpcIdentity(def, npc);
 
                 foreach (var kv in def.Places)
                 {
@@ -671,6 +686,7 @@ namespace LivingNPC.Content
                     sr.TextId = TextTable.Register($"quest:{q.Id}:stage:{stageId}", s.Text ?? new JValue(""));
                     if (s.Complete != null) sr.CompleteCond = CompileCond(s.Complete, ssrc + ".complete");
                     if (s.Fail != null) sr.FailCond = CompileCond(s.Fail, ssrc + ".fail");
+                    (sr.StartFxStart, sr.StartFxCount) = CompileEffects(s.OnStart, ssrc + ".onStart", $"quest:{q.Id}:stage:{stageId}:start");
                     (sr.FxStart, sr.FxCount) = CompileEffects(s.OnComplete, ssrc + ".onComplete", $"quest:{q.Id}:stage:{stageId}:done");
                     (sr.FailFxStart, sr.FailFxCount) = CompileEffects(s.OnFail, ssrc + ".onFail", $"quest:{q.Id}:stage:{stageId}:fail");
                     if (!string.IsNullOrEmpty(s.Next))
@@ -1036,11 +1052,14 @@ namespace LivingNPC.Content
                             default: throw new CondException("elapsed: 'since' must be 'stage' or 'quest'");
                         }
                         string qid = (string)o["quest"];
-                        if (string.IsNullOrEmpty(qid)) qid = _curQuest ?? throw new CondException("elapsed outside a quest needs 'quest'");
-                        if (!_questIndex.TryGetValue(qid, out var qi)) throw new CondException($"unknown quest '{qid}'");
                         double total = ((double?)o["days"] ?? 0) * GameTime.MinutesPerDay + ((double?)o["hours"] ?? 0) * 60 + ((double?)o["minutes"] ?? 0);
                         if (total <= 0) throw new CondException("elapsed needs a duration (days, hours and/or minutes)");
-                        return AddCond(new CondNode { Type = CondType.Elapsed, A = qi, B = mode, C = (int)Math.Min(int.MaxValue, Math.Round(total)) });
+                        int minutes = (int)Math.Min(int.MaxValue, Math.Round(total));
+                        // in the stages of an automatic quest: since its own stage / start (A = -1)
+                        if (string.IsNullOrEmpty(qid) && _tpl != null && _tpl.InStage) return AddCond(new CondNode { Type = CondType.Elapsed, A = -1, B = mode, C = minutes });
+                        if (string.IsNullOrEmpty(qid)) qid = _curQuest ?? throw new CondException("elapsed outside a quest needs 'quest'");
+                        if (!_questIndex.TryGetValue(qid, out var qi)) throw new CondException($"unknown quest '{qid}'");
+                        return AddCond(new CondNode { Type = CondType.Elapsed, A = qi, B = mode, C = minutes });
                     }
                 case "playerat":
                     return AddCond(new CondNode { Type = CondType.PlayerAt, A = NodeRef(o, "node") });
@@ -1080,6 +1099,58 @@ namespace LivingNPC.Content
                     return AddCond(new CondNode { Type = CondType.Activity, A = NpcRef(o, "npc"), B = Ids.Hash(Req(o, "activity")) });
                 case "hasitem":
                     return AddCond(new CondNode { Type = CondType.HasItem, A = TargetRef(o, "target"), B = ItemRef(o), Op = ParseOp((string)o["op"]), F = (float?)o["count"] ?? 1 });
+                case "relation":
+                    return AddCond(new CondNode { Type = CondType.Relation, A = TargetRef(o, "from"), B = TargetRef(o, "to"), Op = ParseOp((string)o["op"]), F = (float?)o["value"] ?? 0 });
+                case "goal":
+                    return AddCond(new CondNode { Type = CondType.Goal, A = NpcRef(o, "npc"), B = string.IsNullOrEmpty((string)o["goal"]) ? 0 : GoalRef((string)o["goal"]) });
+                case "age":
+                    return AddCond(new CondNode { Type = CondType.Age, A = NpcRef(o, "npc"), Op = ParseOp((string)o["op"]), F = (float?)o["value"] ?? 0 });
+                case "sex":
+                    {
+                        byte sex = ParseSex((string)o["sex"]);
+                        if (sex == 0) throw new CondException("sex must be m, f or x");
+                        return AddCond(new CondNode { Type = CondType.Sex, A = NpcRef(o, "npc"), B = sex });
+                    }
+                case "chance":
+                    {
+                        // the roll of the stage (0-99, drawn when the stage begins) is below the percent: stable for the whole stage
+                        if (_tpl == null || !_tpl.InStage) throw new CondException("chance is only for the stages of an automatic quest (template)");
+                        float p = (float?)o["percent"] ?? throw new CondException("chance needs 'percent'");
+                        return AddCond(new CondNode { Type = CondType.Chance, A = (int)Math.Round(Math.Max(0, Math.Min(100, p))) });
+                    }
+                case "doing":
+                    {
+                        int npc = NpcRef(o, "npc");
+                        int ti = -1, stage = -1;
+                        string tid = (string)o["template"];
+                        if (!string.IsNullOrEmpty(tid) && !_templateIndex.TryGetValue(tid, out ti)) throw new CondException($"unknown template '{tid}'");
+                        string sid = (string)o["stage"];
+                        if (sid != null)
+                        {
+                            if (ti < 0) throw new CondException("doing: 'stage' needs 'template'");
+                            if (!_templateStageIndex[tid].TryGetValue(sid, out stage)) throw new CondException($"template '{tid}' has no stage '{sid}'");
+                        }
+                        return AddCond(new CondNode { Type = CondType.Doing, A = npc, B = ti + 1, C = stage });
+                    }
+                case "did":
+                    {
+                        int npc = NpcRef(o, "npc");
+                        int ti = -1;
+                        string tid = (string)o["template"];
+                        if (!string.IsNullOrEmpty(tid) && !_templateIndex.TryGetValue(tid, out ti)) throw new CondException($"unknown template '{tid}'");
+                        int outcome;
+                        switch (((string)o["status"] ?? "").ToLowerInvariant())
+                        {
+                            case "": case "any": outcome = 0; break;
+                            case "completed": case "done": outcome = (int)QuestStatus.Completed; break;
+                            case "failed": outcome = (int)QuestStatus.Failed; break;
+                            case "stopped": outcome = RuleRuntime.AutoStopped; break;
+                            default: throw new CondException($"did: unknown status '{o["status"]}' (completed, failed, stopped)");
+                        }
+                        float days = (float?)o["days"] ?? 0;
+                        if (days < 0) throw new CondException("did: 'days' cannot be negative");
+                        return AddCond(new CondNode { Type = CondType.Did, A = npc, B = ti + 1, C = outcome, F = days });
+                    }
                 case "":
                     throw new CondException("missing 'type' (or all/any/not)");
                 default:
@@ -1105,6 +1176,7 @@ namespace LivingNPC.Content
         int NodeRef(JObject o, string key)
         {
             var id = Req(o, key);
+            if (TryBound(id, SlotKind.Node, out int bound)) return bound;
             if (!_db.Maps.ContainsKey(id)) throw new CondException($"unknown node '{id}'");
             return Ids.Hash(id);
         }
@@ -1112,6 +1184,7 @@ namespace LivingNPC.Content
         int NpcRef(JObject o, string key)
         {
             var id = Req(o, key);
+            if (TryBound(id, SlotKind.Npc, out int bound)) return bound;
             if (!_db.Npcs.ContainsKey(id)) throw new CondException($"unknown npc '{id}'");
             return Ids.Hash(id);
         }
@@ -1120,6 +1193,7 @@ namespace LivingNPC.Content
         {
             var id = (string)o[key];
             if (string.IsNullOrEmpty(id) || id == "player") return 0;
+            if (TryBound(id, SlotKind.Npc, out int bound)) return bound;
             if (!_db.Npcs.ContainsKey(id)) throw new CondException($"unknown npc '{id}'");
             return Ids.Hash(id);
         }
@@ -1135,6 +1209,7 @@ namespace LivingNPC.Content
         int ItemRef(JObject o)
         {
             var id = Req(o, "item");
+            if (TryBound(id, SlotKind.Item, out int bound)) return bound;
             int h = Ids.Hash(id);
             if (!_itemIds.Contains(h)) throw new CondException($"unknown item '{id}'");
             return h;
@@ -1179,7 +1254,8 @@ namespace LivingNPC.Content
         {
             "setFlag", "addFlag", "startQuest", "advanceQuest", "completeQuest", "failQuest", "modStat", "setStat",
             "giveItem", "takeItem", "moveNpc", "setPlace", "removeRoutine", "advanceTime", "advanceTimeTo", "teleportPlayer",
-            "showLink", "hideLink", "openLink", "closeLink",
+            "showLink", "hideLink", "openLink", "closeLink", "modRelation", "setRelation", "setGoal", "setAutoQuests",
+            "startAuto", "stopAuto",
         };
 
         internal bool TryCompileConsoleEffect(JObject o, out FxNode fx, out string error)
@@ -1208,7 +1284,7 @@ namespace LivingNPC.Content
                     {
                         // keyed by the text itself, not by the effect's position: the message log of a save keeps the key
                         var text = o["text"] ?? throw new CondException("message needs 'text'");
-                        return new FxNode { Type = FxType.Message, A = TextTable.Register($"{textKey}:msg:{ContentHash(text)}", text) };
+                        return new FxNode { Type = FxType.Message, A = TextTable.Register($"{textKey}:msg:{ContentHash(text)}", BindTexts(text, _fxSrc)) };
                     }
                 case "setflag": return new FxNode { Type = FxType.SetFlag, A = Ids.Hash(Req(o, "key")), F = (float?)o["value"] ?? 1 };
                 case "addflag": return new FxNode { Type = FxType.AddFlag, A = Ids.Hash(Req(o, "key")), F = (float?)o["value"] ?? 1 };
@@ -1224,10 +1300,9 @@ namespace LivingNPC.Content
                         // changes a named place of the npc ("home", "work"...): every routine block written as "$place" follows
                         int npc = NpcRef(o, "npc");
                         string place = Req(o, "place").TrimStart('$');
-                        string node = Req(o, "node");
-                        if (!_db.Maps.ContainsKey(node)) throw new CondException($"unknown node '{node}'");
+                        int node = NodeRef(o, "node");
                         _placeSetters.Add((npc, Ids.Hash(place)));
-                        return new FxNode { Type = FxType.SetPlace, A = npc, B = Ids.Hash(place), C = Ids.Hash(node), F = place == Ids.HomePlace ? 1 : 0 };
+                        return new FxNode { Type = FxType.SetPlace, A = npc, B = Ids.Hash(place), C = node, F = place == Ids.HomePlace ? 1 : 0 };
                     }
                 case "addroutine": return CompileRoutineEffect(o, FxType.AddRoutine);
                 case "setroutine": return CompileRoutineEffect(o, FxType.SetRoutine);
@@ -1282,6 +1357,23 @@ namespace LivingNPC.Content
                         _loopStops.Add((_fxSrc, Ids.AmbientKey(name), $"stopAmbient '{name}'"));
                         return new FxNode { Type = FxType.StopLoop, A = Ids.AmbientKey(name) };
                     }
+                case "tell": return CompileTell(o);
+                case "modrelation": return new FxNode { Type = FxType.ModRelation, A = TargetRef(o, "from"), B = TargetRef(o, "to"), F = (float?)o["delta"] ?? 0 };
+                case "setrelation": return new FxNode { Type = FxType.SetRelation, A = TargetRef(o, "from"), B = TargetRef(o, "to"), F = (float?)o["value"] ?? 0 };
+                case "setgoal":
+                    {
+                        string goal = (string)o["goal"];
+                        return new FxNode { Type = FxType.SetGoal, A = NpcRef(o, "npc"), B = string.IsNullOrEmpty(goal) || goal == "none" ? 0 : GoalRef(goal) };
+                    }
+                case "setautoquests": return new FxNode { Type = FxType.SetAutoQuests, A = NpcRef(o, "npc"), B = ((bool?)o["on"] ?? true) ? 1 : 0 };
+                case "startauto":
+                    {
+                        int npc = NpcRef(o, "npc");
+                        string tid = Req(o, "template");
+                        if (!_templateIndex.TryGetValue(tid, out int ti)) throw new CondException($"unknown template '{tid}'");
+                        return new FxNode { Type = FxType.StartAuto, A = npc, B = ti };
+                    }
+                case "stopauto": return new FxNode { Type = FxType.StopAuto, A = NpcRef(o, "npc") };
                 case "giveitem": return new FxNode { Type = FxType.GiveItem, A = TargetRef(o, "target"), B = ItemRef(o), F = PositiveCount(o) };
                 case "takeitem": return new FxNode { Type = FxType.TakeItem, A = TargetRef(o, "target"), B = ItemRef(o), F = PositiveCount(o) };
                 case "": throw new CondException("missing 'do'");
@@ -1297,6 +1389,7 @@ namespace LivingNPC.Content
         FxNode CompileRoutineEffect(JObject o, FxType type)
         {
             int npcId = NpcRef(o, "npc");
+            if (BindRef.Is(npcId)) throw new CondException((type == FxType.SetRoutine ? "setRoutine" : "addRoutine") + " needs the id of a character, not self or a slot");
             var def = _db.Npcs[(string)o["npc"]];
             string id = (string)o["id"];
             var tokens = new List<JToken>();
@@ -1368,6 +1461,14 @@ namespace LivingNPC.Content
             Fill(b, ref root.RoutineBlocks, _routineBlocks);
             Fill(b, ref root.RoutineSets, _routineSets);
             Fill(b, ref root.BedNodes, _beds);
+            Fill(b, ref root.Templates, _templates);
+            Fill(b, ref root.Slots, _slots);
+            Fill(b, ref root.Weights, _weights);
+            Fill(b, ref root.ListValues, _listValues);
+            Fill(b, ref root.TextGroups, _textGroups);
+            Fill(b, ref root.TextVariants, _textVariants);
+            Fill(b, ref root.TextLines, _textLines);
+            root.AutoCheckMinutes = _autoCheck; root.AutoMaxActive = _autoMax; root.AutoPauseMin = _autoPause;
             root.SleepFrom = _sleepFrom; root.SleepWake = _sleepWake;
             root.SleepFxStart = _sleepFxStart; root.SleepFxCount = _sleepFxCount;
             root.DefaultTalkText = TextTable.Register("sys:talk_default", new JValue("{npc} has nothing to say right now."));

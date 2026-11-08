@@ -15,7 +15,7 @@ namespace LivingNPC.Content
     ///   project.json                   (world: name, startNode, editor graph positions)
     ///   nodes/ID/node.json + png       (maps, written by the map editor)
     ///   rules.json                     (clock, stats, activities, day parts)
-    ///   npcs/*.json schedules/*.json quests/*.json events/*.json
+    ///   npcs/*.json schedules/*.json quests/*.json events/*.json templates/*.json lines/*.json
     ///
     /// Later packs override earlier ones by id. A file can also carry "$op": "merge" (deep-merge into the existing
     /// definition: ideal for LLM patches) or "$op": "delete".
@@ -266,6 +266,8 @@ namespace LivingNPC.Content
             var quests = new Dictionary<string, Raw>();
             var events = new Dictionary<string, Raw>();
             var items = new Dictionary<string, Raw>();
+            var templates = new Dictionary<string, Raw>();
+            var lines = new Dictionary<string, Raw>();
             var graph = new Dictionary<string, (float x, float y)>();
             var rules = new JObject();
 
@@ -282,6 +284,8 @@ namespace LivingNPC.Content
                 LoadCategory(pack, "quests", db.Report, quests);
                 LoadCategory(pack, "events", db.Report, events);
                 LoadCategory(pack, "items", db.Report, items);
+                LoadCategory(pack, "templates", db.Report, templates);
+                LoadCategory(pack, "lines", db.Report, lines);
             }
 
             db.Rules = Deserialize<RulesDef>(rules, "rules.json", db.Report) ?? new RulesDef();
@@ -301,6 +305,8 @@ namespace LivingNPC.Content
             foreach (var kv in quests) { var d = Deserialize<QuestDef>(kv.Value.Obj, kv.Value.Source, db.Report); if (d != null) { d.Id = kv.Key; d.Source = kv.Value.Source; d.PackDir = kv.Value.PackDir; db.QuestList.Add(d); } }
             foreach (var kv in items) { var d = Deserialize<ItemDef>(kv.Value.Obj, kv.Value.Source, db.Report); if (d != null) { d.Id = kv.Key; d.Source = kv.Value.Source; db.ItemList.Add(d); db.Items[d.Id] = d; } }
             foreach (var kv in events) { var d = Deserialize<EventDef>(kv.Value.Obj, kv.Value.Source, db.Report); if (d != null) { d.Id = kv.Key; d.Source = kv.Value.Source; d.PackDir = kv.Value.PackDir; db.EventList.Add(d); } }
+            foreach (var kv in templates) { var d = Deserialize<TemplateDef>(kv.Value.Obj, kv.Value.Source, db.Report); if (d != null) { d.Id = kv.Key; d.Source = kv.Value.Source; d.PackDir = kv.Value.PackDir; db.TemplateList.Add(d); } }
+            foreach (var kv in lines) { var d = Deserialize<LinesDef>(kv.Value.Obj, kv.Value.Source, db.Report); if (d != null) { d.Id = kv.Key; d.Source = kv.Value.Source; db.LinesList.Add(d); } }
             return db;
         }
 
@@ -414,7 +420,7 @@ namespace LivingNPC.Content
 
         // ---------------------------------------------------------------- helpers
 
-        static readonly string[] s_MergeByIdArrays = { "stats", "activities", "dayParts" };
+        static readonly string[] s_MergeByIdArrays = { "stats", "activities", "dayParts", "goals" };
 
         static void MergeRules(JObject acc, JObject next)
         {

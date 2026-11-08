@@ -1,0 +1,20 @@
+{
+  "id": "smoke_hello",
+  "variants": [
+    {
+      "when": {
+        "type": "goal",
+        "npc": "self",
+        "goal": "trade"
+      },
+      "lines": [
+        "{self.first} ({self.age}) goes out to trade."
+      ]
+    },
+    {
+      "lines": [
+        "{self.first} goes out."
+      ]
+    }
+  ]
+}

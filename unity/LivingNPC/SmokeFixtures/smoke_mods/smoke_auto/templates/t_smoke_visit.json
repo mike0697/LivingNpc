@@ -1,0 +1,105 @@
+{
+  "id": "t_smoke_visit",
+  "title": "{self} visits {friend}",
+  "pauseDays": 1,
+  "weight": {
+    "base": 10,
+    "goals": {
+      "trade": 20
+    },
+    "relations": {
+      "friend": 0.5
+    }
+  },
+  "slots": [
+    {
+      "id": "friend",
+      "type": "npc",
+      "free": true,
+      "when": {
+        "type": "relation",
+        "from": "self",
+        "to": "it",
+        "op": ">=",
+        "value": 10
+      }
+    },
+    {
+      "id": "house",
+      "type": "place",
+      "of": "friend",
+      "place": "home"
+    }
+  ],
+  "texts": {
+    "talk": [
+      "{self.first} is busy: {friend.first} is waiting for {self:him|her}."
+    ],
+    "done": [
+      "{self.first} visited {friend.full}."
+    ]
+  },
+  "onComplete": [
+    {
+      "do": "setFlag",
+      "key": "smoke_visit_done",
+      "value": 1
+    },
+    {
+      "do": "tell",
+      "lines": "done",
+      "everywhere": true
+    }
+  ],
+  "stages": [
+    {
+      "id": "go",
+      "text": "{self} walks to {house}",
+      "onStart": [
+        {
+          "do": "tell",
+          "lines": "smoke_hello",
+          "everywhere": true
+        },
+        {
+          "do": "moveNpc",
+          "npc": "self",
+          "node": "house",
+          "forMinutes": 240
+        }
+      ],
+      "complete": {
+        "type": "npcAt",
+        "npc": "self",
+        "node": "house"
+      },
+      "fail": {
+        "type": "elapsed",
+        "hours": 6
+      }
+    },
+    {
+      "id": "stay",
+      "onStart": [
+        {
+          "do": "moveNpc",
+          "npc": "self",
+          "node": "house",
+          "forMinutes": 60
+        }
+      ],
+      "complete": {
+        "type": "elapsed",
+        "minutes": 30
+      },
+      "onComplete": [
+        {
+          "do": "modRelation",
+          "from": "friend",
+          "to": "self",
+          "delta": 7
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "tired",
+  "variants": [
+    "{self.first} sighs: nothing went in today.",
+    "{self.first} falls asleep on the book."
+  ]
+}

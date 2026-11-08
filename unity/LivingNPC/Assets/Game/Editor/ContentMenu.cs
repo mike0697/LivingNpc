@@ -196,7 +196,7 @@ namespace LivingNPC.EditorTools
 
                     // 3. a hand-written save: the layout the sections read (and an example of it)
                     Fresh();
-                    const string svHand = "{\"format\":\"livingnpc-save\",\"version\":2,\"sections\":{\"clock\":{\"now\":4000},\"flags\":{\"smoke_old\":2},"
+                    const string svHand = "{\"format\":\"livingnpc-save\",\"version\":3,\"sections\":{\"clock\":{\"now\":4000},\"flags\":{\"smoke_old\":2},"
                         + "\"quests\":{\"q_lost_notebook\":{\"status\":\"active\",\"stage\":\"return\",\"startedAt\":3800,\"stageAt\":3900}},"
                         + "\"messages\":[{\"at\":3900,\"kind\":\"questUpdated\",\"text\":\"quest:q_lost_notebook:stage:return\"}],"
                         + "\"player\":{\"node\":\"square_fountain\",\"items\":{\"bread\":7}}}}";
@@ -531,6 +531,88 @@ namespace LivingNPC.EditorTools
                     var talkState = em.GetComponentData<WorldState>(h.World);
                     sb.AppendLine($"talking: dialog {talkState.DialogOpen}, speaker {Ids.Name(talkState.DialogNpc)}, map pictures {npcLayer.childCount}, talk pictures {portrait.childCount} (expected 1, smoke_npc, 0, 1)");
                     if (talkState.DialogOpen != 1 || npcLayer.childCount != 0 || portrait.childCount != 1) exit = 10;
+                }
+
+                // automatic quests: runs only when the test template exists (LIVINGNPC_MODS with the pack smoke_auto: bruno and sira with
+                // first name, age, sex, relations; t_smoke_visit = bruno visits a friend at home; t_smoke_luck = chance(50); t_smoke_never = a when that never holds)
+                int visitT = db.TemplateList.FindIndex(t => t.Id == "t_smoke_visit");
+                if (visitT >= 0)
+                {
+                    void Check(string label, bool ok) { sb.AppendLine($"auto {label}: {(ok ? "ok" : "FAILED")}"); if (!ok) exit = 23; }
+                    int luckT = db.TemplateList.FindIndex(t => t.Id == "t_smoke_luck"), neverT = db.TemplateList.FindIndex(t => t.Id == "t_smoke_never");
+                    int bruno = Ids.Hash("bruno"), sira = Ids.Hash("sira");
+                    var art = RuleRuntime.Create(em, h.World, h.Player);
+                    NpcAuto Auto(int id) => em.GetComponentData<NpcAuto>(art.FindNpc(id));
+                    NpcMemory LastMemory(int id) { var m = em.GetBuffer<NpcMemory>(art.FindNpc(id)); return m.Length > 0 ? m[m.Length - 1] : default; }
+                    int Now() => em.GetComponentData<ClockState>(h.World).Now;
+                    void Wait(int minutes) { while (minutes > 0) { int step = System.Math.Min(minutes, GameTime.MinutesPerDay); Cmd(CommandType.Wait, step); Pump(); minutes -= step; } }
+                    bool Said(int npc, string part)
+                    {
+                        foreach (var m in em.GetBuffer<GameMessage>(h.World))
+                        {
+                            if (m.Kind != MsgKind.Npc || m.Arg != npc) continue;
+                            string text = compiled.Format(TextTable.Get(m.TextId), m.Arg, m.Bind);
+                            if (text.Contains(part) && !text.Contains("{")) return true;
+                        }
+                        return false;
+                    }
+
+                    var cb = compiled.Npcs.Find(n => n.Id == bruno);
+                    Check("who they are", TextTable.Get(cb.FirstNameText) == "Bruno" && TextTable.Get(cb.LastNameText) == "Ferri" && cb.Age == 45 && cb.Sex == 1);
+                    string formatted = compiled.Format("{npc.full}, {npc.age}, {npc:he|she}, {npc.first}", sira);
+                    Check($"placeholders ({formatted})", formatted == "Sira Vale, 30, she, Sira");
+                    Check("starting relations", art.GetRelation(bruno, sira) == 20 && art.GetRelation(sira, bruno) == 5);
+                    Check("off until turned on", Auto(bruno).Enabled == 0 && Auto(bruno).Template == 0);
+                    Check("a when that does not hold keeps a template out", neverT < 0 || art.TryTemplateSeeded(art.FindNpc(bruno), bruno, neverT, 7u, true, out _, out _, out _) == AutoPick.When);
+
+                    em.SetComponentData(h.Player, new PlayerState { Node = Ids.Hash("square_fountain"), Arrived = 1 }); Pump();
+                    art.ApplyOne(new FxNode { Type = FxType.SetAutoQuests, A = bruno, B = 1 });
+                    Wait(31);
+                    var a = Auto(bruno);
+                    Check("picks the visit at the next check", a.Template == visitT + 1 && a.Bind.Length == 3 && a.Bind[0] == bruno && a.Bind[1] == sira && a.Bind[2] == Ids.Hash("potion_store"));
+                    Check("talking to it while busy gives its talk line", art.TalkAuto(bruno) && Said(bruno, "Sira"));
+
+                    // a save while it runs, loaded in a new world: the instance comes back as it was
+                    var autoSave = SaveGame.Capture(new SaveContext(em, h.World, h.Player, compiled));
+                    Check("saved with its template", (string)autoSave["sections"]["npcs"]["bruno"]["auto"]?["template"] == "t_smoke_visit");
+                    em.DestroyEntity(em.UniversalQuery);
+                    h = WorldBuilder.Build(em, compiled);
+                    var autoCtx = new SaveContext(em, h.World, h.Player, compiled);
+                    SaveGame.Apply(autoCtx, autoSave);
+                    foreach (var w in autoCtx.Warnings) sb.AppendLine("   warning: " + w);
+                    art = RuleRuntime.Create(em, h.World, h.Player);
+                    rt = art;
+                    view.Bind(em, h.World, h.Player, db, compiled);
+                    var restored = Auto(bruno);
+                    Check("restored after loading", restored.Template == a.Template && restored.Stage == a.Stage && restored.Seed == a.Seed && restored.Enabled == 1
+                        && restored.Bind.Length == 3 && restored.Bind[1] == sira && restored.StartedAt == a.StartedAt);
+
+                    Wait(8 * 60);
+                    a = Auto(bruno);
+                    var last = LastMemory(bruno);
+                    Check("completed and remembered", a.Template == 0 && last.Template == Ids.Hash("t_smoke_visit") && last.Outcome == (byte)QuestStatus.Completed && last.Other == sira);
+                    Check("its effects ran with self and the slots", art.GetRelation(sira, bruno) == 12 && art.GetFlag(Ids.Hash("smoke_visit_done")) == 1);
+                    Check("said its line with the names", Said(bruno, "Bruno visited Sira Vale"));
+                    Check("rests after it", a.NextAt > Now());
+                    int q = db.QuestList.FindIndex(x => x.Id == "q_smoke_auto");
+                    Check("did / relation conditions start a quest", q < 0 || em.GetBuffer<QuestState>(h.World)[q].Status != (byte)QuestStatus.NotStarted);
+
+                    if (luckT >= 0)
+                    {
+                        art.ApplyOne(new FxNode { Type = FxType.StartAuto, A = sira, B = luckT });
+                        var la = Auto(sira);
+                        Check("startAuto starts it even with automatic quests off", la.Template == luckT + 1);
+                        int roll = la.Roll;
+                        Wait(10);
+                        var lm = LastMemory(sira);
+                        byte want = roll < 50 ? (byte)QuestStatus.Completed : (byte)QuestStatus.Failed;
+                        Check($"chance(50) follows the roll of the stage ({roll})", Auto(sira).Template == 0 && lm.Template == Ids.Hash("t_smoke_luck") && lm.Outcome == want);
+                        art.ApplyOne(new FxNode { Type = FxType.StartAuto, A = sira, B = luckT });
+                        art.ApplyOne(new FxNode { Type = FxType.StopAuto, A = sira });
+                        Check("stopAuto ends it as stopped", Auto(sira).Template == 0 && LastMemory(sira).Outcome == RuleRuntime.AutoStopped);
+                    }
+                    art.ApplyOne(new FxNode { Type = FxType.SetAutoQuests, A = bruno, B = 0 });
+                    Pump(); view.Tick();
                 }
 
                 view.Audio.Dispose();

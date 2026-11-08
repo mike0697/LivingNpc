@@ -13,6 +13,7 @@ the [JSON reference](JSON_REFERENCE.md) describe the same things from two sides.
 - [How a script is written](#how-a-script-is-written)
 - [Quests](#quests)
 - [Messages (events)](#messages-events)
+- [Automatic quests (template) and shared lines](#automatic-quests-template-and-shared-lines)
 - [Dialogue lines](#dialogue-lines)
 - [Control flow: if, elif, else, choice](#control-flow-if-elif-else-choice)
 - [Game commands (effects)](#game-commands-effects)
@@ -128,12 +129,95 @@ quest q_lost_notebook:
 | In a stage | Kind | Meaning |
 |---|---|---|
 | `text` | property | Journal text while this stage is active. |
+| `onStart:` | game commands | Run when the stage begins. |
 | `complete:`, `fail:` | conditions | When the stage is completed / failed. |
 | `onComplete:`, `onFail:` | game commands | Run when the stage is completed / failed. |
 | `next` | property | Id of the next stage, or `end`. Omitted = the next stage in the list. |
 
 Only **game commands** (see below) can go in `onStart`, `onComplete` and `onFail`: dialogue lines, choices and `if`
 belong to messages.
+
+## Automatic quests (template) and shared lines
+
+A `template` is a quest the **characters pick and do by themselves**: every character with *Automatic quests* on (in
+the Characters tab, `"autoQuests": true`) that is free looks at the templates it can do, fills their **slots** and
+picks one at random, weighted by `weight`. The file goes to `templates/<id>.json`.
+
+```python
+template t_bring_bread:
+    title = "{self} brings bread to {friend}"
+    pauseDays = 1                        # optional: days before the next one (rules.json autoQuests.pauseDays)
+    when:                                # optional: who can pick it
+        hasItem(bread, target=self)
+    weight:                              # optional: the score (base 10)
+        base = 5
+        stats = {"happiness": 0.2}       # + stat of self × number
+        goals = {"help": 30}             # + number, when self has that goal
+        relations = {"friend": 0.5}      # + relation of self towards the slot × number
+    slot friend:                         # filled when it is picked
+        type = npc                       # npc | place | node | item
+        free = true                      # npc: not busy with an automatic quest
+        when:                            # it = the candidate
+            relation(self, it, ">=", 10)
+    slot house:
+        type = place
+        of = friend                      # a named place of a character (default self)
+        place = home
+    texts:
+        intro:
+            variant if relation(self, friend, ">=", 30):
+                "Off to {friend.first}, with a warm loaf!"
+            variant:
+                "Maybe {friend} would like some bread."
+        talk:                            # said when the player talks to them meanwhile
+            "Not now: {friend} is waiting for me in {friend:his|her} room."
+    onStart:
+        tell(intro)
+    onComplete:
+        modRelation(friend, self, 10)
+
+    stage go:
+        text = "{self} walks to {house}"
+        onStart:
+            moveNpc(self, house, forMinutes=180)
+        complete:
+            npcAt(self, house)
+        fail:
+            elapsed(hours=3)
+
+    stage give:
+        complete:
+            elapsed(minutes=30)
+            chance(80)
+        onComplete:
+            giveItem(bread, target=friend)
+```
+
+| In a template | Kind | Meaning |
+|---|---|---|
+| `title`, `pauseDays` | properties | Name in the debug panel; days of rest after it. |
+| `when:` | conditions | Who can pick it. |
+| `weight:` | properties | `base`, `stats`, `goals`, `relations` (see above). A score of 0 or less is never picked. |
+| `slot <name>:` | block | `type`, `free`, `of`, `place`, `nodes = [...]`, `items = [...]` and a `when:` with `it`. At most 6. |
+| `texts:` | groups | `name:` with lines, or `variant if <condition>:` / `variant:` blocks with lines. |
+| `onStart:`, `onComplete:`, `onFail:` | game commands | When it starts, is completed, fails. |
+| `stage <id>:` | block | As in a quest. |
+
+Inside a template **`self`** (the character doing it) and **the slot names** can be written wherever a character, a
+place or an item goes. The texts say `{self}`, `{friend}`, `{friend.first}`, `{friend.last}`, `{friend.full}`,
+`{friend.age}` and `{friend:him|her|them}` (a word for a male, a female, another character). `elapsed(...)` without a
+quest counts from the template's stage; `chance(70)` holds for 70% of the times, decided when the stage begins.
+
+**Shared lines** (`lines/<id>.json`) are groups of lines every template can say with `tell(<id>)`; in them `self` is
+who speaks:
+
+```python
+lines tired:
+    variant if stat(energy, "<", 20, target=self):
+        "{self.first} yawns."
+    variant:
+        "{self.first} stretches."
+```
 
 ## Messages (events)
 
@@ -294,6 +378,21 @@ removeRoutine(anselmo, church_service)
 
 Routine changes last for the rest of the game and are kept in the saves.
 
+| Command | Does |
+|---|---|
+| `modRelation(from, to, delta)` | Changes what `from` thinks of `to` (characters or `player`), from -100 to 100. |
+| `setRelation(from, to, value)` | Sets it. |
+
+### Automatic quests
+
+| Command | Does |
+|---|---|
+| `tell(lines, npc=, everywhere=)` | A line of a text group (of the template, or a file of `lines/`) in the log, said by `npc` (in a template: by `self`). Only when the player is there, unless `everywhere=true`. |
+| `setGoal(npc, goal)` | Changes the goal of a character (`goal` omitted or `none` = no goal). |
+| `setAutoQuests(npc, on)` | Turns the automatic quests of a character on or off (`on` omitted = true). The running one finishes. |
+| `startAuto(npc, template)` | The character starts that template now, if it is free and its slots can be filled. |
+| `stopAuto(npc)` | The character drops its automatic quest, with no effects. |
+
 ## Dialogue-only commands
 
 These only work inside a message, while its dialogue is open.
@@ -338,6 +437,12 @@ On one line the same groups are written `all(a, b)`, `any(a, b)` and `not(a)`.
 | `day(days)` | the day of the week is one of `days`: `["mon","tue"]`, `"weekdays"`, `"weekend"`, `"all"`. |
 | `date(fromDay=, toDay=)` | the game day is between the two (0 = the first day, both included). |
 | `after(day, time)` | from that moment of the calendar on (day 0 = the first day; time omitted = 00:00). |
+| `relation(from, to, op, value)` | what `from` thinks of `to` compares (characters or `player`). |
+| `goal(npc, goal)` | the character has that goal (omitted = any goal). |
+| `age(npc, op, value)` / `sex(npc, sex)` | age and sex (`m`, `f`, `x`) of a character. |
+| `doing(npc, template, stage)` | the character is doing an automatic quest (that one, at that stage; both optional). |
+| `did(npc, template, status, days=)` | it finished one: `completed`, `failed`, `stopped` (optional), in the last `days` (omitted = ever). |
+| `chance(percent)` | only in the stages of a template: true for that percent of the times, decided when the stage begins. |
 
 `op` is one of `>=`, `>`, `==`, `!=`, `<`, `<=` and is written in quotes: `flag(gold_given, "==", 0)`.
 

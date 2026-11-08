@@ -75,6 +75,44 @@ namespace LivingNPC.Simulation
         }
 
         /// <summary>What the owner holds, item id -> count.</summary>
+        /// <summary>What the owner thinks of the others: {"npc_id": 20, "player": -5}.</summary>
+        public static JObject Relations(SaveContext c, Entity owner)
+        {
+            var items = new SortedDictionary<string, JToken>(StringComparer.Ordinal);
+            if (c.Em.HasBuffer<RelationValue>(owner))
+                foreach (var r in c.Em.GetBuffer<RelationValue>(owner, true)) items[r.Other == 0 ? "player" : SaveIds.Name(r.Other)] = r.Value;
+            return Sorted(items);
+        }
+
+        /// <summary>Replaces the relations of the owner; one with a character that no longer exists is skipped.</summary>
+        public static void ApplyRelations(SaveContext c, Entity owner, JToken data, string who)
+        {
+            if (!c.Em.HasBuffer<RelationValue>(owner)) return;
+            var buf = c.Em.GetBuffer<RelationValue>(owner);
+            buf.Clear();
+            foreach (var p in Obj(data).Properties())
+            {
+                int other = p.Name == "player" ? 0 : SaveIds.Id(p.Name);
+                if (other != 0 && c.Rt.FindNpc(other) == Entity.Null) { c.Warn($"{who}: relation with '{p.Name}', who no longer exists: skipped"); continue; }
+                buf.Add(new RelationValue { Other = other, Value = p.Value.Value<float>() });
+            }
+        }
+
+        /// <summary>A list of ids (characters, places, items) by name.</summary>
+        public static JArray Names(in Unity.Collections.FixedList32Bytes<int> ids)
+        {
+            var arr = new JArray();
+            for (int i = 0; i < ids.Length; i++) arr.Add(SaveIds.Name(ids[i]));
+            return arr;
+        }
+
+        public static Unity.Collections.FixedList32Bytes<int> Ids32(JToken data)
+        {
+            var list = new Unity.Collections.FixedList32Bytes<int>();
+            foreach (var v in Arr(data)) if (list.Length < list.Capacity) list.Add(SaveIds.Id(v.Value<string>()));
+            return list;
+        }
+
         public static JObject Items(SaveContext c, Entity owner)
         {
             var items = new SortedDictionary<string, JToken>(StringComparer.Ordinal);
@@ -415,6 +453,7 @@ namespace LivingNPC.Simulation
             {
                 var o = new JObject { ["at"] = m.At, ["kind"] = SaveJson.Camel(m.Kind.ToString()), ["text"] = TextKey(m.TextId) };
                 if (m.Arg != 0) o["npc"] = SaveIds.Name(m.Arg);     // Arg is the npc that {npc} in the text stands for
+                if (m.Bind.Length > 0) o["bind"] = SaveJson.Names(m.Bind);      // what {self} and the slots of an automatic quest stand for
                 arr.Add(o);
             }
             return arr;
@@ -430,7 +469,7 @@ namespace LivingNPC.Simulation
                 int text = TextId(SaveJson.Str(m, "text"));
                 if (text != 0 && string.IsNullOrEmpty(TextTable.Get(text))) { dropped++; continue; }
                 Enum.TryParse<MsgKind>(SaveJson.Str(m, "kind"), true, out var kind);
-                buf.Add(new GameMessage { TextId = text, Kind = kind, At = SaveJson.Int(m, "at"), Arg = SaveIds.Id(SaveJson.Str(m, "npc")) });
+                buf.Add(new GameMessage { TextId = text, Kind = kind, At = SaveJson.Int(m, "at"), Arg = SaveIds.Id(SaveJson.Str(m, "npc")), Bind = SaveJson.Ids32(m["bind"]) });
             }
             if (dropped > 0) c.Warn($"log: {dropped} message(s) with a text that no longer exists");
         }
@@ -450,6 +489,7 @@ namespace LivingNPC.Simulation
                 ["node"] = SaveIds.Name(p.Node != 0 ? p.Node : p.PendingNode),
                 ["stats"] = SaveJson.Stats(c, c.Player),
                 ["items"] = SaveJson.Items(c, c.Player),        // always written: an empty inventory is not the starting one
+                ["relations"] = SaveJson.Relations(c, c.Player),
             };
         }
 
@@ -463,6 +503,7 @@ namespace LivingNPC.Simulation
             c.Em.SetComponentData(c.Player, p);
             SaveJson.ApplyStats(c, c.Player, data?["stats"]);
             if (data?["items"] is JObject items) SaveJson.ApplyItems(c, c.Player, items);
+            if (data?["relations"] is JObject relations) SaveJson.ApplyRelations(c, c.Player, relations, "player");
         }
     }
 
@@ -498,6 +539,7 @@ namespace LivingNPC.Simulation
                 o["stats"] = SaveJson.Stats(c, r.Entity);
                 content.TryGetValue(r.Id, out var cn);
                 CaptureContentChanges(c, r.Entity, cn, o);
+                CaptureAuto(c, r.Entity, cn, o);
                 items[SaveIds.Name(r.Id)] = o;
             }
             return SaveJson.Sorted(items);
@@ -529,6 +571,92 @@ namespace LivingNPC.Simulation
                     ["activity"] = SaveIds.Name(b.Activity), ["priority"] = (int)b.Priority, ["tag"] = SaveIds.Name(b.Tag),
                 });
             o["routine"] = arr;
+        }
+
+        /// <summary>
+        /// The automatic quests of the npc: "relations" (always), "memory" (when it has any) and "auto": what differs from the
+        /// content (enabled, goal), the pause ("nextAt") and the running quest ("template", "stage", "bind"...).
+        /// </summary>
+        static void CaptureAuto(SaveContext c, Entity npc, CompiledNpc content, JObject o)
+        {
+            o["relations"] = SaveJson.Relations(c, npc);
+            if (c.Em.HasBuffer<NpcMemory>(npc))
+            {
+                var mem = new JArray();
+                foreach (var m in c.Em.GetBuffer<NpcMemory>(npc, true))
+                {
+                    var mo = new JObject { ["template"] = SaveIds.Name(m.Template), ["outcome"] = m.Outcome, ["at"] = m.At };
+                    if (m.Other != 0) mo["other"] = SaveIds.Name(m.Other);
+                    mem.Add(mo);
+                }
+                if (mem.Count > 0) o["memory"] = mem;
+            }
+            if (!c.Em.HasComponent<NpcAuto>(npc)) return;
+            var a = c.Em.GetComponentData<NpcAuto>(npc);
+            var ao = new JObject();
+            if (content == null || (a.Enabled != 0) != content.AutoQuests) ao["enabled"] = a.Enabled != 0;
+            if (content == null || a.Goal != content.Goal) ao["goal"] = SaveIds.Name(a.Goal);
+            if (a.NextAt != 0) ao["nextAt"] = a.NextAt;
+            ref var rules = ref c.Rt.Rules.Value;
+            if (a.Template > 0 && a.Template <= rules.Templates.Length)
+            {
+                var t = rules.Templates[a.Template - 1];
+                ao["template"] = SaveIds.Name(t.Id);
+                if (a.Stage < t.StageCount) ao["stage"] = SaveIds.Name(rules.Stages[t.StageStart + a.Stage].Id);
+                ao["stageAt"] = a.StageAt;
+                ao["startedAt"] = a.StartedAt;
+                ao["roll"] = a.Roll;
+                ao["seed"] = a.Seed;
+                ao["bind"] = SaveJson.Names(a.Bind);
+            }
+            if (ao.Count > 0) o["auto"] = ao;
+        }
+
+        static void ApplyAuto(SaveContext c, Entity npc, string name, JToken o)
+        {
+            if (o["relations"] is JObject relations) SaveJson.ApplyRelations(c, npc, relations, $"character '{name}'");
+            if (c.Em.HasBuffer<NpcMemory>(npc) && o["memory"] is JArray memory)
+            {
+                var mem = c.Em.GetBuffer<NpcMemory>(npc);
+                mem.Clear();
+                foreach (var m in memory)
+                    mem.Add(new NpcMemory { Template = SaveIds.Id(SaveJson.Str(m, "template")), Outcome = (byte)SaveJson.Int(m, "outcome"), At = SaveJson.Int(m, "at"), Other = SaveIds.Id(SaveJson.Str(m, "other")) });
+            }
+            if (!c.Em.HasComponent<NpcAuto>(npc) || !(o["auto"] is JObject ao)) return;
+            var a = c.Em.GetComponentData<NpcAuto>(npc);
+            if (ao["enabled"] is JValue en) a.Enabled = (byte)((bool)en ? 1 : 0);
+            if (ao["goal"] != null)
+            {
+                string goal = SaveJson.Str(ao, "goal");
+                a.Goal = string.IsNullOrEmpty(goal) ? 0 : SaveIds.Id(goal);
+                if (a.Goal != 0 && !c.Content.GoalNames.ContainsKey(a.Goal)) { c.Warn($"character '{name}': goal '{goal}' no longer exists"); a.Goal = 0; }
+            }
+            a.NextAt = SaveJson.Int(ao, "nextAt");
+            string template = SaveJson.Str(ao, "template");
+            if (!string.IsNullOrEmpty(template))
+            {
+                ref var rules = ref c.Rt.Rules.Value;
+                int ti = -1, tid = SaveIds.Id(template);
+                for (int i = 0; i < rules.Templates.Length; i++) if (rules.Templates[i].Id == tid) { ti = i; break; }
+                if (ti < 0) c.Warn($"character '{name}': automatic quest '{template}' no longer exists: dropped");
+                else
+                {
+                    var t = rules.Templates[ti];
+                    string stageName = SaveJson.Str(ao, "stage");
+                    int stage = -1;
+                    for (int s = 0; s < t.StageCount; s++) if (SaveIds.Name(rules.Stages[t.StageStart + s].Id) == stageName) { stage = s; break; }
+                    var bind = SaveJson.Ids32(ao["bind"]);
+                    if (stage < 0) c.Warn($"character '{name}': automatic quest '{template}': stage '{stageName}' no longer exists: dropped");
+                    else if (bind.Length != t.SlotCount + 1) c.Warn($"character '{name}': automatic quest '{template}': its slots changed: dropped");
+                    else
+                    {
+                        a.Template = ti + 1; a.Stage = stage; a.Bind = bind;
+                        a.StageAt = SaveJson.Int(ao, "stageAt"); a.StartedAt = SaveJson.Int(ao, "startedAt");
+                        a.Roll = SaveJson.Int(ao, "roll"); a.Seed = ao["seed"]?.Value<uint>() ?? 1u;
+                    }
+                }
+            }
+            c.Em.SetComponentData(npc, a);
         }
 
         /// <summary>Same items and counts, in any order (both hold one entry per item).</summary>
@@ -600,6 +728,7 @@ namespace LivingNPC.Simulation
                 var o = p.Value;
                 ApplyContentChanges(c, e, p.Name, o);
                 SaveJson.ApplyStats(c, e, o["stats"]);
+                ApplyAuto(c, e, p.Name, o);
                 int node = SaveJson.KnownNode(c, SaveJson.Str(o, "node"));
                 int next = SaveJson.KnownNode(c, SaveJson.Str(o, "next"));
                 if (node == 0 && next == 0) continue;        // not placeable (a map was removed): resolved from the routine below

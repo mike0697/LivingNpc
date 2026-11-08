@@ -17,7 +17,9 @@ and open http://127.0.0.1:5180 (Node.js 20 or newer; no `npm install` needed). T
 
 ## How to use it
 
-- On the left: the **quests** (with their messages, in `events/<quest id>/`) and the stand-alone **messages**.
+- On the left: the **quests** (with their messages, in `events/<quest id>/`), the **automatic quests** (the
+  templates the characters pick by themselves, `templates/`, and the shared lines, `lines/`) and the stand-alone
+  **messages**.
 - In the middle: the code. While you type, errors and warnings (for example a character that does not exist) appear
   below with their line number; the “JSON to be saved” tab shows the files.
 - On the right: the buttons. Put the cursor where you want the command and press a button: fill in the form and the

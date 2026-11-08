@@ -1,0 +1,10 @@
+{
+  "id": "smoke_auto",
+  "name": "Smoke test: automatic quests",
+  "author": "test",
+  "version": "1.0",
+  "priority": 100,
+  "dependsOn": [
+    "base"
+  ]
+}

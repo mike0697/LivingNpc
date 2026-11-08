@@ -68,8 +68,11 @@ namespace LivingNPC.Simulation
     public static class SaveGame
     {
         public const string FormatName = "livingnpc-save";
-        /// <summary>2: sections without their own version, items with their owner, links and message keys by id.</summary>
-        public const int FormatVersion = 2;
+        /// <summary>
+        /// 2: sections without their own version, items with their owner, links and message keys by id.
+        /// 3: automatic quests, relations and memory of the npcs, relations of the player, the values of a log line ("bind").
+        /// </summary>
+        public const int FormatVersion = 3;
         public const string QuickSlot = "quick", AutoSlot = "auto";
 
         /// <summary>Applied in this order: later sections may rely on earlier ones (npcs need the clock).</summary>

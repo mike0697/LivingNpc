@@ -1,6 +1,10 @@
 {
   "id": "elena",
   "name": "Elena",
+  "firstName": "Elena",
+  "lastName": "Marlowe",
+  "age": 41,
+  "sex": "f",
   "places": {
     "home": "stanza_da_letto_npc_1"
   },
@@ -32,5 +36,14 @@
       "width": 30
     }
   },
-  "description": "Potions teacher"
+  "description": "Potions teacher",
+  "autoQuests": true,
+  "goal": "help",
+  "relations": {
+    "student_1": 25,
+    "player": 10
+  },
+  "inventory": {
+    "bread": 3
+  }
 }

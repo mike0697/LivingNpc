@@ -457,6 +457,91 @@ namespace LivingNPC.Presentation
 
             BuildStats(b, e, id);
             BuildInventory(b, e, id);
+            BuildAuto(b, n, e, id, clock);
+        }
+
+        /// <summary>Who the npc is, its relations, and its automatic quests: the one it runs (branch by branch), the templates it could pick now, what it did.</summary>
+        void BuildAuto(Page b, CompiledNpc n, Entity e, string id, ClockState clock)
+        {
+            int now = clock.Now;
+            ref var rules = ref _compiled.Rules.Value;
+            var rt = RuleRuntime.Create(_em, _world, _player);
+
+            b.Heading("Who they are");
+            string first = TextTable.Get(n.FirstNameText), last = TextTable.Get(n.LastNameText);
+            b.Line($"First name: {(first.Length > 0 ? Esc(first) : $"<color={Grey}>-</color>")}   Last name: {(last.Length > 0 ? Esc(last) : $"<color={Grey}>-</color>")}");
+            b.Line($"Age: {(n.Age > 0 ? n.Age.ToString() : $"<color={Grey}>-</color>")}   Sex: {SexName(n.Sex)}");
+
+            b.Heading("Relations");
+            var rel = _em.GetBuffer<RelationValue>(e, true);
+            if (rel.Length == 0) b.Line($"<color={Grey}>none: 0 with everybody</color>");
+            for (int i = 0; i < rel.Length; i++)
+            {
+                string other = rel[i].Other == 0 ? "player" : Ids.Name(rel[i].Other);
+                b.Row($"{WhoName(rel[i].Other)}: <b>{rel[i].Value:0.##}</b>", ("-10", $"modRelation({id}, {other}, -10)"), ("+10", $"modRelation({id}, {other}, 10)"));
+            }
+
+            var a = _em.GetComponentData<NpcAuto>(e);
+            b.Heading("Automatic quests");
+            b.Row($"Picks them by itself: {(a.Enabled != 0 ? "yes" : "no")}", a.Enabled != 0 ? ("Turn off", $"setAutoQuests({id}, false)") : ("Turn on", $"setAutoQuests({id}, true)"));
+            b.Line($"Goal: {(a.Goal != 0 ? GoalName(a.Goal) : $"<color={Grey}>none</color>")}");
+            if (a.Template > 0 && a.Template <= rules.Templates.Length)
+            {
+                var t = rules.Templates[a.Template - 1];
+                var sr = rules.Stages[t.StageStart + a.Stage];
+                b.Row($"Doing: <b>{Esc(_compiled.Format(TextTable.Get(t.TitleText), n.Id, a.Bind))}</b>  <color={Grey}>{Esc(Ids.Name(t.Id))}</color>", ("Stop", $"stopAuto({id})"));
+                b.Line($"Stage <b>{Esc(Ids.Name(sr.Id))}</b> ({a.Stage + 1} of {t.StageCount}) for {Duration(now - a.StageAt)}; started {Duration(now - a.StartedAt)} ago; roll {a.Roll}");
+                for (int k = 1; k < a.Bind.Length; k++)
+                {
+                    var slot = rules.Slots[t.SlotStart + k - 1];
+                    b.Line($"   {Esc(Ids.Name(slot.Id))} = {Esc(_compiled.NameOf(a.Bind[k]))}  <color={Grey}>({Esc(Ids.Name(a.Bind[k]))})</color>");
+                }
+                string text = _compiled.Format(TextTable.Get(sr.TextId), n.Id, a.Bind);
+                if (text.Length > 0) b.Line($"<color={Grey}>{Esc(text)}</color>");
+                var saved = rt.Enter(a);
+                if (sr.CompleteCond >= 0) Condition(b, rt, "Next stage when", sr.CompleteCond, false);
+                if (sr.FailCond >= 0) Condition(b, rt, "Fails when", sr.FailCond, true);
+                rt.RestoreCtx(saved);
+            }
+            else
+            {
+                int check = Math.Max(1, rules.AutoCheckMinutes);
+                string pause = a.NextAt > now ? $"pause until {When(a.NextAt, now)}" : "no pause";
+                b.Line($"Doing: <color={Grey}>nothing</color>  <color={Grey}>({pause}; free npcs look for one every {Duration(check)}; running now {rt.ActiveAutoCount()} of at most {rules.AutoMaxActive})</color>");
+            }
+
+            if (rules.Templates.Length > 0)
+            {
+                b.Line();
+                b.Line($"<color={Grey}>Templates now (slots drawn at random for this check; Start skips when and score):</color>");
+                var rng = new Unity.Mathematics.Random((uint)(now * 31 + n.Id) | 1u);
+                for (int ti = 0; ti < rules.Templates.Length; ti++)
+                {
+                    var t = rules.Templates[ti];
+                    var pick = rt.TryTemplate(e, n.Id, ti, ref rng, true, out var bind, out float score, out int failed);
+                    string why;
+                    switch (pick)
+                    {
+                        case AutoPick.Ok: why = $"<color={Green}>can pick it</color>, score {score:0.##}"; break;
+                        case AutoPick.NoStages: why = $"<color={Red}>no stages</color>"; break;
+                        case AutoPick.When: why = $"<color={Red}>its when does not hold</color>"; break;
+                        case AutoPick.Slot: why = $"<color={Red}>nobody / nothing fits slot {Esc(Ids.Name(rules.Slots[t.SlotStart + failed].Id))}</color>"; break;
+                        default: why = $"<color={Red}>score {score:0.##}</color> (0 or less is never picked)"; break;
+                    }
+                    string tid = Ids.Name(t.Id);
+                    if (a.Template == 0) b.Row($"   {Esc(tid)}: {why}", ("Start", $"startAuto({id}, {tid})"));
+                    else b.Line($"   {Esc(tid)}: {why}");
+                }
+            }
+
+            var mem = _em.GetBuffer<NpcMemory>(e, true);
+            if (mem.Length > 0)
+            {
+                b.Line();
+                b.Line($"<color={Grey}>Done (last first):</color>");
+                for (int i = mem.Length - 1; i >= 0 && i >= mem.Length - 8; i--)
+                    b.Line($"   {When(mem[i].At, now)}  {Esc(Ids.Name(mem[i].Template))} {OutcomeName(mem[i].Outcome)}{(mem[i].Other != 0 ? $"  <color={Grey}>({Esc(_compiled.NameOf(mem[i].Other))})</color>" : "")}");
+            }
         }
 
         // ---- player
@@ -675,6 +760,7 @@ namespace LivingNPC.Presentation
         {
             string Now(string s) => $"  <color={Grey}>(now {s})</color>";
             int now = clock.Now;
+            int V(int x) => rt.R(x);       // "self" and the slots of an automatic quest: the values of the instance shown
             switch (c.Type)
             {
                 case CondType.Always: return "always";
@@ -685,19 +771,51 @@ namespace LivingNPC.Presentation
                 case CondType.PlayerAt:
                     {
                         var p = _em.GetComponentData<PlayerState>(_player);
-                        return $"player at {MapName(c.A)}{Now(p.Node != 0 ? Esc(MapTitle(p.Node)) : "travelling")}";
+                        return $"player at {MapName(V(c.A))}{Now(p.Node != 0 ? Esc(MapTitle(p.Node)) : "travelling")}";
                     }
-                case CondType.NpcAt: return $"{Esc(NpcName(c.A))} at {MapName(c.B)}{Now(NpcWhere(c.A))}";
-                case CondType.NpcWithPlayer: return $"{Esc(NpcName(c.A))} with the player{Now(NpcWhere(c.A))}";
+                case CondType.NpcAt: return $"{Esc(NpcName(V(c.A)))} at {MapName(V(c.B))}{Now(NpcWhere(V(c.A)))}";
+                case CondType.NpcWithPlayer: return $"{Esc(NpcName(V(c.A)))} with the player{Now(NpcWhere(V(c.A)))}";
                 case CondType.Activity:
                     {
-                        var e = FindNpc(c.A);
+                        var e = FindNpc(V(c.A));
                         int act = e == Entity.Null ? 0 : _em.GetComponentData<NpcLocation>(e).Activity;
-                        return $"{Esc(NpcName(c.A))} doing {ActivityName(c.B)}{Now(act != 0 ? ActivityName(act) : "nothing")}";
+                        return $"{Esc(NpcName(V(c.A)))} doing {ActivityName(c.B)}{Now(act != 0 ? ActivityName(act) : "nothing")}";
                     }
-                case CondType.Stat: return $"{WhoText(c.A)} {StatName(c.B)} {OpText(c.Op)} {c.F:0.##}{Now($"{rt.GetStat(c.A, c.B):0.##}")}";
+                case CondType.Stat: return $"{WhoText(V(c.A))} {StatName(c.B)} {OpText(c.Op)} {c.F:0.##}{Now($"{rt.GetStat(V(c.A), c.B):0.##}")}";
                 case CondType.Flag: return $"flag {Esc(Ids.Name(c.A))} {OpText(c.Op)} {c.F:0.##}{Now($"{rt.GetFlag(c.A):0.##}")}";
-                case CondType.HasItem: return $"{WhoText(c.A)} has {ItemName(c.B)} {OpText(c.Op)} {c.F:0}{Now(rt.GetItemCount(c.A, c.B).ToString())}";
+                case CondType.HasItem: return $"{WhoText(V(c.A))} has {ItemName(V(c.B))} {OpText(c.Op)} {c.F:0}{Now(rt.GetItemCount(V(c.A), V(c.B)).ToString())}";
+                case CondType.Relation: return $"{WhoText(V(c.A))} relation with {WhoName(V(c.B))} {OpText(c.Op)} {c.F:0.##}{Now($"{rt.GetRelation(V(c.A), V(c.B)):0.##}")}";
+                case CondType.Goal:
+                    {
+                        var a = AutoOf(V(c.A));
+                        return $"{Esc(NpcName(V(c.A)))} has the goal {(c.B == 0 ? "(any)" : GoalName(c.B))}{Now(a.Goal != 0 ? GoalName(a.Goal) : "none")}";
+                    }
+                case CondType.Age:
+                    {
+                        var e = FindNpc(V(c.A));
+                        int age = e != Entity.Null && _em.HasComponent<NpcInfo>(e) ? _em.GetComponentData<NpcInfo>(e).Age : 0;
+                        return $"{WhoText(V(c.A))} age {OpText(c.Op)} {c.F:0}{Now(age.ToString())}";
+                    }
+                case CondType.Sex:
+                    {
+                        var e = FindNpc(V(c.A));
+                        byte sex = e != Entity.Null && _em.HasComponent<NpcInfo>(e) ? _em.GetComponentData<NpcInfo>(e).Sex : (byte)0;
+                        return $"{Esc(NpcName(V(c.A)))} is {SexName((byte)c.B)}{Now(SexName(sex))}";
+                    }
+                case CondType.Chance: return $"chance {c.A}%{Now(rt.Bind.Length > 0 ? $"roll {rt.CtxRoll}" : "no automatic quest")}";
+                case CondType.Doing:
+                    {
+                        string what = c.B == 0 ? "an automatic quest" : Esc(Ids.Name(rules.Templates[c.B - 1].Id));
+                        string stage = c.C < 0 ? "" : $" at stage {Esc(Ids.Name(rules.Stages[rules.Templates[c.B - 1].StageStart + c.C].Id))}";
+                        return $"{Esc(NpcName(V(c.A)))} doing {what}{stage}{Now(AutoDoing(AutoOf(V(c.A)), ref rules))}";
+                    }
+                case CondType.Did:
+                    {
+                        string what = c.B == 0 ? "an automatic quest" : Esc(Ids.Name(rules.Templates[c.B - 1].Id));
+                        string how = c.C == 0 ? "" : " " + OutcomeName(c.C);
+                        string when = c.F > 0 ? $" in the last {c.F:0.#} days" : "";
+                        return $"{Esc(NpcName(V(c.A)))} did {what}{how}{when}";
+                    }
                 case CondType.Quest:
                     {
                         var q = rules.Quests[c.A];
@@ -710,6 +828,12 @@ namespace LivingNPC.Presentation
                     }
                 case CondType.Elapsed:
                     {
+                        if (c.A < 0)
+                        {
+                            string since0 = c.B == 1 ? "the automatic quest" : "the stage";
+                            string have0 = rt.Bind.Length > 0 ? Duration(now - (c.B == 1 ? rt.CtxStartedAt : rt.CtxStageAt)) : "no automatic quest";
+                            return $"{Duration(c.C)} since {since0} began{Now(have0)}";
+                        }
                         var q = rules.Quests[c.A];
                         var st = _em.GetBuffer<QuestState>(_world, true)[c.A];
                         string since = c.B == 1 ? "the quest" : "the stage";
@@ -729,6 +853,26 @@ namespace LivingNPC.Presentation
         }
 
         string WhoText(int target) => target == 0 ? "player's" : Esc(NpcName(target)) + "'s";
+        string WhoName(int target) => target == 0 ? "the player" : Esc(NpcName(target));
+
+        NpcAuto AutoOf(int npc)
+        {
+            var e = FindNpc(npc);
+            return e != Entity.Null && _em.HasComponent<NpcAuto>(e) ? _em.GetComponentData<NpcAuto>(e) : default;
+        }
+
+        string GoalName(int goal) => Esc(_compiled.GoalNames.TryGetValue(goal, out var n) ? n : Ids.Name(goal));
+
+        static string SexName(byte sex) => sex == 1 ? "male" : sex == 2 ? "female" : sex == 3 ? "other" : "not said";
+
+        static string OutcomeName(int outcome) => outcome == (int)QuestStatus.Completed ? "completed" : outcome == (int)QuestStatus.Failed ? "failed" : outcome == RuleRuntime.AutoStopped ? "stopped" : "?";
+
+        string AutoDoing(in NpcAuto a, ref RuleBlob rules)
+        {
+            if (a.Template <= 0 || a.Template > rules.Templates.Length) return "free";
+            var t = rules.Templates[a.Template - 1];
+            return $"{Esc(Ids.Name(t.Id))}, stage {Esc(Ids.Name(rules.Stages[t.StageStart + a.Stage].Id))}";
+        }
 
         static string OpText(CmpOp op)
         {

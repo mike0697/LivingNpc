@@ -1,0 +1,13 @@
+{
+  "goals": [
+    {
+      "id": "trade",
+      "name": "Trade"
+    }
+  ],
+  "autoQuests": {
+    "checkMinutes": 30,
+    "maxActive": 2,
+    "pauseDays": 0.5
+  }
+}

@@ -20,6 +20,8 @@ namespace LivingNPC.Content
         public readonly Dictionary<string, ScheduleDef> Schedules = new Dictionary<string, ScheduleDef>();
         public readonly List<QuestDef> QuestList = new List<QuestDef>();
         public readonly List<EventDef> EventList = new List<EventDef>();
+        public readonly List<TemplateDef> TemplateList = new List<TemplateDef>();
+        public readonly List<LinesDef> LinesList = new List<LinesDef>();
         public readonly List<ItemDef> ItemList = new List<ItemDef>();
         public readonly Dictionary<string, ItemDef> Items = new Dictionary<string, ItemDef>();
         public RulesDef Rules = new RulesDef();

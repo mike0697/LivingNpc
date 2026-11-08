@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 
 namespace LivingNPC.Simulation
@@ -5,7 +6,7 @@ namespace LivingNPC.Simulation
     // ------------------------------------------------------------------ enums (stored as bytes in components)
 
     public enum QuestStatus : byte { NotStarted = 0, Active = 1, Completed = 2, Failed = 3 }
-    public enum MsgKind : byte { Info = 0, Event = 1, QuestStarted = 2, QuestUpdated = 3, QuestCompleted = 4, QuestFailed = 5, Travel = 6, Talk = 7 }
+    public enum MsgKind : byte { Info = 0, Event = 1, QuestStarted = 2, QuestUpdated = 3, QuestCompleted = 4, QuestFailed = 5, Travel = 6, Talk = 7, Npc = 8 }
     public enum CommandType : byte { Travel = 1, Wait = 2, Choose = 3, Talk = 4, Advance = 5, Sleep = 6 }
 
     // ------------------------------------------------------------------ singleton entity: "the world"
@@ -25,6 +26,7 @@ namespace LivingNPC.Simulation
         public int DialogStep;      // absolute index into RuleBlob.Script of the line on screen, -1 before the first line
         public uint Version;        // bumped on every visible change; the UI polls this
         public byte DebugUsed;      // the debug console changed this game at least once (kept in the saves)
+        public int AutoCheck;       // the last check of the automatic quests (Now / AutoCheckMinutes); not saved
     }
 
     public struct ClockState : IComponentData
@@ -51,7 +53,11 @@ namespace LivingNPC.Simulation
     /// </summary>
     public struct QuestState : IBufferElementData { public byte Status; public int Stage; public int StageAt; public int StartedAt; }
     public struct EventState : IBufferElementData { public int Count; public int LastAt; }                      // index == EventRule index
-    public struct GameMessage : IBufferElementData { public int TextId; public MsgKind Kind; public int At; public int Arg; }
+    /// <summary>
+    /// A line of the log. Arg: the npc {npc} stands for. Bind: the characters, places and items of the automatic quest that
+    /// wrote it ([0] the npc itself, then its slots), which {self} and the slot names of its texts stand for.
+    /// </summary>
+    public struct GameMessage : IBufferElementData { public int TextId; public MsgKind Kind; public int At; public int Arg; public FixedList32Bytes<int> Bind; }
     public struct GameCommand : IBufferElementData { public CommandType Type; public int A; public int B; }
     public struct DialogChoice : IBufferElementData { public int ChoiceIndex; public int TextId; }
     /// <summary>An image a Show step of the open dialogue put on screen (Image: index into CompiledContent.Images). Cleared when the dialogue ends.</summary>
@@ -111,6 +117,35 @@ namespace LivingNPC.Simulation
         public int Place;
         public int Tag;
     }
+
+    /// <summary>Who the npc is: content data, not saved. Sex: 0 not said, 1 male, 2 female, 3 other.</summary>
+    public struct NpcInfo : IComponentData { public int Age; public byte Sex; }
+
+    /// <summary>
+    /// The automatic quests of an npc. Enabled: it picks templates by itself when free. Template: index + 1 of the template
+    /// it runs (0 = free), at stage Stage since StageAt; Roll (0-99) is drawn when a stage begins, for the chance condition.
+    /// NextAt: it does not pick another one before this minute. Bind: [0] the npc, then the values of the slots.
+    /// </summary>
+    public struct NpcAuto : IComponentData
+    {
+        public byte Enabled;
+        public int Goal;
+        public int Template;
+        public int Stage, StageAt, StartedAt;
+        public int Roll;
+        public int NextAt;
+        public uint Seed;
+        public FixedList32Bytes<int> Bind;
+    }
+
+    /// <summary>What the owner (an npc or the player) thinks of Other (an npc id, 0 = the player), from -100 to 100.</summary>
+    public struct RelationValue : IBufferElementData { public int Other; public float Value; }
+
+    /// <summary>
+    /// An automatic quest the npc finished (the last ones, oldest first). Outcome: 2 completed, 3 failed, 4 stopped. Other:
+    /// the value of its first slot.
+    /// </summary>
+    public struct NpcMemory : IBufferElementData { public int Template; public byte Outcome; public int At; public int Other; }
 
     /// <summary>A named place of an npc ("home", "work"...): hashed name -> node id. Changed at runtime by the setPlace effect.</summary>
     public struct NpcPlace : IBufferElementData { public int Key; public int Node; }

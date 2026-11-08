@@ -62,7 +62,8 @@ function renderDocs() {
   list.innerHTML = '';
   const docs = [...state.docs];
   if (state.doc?.unsaved) docs.unshift(state.doc);
-  for (const [title, test] of [['Quests', (d) => d.kind === 'quest'], ['Messages', (d) => d.kind !== 'quest']]) {
+  const auto = (d) => d.kind === 'template' || d.kind === 'lines';
+  for (const [title, test] of [['Quests', (d) => d.kind === 'quest'], ['Automatic quests', auto], ['Messages', (d) => d.kind !== 'quest' && !auto(d)]]) {
     const group = docs.filter(test);
     const head = document.createElement('div');
     head.className = 'doc-group';
@@ -74,7 +75,8 @@ function renderDocs() {
       b.type = 'button';
       b.className = `doc${state.doc?.id === d.id ? ' active' : ''}${d.unsaved ? ' unsaved' : ''}`;
       const changed = state.doc?.id === d.id && dirty() ? ' •' : '';
-      b.innerHTML = `<span class="badge ${d.kind === 'quest' ? '' : 'm'}">${d.kind === 'quest' ? 'Q' : 'M'}</span>${escapeHtml(d.title)}${changed}<small>${escapeHtml(d.unsaved ? 'not saved yet' : d.name + (d.files.length > 1 ? ` · ${d.files.length} files` : ''))}</small>`;
+      const [badge, cls] = { quest: ['Q', ''], template: ['A', 'a'], lines: ['L', 'a'] }[d.kind] || ['M', 'm'];
+      b.innerHTML = `<span class="badge ${cls}">${badge}</span>${escapeHtml(d.title)}${changed}<small>${escapeHtml(d.unsaved ? 'not saved yet' : d.name + (d.files.length > 1 ? ` · ${d.files.length} files` : ''))}</small>`;
       b.addEventListener('click', () => openDoc(d.id));
       list.append(b);
     }
@@ -86,7 +88,7 @@ const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 function updateTitle() {
   $('#doc-title').textContent = state.doc ? state.doc.title : 'No document';
   const files = state.doc?.files || [];
-  $('#doc-files').textContent = !state.doc ? '' : state.doc.unsaved ? 'new, not saved yet' : files.length === 1 ? files[0] : `${files.length} files: ${files[0]} and the messages in ${state.doc.eventDir}/`;
+  $('#doc-files').textContent = !state.doc ? '' : state.doc.unsaved ? 'new, not saved yet' : files.length === 1 ? files[0] : state.doc.kind === 'lines' ? `${files.length} files in lines/` : `${files.length} files: ${files[0]} and the messages in ${state.doc.eventDir}/`;
   $('#doc-files').title = files.join('\n');
   $('#delete-doc').hidden = !state.doc;
   $('#save').classList.toggle('dirty', dirty());
@@ -110,17 +112,19 @@ async function openDoc(id, force = false) {
 
 function startNew(kind) {
   if (!leaveOk()) return;
-  const quest = kind === 'quest';
+  const quest = kind === 'quest', auto = kind === 'template';
   openForm({
-    title: quest ? 'New quest' : 'New message',
-    help: quest ? 'A quest with one stage and the message that offers it. You can change everything in the code.' : 'A message on its own (outside the quests). You can change everything in the code.',
+    title: quest ? 'New quest' : auto ? 'New automatic quest' : 'New message',
+    help: quest ? 'A quest with one stage and the message that offers it. You can change everything in the code.'
+      : auto ? 'A quest the characters with “Automatic quests” on pick and do by themselves. You can change everything in the code.'
+      : 'A message on its own (outside the quests). You can change everything in the code.',
     fields: [{ name: 'id', type: 'text', label: 'Id (letters, digits and _, it becomes the file name)', req: true }],
     ok: ({ id }) => {
       if (!/^[A-Za-z0-9_.\-]+$/.test(id)) return 'The id can only have letters, digits, _ - .';
-      const taken = quest ? state.refs.quest.includes(id) : state.refs.event.includes(id);
+      const taken = quest ? state.refs.quest.includes(id) : auto ? (state.refs.template || []).includes(id) : state.refs.event.includes(id);
       if (taken) return `“${id}” already exists`;
-      state.doc = { id: `new:${id}`, kind: quest ? 'quest' : 'event', title: id, name: id, files: [], eventDir: quest ? `events/${id}` : 'events', unsaved: true };
-      editor.value = (quest ? questTemplate(id) : eventTemplate(id, 'enterNode')).join('\n') + '\n';
+      state.doc = { id: `new:${id}`, kind: quest ? 'quest' : auto ? 'template' : 'event', title: id, name: id, files: [], eventDir: quest ? `events/${id}` : 'events', unsaved: true };
+      editor.value = (quest ? questTemplate(id) : auto ? autoTemplate(id) : eventTemplate(id, 'enterNode')).join('\n') + '\n';
       state.original = '';
       renderDocs(); updateTitle(); check();
       editor.focusLine(1);
@@ -150,6 +154,46 @@ function questTemplate(id) {
       `${IN}option "Not now":`,
       `${IN}${IN}pass`,
     ]),
+  ];
+}
+
+function autoTemplate(id) {
+  const item = firstOf('item', 'bread');
+  return [
+    `template ${id}:`,
+    `${IN}title = "{self} visits {friend}"`,
+    `${IN}pauseDays = 1`,
+    `${IN}weight:`,
+    `${IN}${IN}base = 10`,
+    `${IN}slot friend:`,
+    `${IN}${IN}type = npc`,
+    `${IN}${IN}free = true`,
+    `${IN}slot house:`,
+    `${IN}${IN}type = place`,
+    `${IN}${IN}of = friend`,
+    `${IN}${IN}place = home`,
+    `${IN}texts:`,
+    `${IN}${IN}intro:`,
+    `${IN}${IN}${IN}"I am going to see {friend}."`,
+    `${IN}${IN}talk:`,
+    `${IN}${IN}${IN}"Sorry, I am on my way to {friend}."`,
+    '',
+    `${IN}stage go:`,
+    `${IN}${IN}text = "{self} goes to {friend}'s home"`,
+    `${IN}${IN}onStart:`,
+    `${IN}${IN}${IN}tell(intro)`,
+    `${IN}${IN}${IN}moveNpc(self, house, forMinutes=180)`,
+    `${IN}${IN}complete:`,
+    `${IN}${IN}${IN}npcAt(self, house)`,
+    `${IN}${IN}fail:`,
+    `${IN}${IN}${IN}elapsed(hours=4)`,
+    '',
+    `${IN}stage visit:`,
+    `${IN}${IN}complete:`,
+    `${IN}${IN}${IN}elapsed(minutes=30)`,
+    `${IN}${IN}onComplete:`,
+    `${IN}${IN}${IN}modRelation(friend, self, 5)`,
+    `${IN}${IN}${IN}# giveItem(${item}, target=friend)`,
   ];
 }
 
@@ -233,14 +277,14 @@ async function deleteDoc() {
     await loadWorld(state.world);
     return;
   }
-  const what = doc.kind === 'quest' ? `the quest “${doc.title}” and its messages` : doc.kind === 'folder' ? `the messages of the folder “${doc.name}”` : `the message “${doc.name}”`;
+  const what = doc.kind === 'quest' ? `the quest “${doc.title}” and its messages` : doc.kind === 'template' ? `the automatic quest “${doc.name}”` : doc.kind === 'lines' ? 'all the shared lines' : doc.kind === 'folder' ? `the messages of the folder “${doc.name}”` : `the message “${doc.name}”`;
   // other quests and messages that still name the quest (startQuest, quest(...) conditions...)
   let warn = '';
-  if (doc.kind === 'quest') {
+  if (doc.kind === 'quest' || doc.kind === 'template') {
     try {
-      const { usages } = await api(`/api/usages?${query({ world: state.world, kind: 'quest', id: doc.name })}`);
+      const { usages } = await api(`/api/usages?${query({ world: state.world, kind: doc.kind, id: doc.name })}`);
       const outside = usages.filter((u) => !doc.files.includes(u.rel));
-      if (outside.length) warn = `\n\nWARNING: other files still use this quest and will cause errors in the game:\n${outside.slice(0, 12).map((u) => `${u.rel}: ${u.where}`).join('\n')}${outside.length > 12 ? '\n…' : ''}`;
+      if (outside.length) warn = `\n\nWARNING: other files still use it and will cause errors in the game:\n${outside.slice(0, 12).map((u) => `${u.rel}: ${u.where}`).join('\n')}${outside.length > 12 ? '\n…' : ''}`;
     } catch { /* deleted without the list */ }
   }
   const list = doc.files.slice(0, 15).join('\n') + (doc.files.length > 15 ? `\n… and ${doc.files.length - 15} more` : '');
@@ -287,9 +331,9 @@ function parentOf(lines, start, ind) {
   return -1;
 }
 
-/** Line index of the quest / event block around the cursor, or -1. */
+/** Line index of the quest / event / template / lines block around the cursor, or -1. */
 function unitAt(lines, i) {
-  for (let k = Math.min(i, lines.length - 1); k >= 0; k--) if (lines[k].trim() && indentOf(lines[k]) === 0) return /^(quest|event)\b/.test(lines[k]) ? k : -1;
+  for (let k = Math.min(i, lines.length - 1); k >= 0; k--) if (lines[k].trim() && indentOf(lines[k]) === 0) return /^(quest|event|template|lines)\b/.test(lines[k]) ? k : -1;
   return -1;
 }
 
@@ -332,8 +376,9 @@ function insertCondition(rel) {
   if (parent >= 0 && COND_BLOCKS.test(word(lines[parent]))) { editor.replaceLines(start, count, pad(ind, rel)); return; }
   const unit = unitAt(lines, Math.max(0, start - 1));
   if (unit < 0) { status('Put the cursor inside a message (event) or a quest', 'bad'); return; }
-  let owner = unit, blockName = /^event\b/.test(lines[unit]) ? 'when' : 'autoStart';
-  if (blockName === 'autoStart') {
+  if (/^lines\b/.test(lines[unit])) { status('Put the cursor inside a “variant if …:” line or a block of conditions', 'bad'); return; }
+  let owner = unit, blockName = /^(event|template)\b/.test(lines[unit]) ? 'when' : 'autoStart';
+  if (!/^event\b/.test(lines[unit])) {
     for (let k = Math.max(0, start - 1); k > unit; k--) if (/^\s*stage\b.*:\s*$/.test(lines[k]) && indentOf(lines[k]) === 4) { owner = k; blockName = 'complete'; break; }
   }
   addToBlock(lines, owner, blockName, rel);
@@ -386,6 +431,8 @@ function optionsFor(type, values = {}) {
   if (type === 'id:target') return ['player', ...(r.npc || [])];
   if (type === 'id:npc') return [...(r.npc || []), 'player'];
   if (type === 'id:stage') return values.quest ? r.stage?.[values.quest] || [] : Object.values(r.stage || {}).flat();
+  if (type === 'id:tstage') return values.template ? r.tstage?.[values.template] || [] : Object.values(r.tstage || {}).flat();
+  if (type === 'id:goal') return [...(r.goal || []), 'none'];
   if (type.startsWith('id:')) return r[type.slice(3)] || [];
   if (type.startsWith('file:')) return r[type.slice(5)] || [];
   return [];
@@ -433,11 +480,12 @@ function openForm({ title, help = '', fields, ok, okLabel = 'Insert' }) {
     box.append(label);
     inputs[f.name] = { input, f };
   }
-  // the stages offered follow the quest chosen in the same form
-  if (inputs.quest && inputs.stage) {
-    inputs.quest.input.addEventListener('input', () => {
+  // the stages offered follow the quest (or the automatic quest) chosen in the same form
+  for (const [owner, type] of [['quest', 'id:stage'], ['template', 'id:tstage']]) {
+    if (!inputs[owner] || !inputs.stage) continue;
+    inputs[owner].input.addEventListener('input', () => {
       const list = document.getElementById(inputs.stage.input.getAttribute('list'));
-      if (list) list.innerHTML = optionsFor('id:stage', { quest: inputs.quest.input.value }).map((o) => `<option value="${escapeHtml(o)}">`).join('');
+      if (list) list.innerHTML = optionsFor(type, { [owner]: inputs[owner].input.value }).map((o) => `<option value="${escapeHtml(o)}">`).join('');
     });
   }
   // closing a modal dialog gives the focus back to the code with the cursor at the start: it is put back where it was
@@ -536,10 +584,29 @@ function categories() {
   add('Structure', { label: 'New quest stage (stage)', code: 'stage …:', run: () => {
     const lines = editor.lines();
     const unit = unitAt(lines, editor.cursorLine());
-    if (unit < 0 || !/^quest\b/.test(lines[unit])) { status('Put the cursor inside a quest', 'bad'); return; }
+    if (unit < 0 || !/^(quest|template)\b/.test(lines[unit])) { status('Put the cursor inside a quest or an automatic quest', 'bad'); return; }
     openForm({
       title: 'New stage', fields: [{ name: 'id', type: 'text', label: 'Stage id', req: true }, { name: 'text', type: 'text', label: 'Journal text', req: true, long: true }],
       ok: ({ id, text }) => { editor.replaceLines(blockEnd(lines, unit), 0, ['', `${IN}stage ${id}:`, `${IN}${IN}text = ${JSON.stringify(text)}`]); return null; },
+    });
+  } });
+
+  add('Automatic quests', { label: 'New slot (character, place, item)', code: 'slot …:', run: () => {
+    const lines = editor.lines();
+    const unit = unitAt(lines, editor.cursorLine());
+    if (unit < 0 || !/^template\b/.test(lines[unit])) { status('Put the cursor inside an automatic quest (template)', 'bad'); return; }
+    openForm({
+      title: 'New slot', help: 'Filled when a character picks the quest. Its name can be used in the conditions, the commands and the texts ({name}).',
+      fields: [{ name: 'id', type: 'text', label: 'Name', req: true }, { name: 'type', type: 'select', label: 'What', req: true, options: [['npc', 'Another character'], ['place', 'A place of a character (home, work…)'], ['node', 'A place of the map'], ['item', 'An item']] }],
+      ok: ({ id, type }) => {
+        if (!/^[A-Za-z_][\w\-]*$/.test(id)) return 'The name can only have letters, digits, _ and -';
+        const end = blockEnd(lines, unit);
+        let at = end;
+        for (let k = unit + 1; k < end; k++) if (/^\s{4}(stage|texts|onStart|onComplete|onFail)\b/.test(lines[k])) { at = k; break; }
+        const body = type === 'place' ? ['of = self', 'place = home'] : type === 'npc' ? ['free = true'] : [];
+        editor.replaceLines(at, 0, [`${IN}slot ${id}:`, `${IN}${IN}type = ${type}`, ...body.map((l) => IN + IN + l)]);
+        return null;
+      },
     });
   } });
 
@@ -616,7 +683,7 @@ function categories() {
   return cats;
 }
 
-const ORDER = ['Structure', 'Start', 'Conditions', 'Dialogue', 'Flow', 'Images', 'Sounds', 'Items', 'Quest', 'Variables', 'World', 'Characters'];
+const ORDER = ['Structure', 'Start', 'Conditions', 'Dialogue', 'Flow', 'Images', 'Sounds', 'Items', 'Quest', 'Automatic quests', 'Variables', 'World', 'Characters'];
 const OPEN = new Set(['Start', 'Conditions', 'Dialogue', 'Flow']);
 
 function renderPalette() {
@@ -677,6 +744,7 @@ $('#rec-delete').addEventListener('click', () => recs.remove());
 $('#delete-doc').addEventListener('click', deleteDoc);
 $('#new-quest').addEventListener('click', () => startNew('quest'));
 $('#new-event').addEventListener('click', () => startNew('event'));
+$('#new-template').addEventListener('click', () => startNew('template'));
 $('#help').addEventListener('click', () => $('#guide').showModal());
 $('#filter').addEventListener('input', renderPalette);
 $('#world').addEventListener('change', async (e) => {

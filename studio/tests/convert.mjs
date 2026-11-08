@@ -82,6 +82,71 @@ await test('new format round trip', () => {
   assert.deepEqual(back.units.map((u) => u.json), [quest, sequence], text);
 });
 
+const template = {
+  id: 't_bread',
+  title: '{self} brings bread to {friend}',
+  pauseDays: 2,
+  when: { type: 'hasItem', item: 'bread', target: 'self' },
+  weight: { base: 5, stats: { happiness: 0.2 }, goals: { help: 30 }, relations: { friend: 0.5 } },
+  slots: [
+    { id: 'friend', type: 'npc', free: true, when: { type: 'relation', from: 'self', to: 'it', op: '>=', value: 10 } },
+    { id: 'home', type: 'place', of: 'friend', place: 'home' },
+    { id: 'gift', type: 'item', items: ['bread', 'gold_coin'] },
+  ],
+  texts: {
+    intro: [
+      { when: { type: 'stat', stat: 'happiness', op: '>=', value: 60, target: 'self' }, lines: ['On my way to {friend}!', { it: 'Vado da {friend}', en: 'Going to {friend}' }] },
+      { lines: ['I should see {friend:him|her}.'] },
+    ],
+    talk: ['Not now, I am busy.'],
+  },
+  onStart: [{ do: 'tell', lines: 'intro' }],
+  onComplete: [{ do: 'modRelation', from: 'friend', to: 'self', delta: 5 }],
+  stages: [
+    { id: 'go', text: 'Going to {home}', onStart: [{ do: 'moveNpc', npc: 'self', node: 'home', forMinutes: 120 }], complete: { type: 'npcAt', npc: 'self', node: 'home' }, fail: { type: 'elapsed', hours: 6 } },
+    { id: 'give', complete: { all: [{ type: 'elapsed', hours: 1 }, { type: 'chance', percent: 70 }] }, onComplete: [{ do: 'giveItem', item: 'gift', target: 'friend' }], next: 'end' },
+  ],
+};
+const lines = { id: 'greet', variants: [{ when: { type: 'relation', from: 'self', to: 'player', op: '>', value: 20 }, lines: ['Hello, {npc}!'] }, { lines: ['Hi.'] }] };
+const plainLines = { id: 'busy', variants: ['Later.', 'Not now.'] };
+
+await test('automatic quests and shared lines round trip', () => {
+  const text = toScript([{ kind: 'template', json: template }, { kind: 'lines', json: lines }, { kind: 'lines', json: plainLines }]);
+  const back = fromScript(text);
+  assert.deepEqual(back.errors, [], text);
+  assert.deepEqual(back.units.map((u) => u.json), [template, lines, plainLines], text);
+  assert.equal(toScript(back.units), text);
+});
+
+await test('automatic quests: self and slots are known ids, typos are not', () => {
+  const r = { npc: ['elena'], node: ['square'], item: ['bread'], stat: [], goal: [], template: [], lines: [], quest: [], stage: {} };
+  const text = [
+    'template t_x:',
+    '    slot friend:',
+    '        type = npc',
+    '        when:',
+    '            npcAt(it, square)',
+    '    slot spot:',
+    '        type = place',
+    '        of = friend',
+    '        place = home',
+    '    texts:',
+    '        intro:',
+    '            "Hi {friend}"',
+    '    stage go:',
+    '        onStart:',
+    '            moveNpc(self, spot)',
+    '            tell(intro)',
+    '            giveItem(bread, target=frend)',
+    '            tell(nope)',
+    '        complete:',
+    '            npcAt(friend, spot)',
+  ].join('\n');
+  const out = fromScript(text, r);
+  assert.deepEqual(out.errors, []);
+  assert.deepEqual(out.warnings.map((w) => w.line), [17, 18], JSON.stringify(out.warnings));
+});
+
 await test('old event forms move into the script', () => {
   const old = { id: 'ev', trigger: 'talk', npc: 'elena', text: 'Ciao', popup: true, effects: [{ do: 'setFlag', key: 'k' }], choices: [{ text: 'Ok', effects: { do: 'advanceQuest', quest: 'q' } }] };
   const back = fromScript(toScript([{ kind: 'event', json: old }]));

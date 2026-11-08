@@ -1,0 +1,25 @@
+{
+  "id": "q_smoke_auto",
+  "title": "Smoke: the visit happened",
+  "autoStart": [
+    {
+      "type": "did",
+      "npc": "bruno",
+      "template": "t_smoke_visit",
+      "status": "completed"
+    },
+    {
+      "type": "relation",
+      "from": "sira",
+      "to": "bruno",
+      "op": ">=",
+      "value": 12
+    }
+  ],
+  "stages": [
+    {
+      "id": "seen",
+      "text": "Bruno visited Sira."
+    }
+  ]
+}

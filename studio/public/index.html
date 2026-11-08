@@ -27,6 +27,7 @@
       <div class="docs-head">
         <button id="new-quest" type="button">+ Quest</button>
         <button id="new-event" type="button">+ Message</button>
+        <button id="new-template" type="button" title="A quest the characters pick and do by themselves">+ Auto quest</button>
       </div>
       <div id="doc-list" class="doc-list"></div>
     </aside>
@@ -140,12 +141,53 @@
     else:
         say("You need a key.")</pre>
       <p>A quest has stages (<code>stage</code>) with the journal text and the <code>complete:</code> / <code>fail:</code> conditions; the <code>onStart:</code>, <code>onComplete:</code>, <code>onFail:</code> blocks accept only game commands (no dialogue lines: those go in a message).</p>
+      <h2>Automatic quests</h2>
+      <p>A <code>template</code> is a quest the characters pick and do <b>by themselves</b> (those with “Automatic quests” on in the Characters tab). When a character is free it looks at the templates it can do (<code>when:</code>), fills the <b>slots</b> (another character, a place, an item) and picks one at random, weighted by its <code>weight:</code>. Conditions and commands use <code>self</code> (the character) and the slot names; the texts say <code>{self}</code>, <code>{friend}</code>, <code>{friend.first}</code>, <code>{friend:him|her}</code>.</p>
+<pre>template t_bread:
+    title = "{self} brings bread to {friend}"
+    pauseDays = 1                  # days before the next one
+    when:                          # who can pick it
+        hasItem(bread, target=self)
+    weight:                        # how much it wants it
+        base = 10
+        goals = {"help": 30}
+    slot friend:
+        type = npc                 # npc, place (of = …, place = home), node, item
+        when:
+            relation(self, it, ">=", 10)
+    slot house:
+        type = place
+        of = friend
+        place = home
+    texts:
+        intro:
+            variant if stat(happiness, ">=", 60, target=self):
+                "Off to {friend}, with fresh bread!"
+            variant:
+                "I should bring {friend} some bread."
+        talk:                      # when the player talks to them meanwhile
+            "Sorry, I am bringing bread to {friend}."
+    stage go:
+        onStart:
+            tell(intro)            # a line in the log, if the player is there
+            moveNpc(self, house, forMinutes=180)
+        complete:
+            npcAt(self, house)
+    stage give:
+        complete:
+            elapsed(minutes=30)
+            chance(80)             # fixed when the stage begins
+        onComplete:
+            takeItem(bread, target=self)
+            giveItem(bread, target=friend)
+            modRelation(friend, self, 10)</pre>
+      <p>Lines shared by every template go in <code>lines greet:</code> blocks (the files of <code>lines/</code>), said with <code>tell(greet)</code>.</p>
       <p><code>#</code> starts a comment (it is not saved). The text is saved in the game's JSON files: <b>Save</b> (Ctrl+S) writes them, and the “JSON to be saved” panel shows them first.</p>
       <h2>The other tabs</h2>
       <ul>
-        <li><b>Characters</b>: the characters (NPCs) with their places, their weekly routine (with a chart of where they are at every hour), stats, inventory and images; and the routines shared by several characters.</li>
+        <li><b>Characters</b>: the characters (NPCs) with first name, last name, age, sex, goal, relations and automatic quests on / off, their places, their weekly routine (with a chart of where they are at every hour), stats, inventory and images; and the routines shared by several characters.</li>
         <li><b>Items</b>: name, description, type and value of every item.</li>
-        <li><b>Rules</b>: start time and day, starting inventory, stats, activities, dayparts and sleep (<code>rules.json</code>).</li>
+        <li><b>Rules</b>: start time and day, starting inventory, stats, activities, dayparts, sleep, goals and the automatic quests (<code>rules.json</code>).</li>
         <li><b>System</b>: the game title, the main menu of the game (background image, title, music) and the images of the game and menu buttons, with a preview (<code>title.json</code>).</li>
       </ul>
       <p>Every tab has a <b>Form</b> and the <b>JSON</b> view with the file as it is. On the right you find the problems, where it is used and the JSON to be saved.</p>

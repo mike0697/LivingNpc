@@ -1,0 +1,36 @@
+{
+  "id": "t_smoke_luck",
+  "title": "{self} tries {self:his|her} luck",
+  "pauseDays": 0,
+  "stages": [
+    {
+      "id": "roll",
+      "complete": {
+        "all": [
+          {
+            "type": "elapsed",
+            "minutes": 5
+          },
+          {
+            "type": "chance",
+            "percent": 50
+          }
+        ]
+      },
+      "fail": {
+        "all": [
+          {
+            "type": "elapsed",
+            "minutes": 5
+          },
+          {
+            "not": {
+              "type": "chance",
+              "percent": 50
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -24,6 +24,8 @@ namespace LivingNPC
             }
             int id = (int)h;
             if (id == 0) id = 1;
+            // the lowest values stand for "self" and the slots of an automatic quest (Simulation.BindRef)
+            if (id < int.MinValue + Simulation.BindRef.Reserved) id += Simulation.BindRef.Reserved;
 
             if (s_Names.TryGetValue(id, out var existing))
             {

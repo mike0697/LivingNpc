@@ -25,6 +25,9 @@ you write it**: describe a character or a quest, and let it draft the files for 
   change their stats over time. Characters plan their trips and leave early to arrive on time, also off screen.
 - **A world that keeps going.** Time moves when the player travels, waits or sleeps; everyone else moves with it.
   Places change background with the time of day.
+- **Characters with a will of their own.** First name, last name, age, sex, a goal and relations with the others;
+  with *automatic quests* on they pick by themselves quests written as templates ("bring bread to a friend", "study in
+  the library"), weighted by their goal, stats and relations, and do them off screen too.
 - **Quests and messages that react to the world.** Start a quest only *in that place, at that hour, with those
   characters*; wait two days; fail it if the player is late. Dialogues with lines, poses, choices, `if` / `else`,
   pictures, sounds and music.

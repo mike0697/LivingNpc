@@ -1,0 +1,15 @@
+{
+  "id": "t_smoke_never",
+  "when": {
+    "type": "flag",
+    "key": "smoke_never"
+  },
+  "stages": [
+    {
+      "id": "never",
+      "complete": {
+        "type": "always"
+      }
+    }
+  ]
+}

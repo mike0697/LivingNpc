@@ -9,7 +9,7 @@ namespace LivingNPC.Simulation
     /// Pure struct + EntityManager access: usable from Burst-compiled ISystems on the main thread
     /// and from managed code (tests, tools) alike.
     /// </summary>
-    public struct RuleRuntime
+    public partial struct RuleRuntime
     {
         public EntityManager Em;
         public Entity World;
@@ -144,7 +144,7 @@ namespace LivingNPC.Simulation
         public void PushMessage(int textId, MsgKind kind, int arg = 0)
         {
             var buf = Em.GetBuffer<GameMessage>(World);
-            buf.Add(new GameMessage { TextId = textId, Kind = kind, At = Clock.Now, Arg = arg });
+            buf.Add(new GameMessage { TextId = textId, Kind = kind, At = Clock.Now, Arg = arg, Bind = Bind });
             if (buf.Length > 200) buf.RemoveRange(0, buf.Length - 150);
             Touch();
         }
@@ -218,22 +218,22 @@ namespace LivingNPC.Simulation
                             r = day >= c.A && day <= c.B;
                             break;
                         }
-                    case CondType.PlayerAt: r = player.Node == c.A; break;
+                    case CondType.PlayerAt: r = player.Node == R(c.A); break;
                     case CondType.NpcAt:
                         {
-                            var e = FindNpc(c.A);
-                            r = e != Entity.Null && Em.GetComponentData<NpcLocation>(e).Node == c.B;
+                            var e = FindNpc(R(c.A));
+                            r = e != Entity.Null && Em.GetComponentData<NpcLocation>(e).Node == R(c.B);
                             break;
                         }
                     case CondType.NpcWithPlayer:
                         {
-                            var e = FindNpc(c.A);
+                            var e = FindNpc(R(c.A));
                             r = e != Entity.Null && player.Node != 0 && Em.GetComponentData<NpcLocation>(e).Node == player.Node;
                             break;
                         }
-                    case CondType.Stat: r = Compare(GetStat(c.A, c.B), c.Op, c.F); break;
+                    case CondType.Stat: r = Compare(GetStat(R(c.A), c.B), c.Op, c.F); break;
                     case CondType.Flag: r = Compare(GetFlag(c.A), c.Op, c.F); break;
-                    case CondType.HasItem: r = Compare(GetItemCount(c.A, c.B), c.Op, c.F); break;
+                    case CondType.HasItem: r = Compare(GetItemCount(R(c.A), R(c.B)), c.Op, c.F); break;
                     case CondType.Quest:
                         {
                             var qs = Em.GetBuffer<QuestState>(World)[c.A];
@@ -242,6 +242,8 @@ namespace LivingNPC.Simulation
                         }
                     case CondType.Elapsed:
                         {
+                            // A = -1: the automatic quest being evaluated (its stage / its start)
+                            if (c.A < 0) { r = Bind.Length > 0 && clock.Now - (c.B == 1 ? CtxStartedAt : CtxStageAt) >= c.C; break; }
                             // A = quest, B = 0 since the stage began / 1 since the quest began, C = minutes; only while the quest is running
                             var qs = Em.GetBuffer<QuestState>(World)[c.A];
                             r = qs.Status == (byte)QuestStatus.Active && clock.Now - (c.B == 1 ? qs.StartedAt : qs.StageAt) >= c.C;
@@ -250,10 +252,41 @@ namespace LivingNPC.Simulation
                     case CondType.After: r = clock.Now >= c.A; break;      // A = absolute minute
                     case CondType.Activity:
                         {
-                            var e = FindNpc(c.A);
+                            var e = FindNpc(R(c.A));
                             r = e != Entity.Null && Em.GetComponentData<NpcLocation>(e).Activity == c.B;
                             break;
                         }
+                    case CondType.Relation: r = Compare(GetRelation(R(c.A), R(c.B)), c.Op, c.F); break;
+                    case CondType.Goal:
+                        {
+                            var e = FindNpc(R(c.A));
+                            if (e == Entity.Null || !Em.HasComponent<NpcAuto>(e)) break;
+                            int goal = Em.GetComponentData<NpcAuto>(e).Goal;
+                            r = c.B == 0 ? goal != 0 : goal == c.B;
+                            break;
+                        }
+                    case CondType.Age:
+                        {
+                            var e = FindNpc(R(c.A));
+                            r = e != Entity.Null && Em.HasComponent<NpcInfo>(e) && Compare(Em.GetComponentData<NpcInfo>(e).Age, c.Op, c.F);
+                            break;
+                        }
+                    case CondType.Sex:
+                        {
+                            var e = FindNpc(R(c.A));
+                            r = e != Entity.Null && Em.HasComponent<NpcInfo>(e) && Em.GetComponentData<NpcInfo>(e).Sex == c.B;
+                            break;
+                        }
+                    case CondType.Chance: r = Bind.Length > 0 && CtxRoll < c.A; break;
+                    case CondType.Doing:
+                        {
+                            var e = FindNpc(R(c.A));
+                            if (e == Entity.Null || !Em.HasComponent<NpcAuto>(e)) break;
+                            var a = Em.GetComponentData<NpcAuto>(e);
+                            r = a.Template != 0 && (c.B == 0 || a.Template == c.B) && (c.C < 0 || a.Stage == c.C);
+                            break;
+                        }
+                    case CondType.Did: r = Remembers(R(c.A), c.B, c.C, c.F, clock.Now); break;
                 }
                 res[i - lo] = (byte)(r ? 1 : 0);
             }
@@ -279,25 +312,32 @@ namespace LivingNPC.Simulation
                 case FxType.AdvanceQuest: AdvanceQuest(fx.A); break;
                 case FxType.CompleteQuest: CompleteQuest(fx.A); break;
                 case FxType.FailQuest: FailQuest(fx.A, false); break;
-                case FxType.ModStat: SetStat(fx.A, fx.B, GetStat(fx.A, fx.B) + fx.F); break;
-                case FxType.SetStat: SetStat(fx.A, fx.B, fx.F); break;
-                case FxType.GiveItem: AddItem(fx.A, fx.B, (int)fx.F); break;
-                case FxType.TakeItem: AddItem(fx.A, fx.B, -(int)fx.F); break;
+                case FxType.ModStat: SetStat(R(fx.A), fx.B, GetStat(R(fx.A), fx.B) + fx.F); break;
+                case FxType.SetStat: SetStat(R(fx.A), fx.B, fx.F); break;
+                case FxType.GiveItem: AddItem(R(fx.A), R(fx.B), (int)fx.F); break;
+                case FxType.TakeItem: AddItem(R(fx.A), R(fx.B), -(int)fx.F); break;
                 case FxType.MoveNpc:
                     {
-                        var e = FindNpc(fx.A);
+                        var e = FindNpc(R(fx.A));
                         if (e == Entity.Null) break;
                         var loc = Em.GetComponentData<NpcLocation>(e);
-                        loc.OverrideNode = fx.B;
+                        loc.OverrideNode = R(fx.B);
                         loc.OverrideUntil = Clock.Now + (int)fx.F;
                         Em.SetComponentData(e, loc);
                         Touch();
                         break;
                     }
-                case FxType.SetPlace: SetNpcPlace(fx.A, fx.B, fx.C, fx.F != 0); break;
+                case FxType.SetPlace: SetNpcPlace(R(fx.A), fx.B, R(fx.C), fx.F != 0); break;
                 case FxType.AddRoutine: ApplyRoutineSet(fx.A, fx.B, false); break;
                 case FxType.SetRoutine: ApplyRoutineSet(fx.A, fx.B, true); break;
-                case FxType.RemoveRoutine: RemoveRoutineTag(fx.A, fx.B); break;
+                case FxType.RemoveRoutine: RemoveRoutineTag(R(fx.A), fx.B); break;
+                case FxType.Tell: Tell(fx); break;
+                case FxType.ModRelation: SetRelation(R(fx.A), R(fx.B), GetRelation(R(fx.A), R(fx.B)) + fx.F); break;
+                case FxType.SetRelation: SetRelation(R(fx.A), R(fx.B), fx.F); break;
+                case FxType.SetGoal: SetNpcGoal(R(fx.A), fx.B); break;
+                case FxType.SetAutoQuests: SetAutoEnabled(R(fx.A), fx.B != 0); break;
+                case FxType.StartAuto: StartAuto(R(fx.A), fx.B); break;
+                case FxType.StopAuto: StopAuto(R(fx.A)); break;
                 case FxType.AdvanceTime:
                     {
                         var clock = Clock;
@@ -324,7 +364,7 @@ namespace LivingNPC.Simulation
                 case FxType.TeleportPlayer:
                     {
                         var p = PlayerData;
-                        p.FromNode = p.Node; p.Node = fx.A; p.PendingNode = 0; p.Arrived = 1;
+                        p.FromNode = p.Node; p.Node = R(fx.A); p.PendingNode = 0; p.Arrived = 1;
                         Em.SetComponentData(Player, p);
                         Touch();
                         break;
@@ -455,6 +495,7 @@ namespace LivingNPC.Simulation
             PushMessage(q.TitleText, MsgKind.QuestStarted);
             if (q.StageCount > 0) PushMessage(Rules.Value.Stages[q.StageStart].TextId, MsgKind.QuestUpdated);
             Apply(q.StartFxStart, q.StartFxCount);
+            StageStarted(qi, 0);
             return true;
         }
 
@@ -471,6 +512,17 @@ namespace LivingNPC.Simulation
             if (sr.Next < 0) { CompleteQuest(qi); return; }
             states[qi] = new QuestState { Status = (byte)QuestStatus.Active, Stage = sr.Next, StageAt = Clock.Now, StartedAt = states[qi].StartedAt };
             PushMessage(Rules.Value.Stages[q.StageStart + sr.Next].TextId, MsgKind.QuestUpdated);
+            StageStarted(qi, sr.Next);
+        }
+
+        /// <summary>The onStart effects of a stage that has just begun, if the quest is still at that stage (earlier effects may have moved it).</summary>
+        void StageStarted(int qi, int stage)
+        {
+            var st = Em.GetBuffer<QuestState>(World)[qi];
+            var q = Rules.Value.Quests[qi];
+            if (st.Status != (byte)QuestStatus.Active || st.Stage != stage || stage >= q.StageCount) return;
+            var sr = Rules.Value.Stages[q.StageStart + stage];
+            Apply(sr.StartFxStart, sr.StartFxCount);
         }
 
         public void CompleteQuest(int qi)

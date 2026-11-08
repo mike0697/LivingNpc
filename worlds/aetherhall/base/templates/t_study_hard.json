@@ -1,0 +1,121 @@
+{
+  "id": "t_study_hard",
+  "title": "{self} studies in the library",
+  "pauseDays": 1,
+  "when": {
+    "all": [
+      {
+        "not": {
+          "type": "activity",
+          "npc": "self",
+          "activity": "sleep"
+        }
+      },
+      {
+        "type": "stat",
+        "stat": "energy",
+        "op": ">=",
+        "value": 30,
+        "target": "self"
+      }
+    ]
+  },
+  "weight": {
+    "base": 5,
+    "goals": {
+      "learn": 40
+    }
+  },
+  "slots": [
+    {
+      "id": "library",
+      "type": "place",
+      "of": "self",
+      "place": "work"
+    }
+  ],
+  "texts": {
+    "intro": [
+      "Exams are coming: to the library!"
+    ],
+    "talk": [
+      "Shh, I am studying."
+    ]
+  },
+  "onStart": [
+    {
+      "do": "tell",
+      "lines": "intro"
+    }
+  ],
+  "onComplete": [
+    {
+      "do": "tell",
+      "lines": "proud",
+      "everywhere": true
+    }
+  ],
+  "onFail": [
+    {
+      "do": "tell",
+      "lines": "tired",
+      "everywhere": true
+    }
+  ],
+  "stages": [
+    {
+      "id": "study",
+      "text": "{self} studies for two hours",
+      "onStart": [
+        {
+          "do": "moveNpc",
+          "npc": "self",
+          "node": "library",
+          "forMinutes": 150
+        }
+      ],
+      "complete": {
+        "all": [
+          {
+            "type": "elapsed",
+            "hours": 2
+          },
+          {
+            "type": "chance",
+            "percent": 70
+          }
+        ]
+      },
+      "fail": {
+        "all": [
+          {
+            "type": "elapsed",
+            "hours": 2
+          },
+          {
+            "not": {
+              "type": "chance",
+              "percent": 70
+            }
+          }
+        ]
+      },
+      "onComplete": [
+        {
+          "do": "modStat",
+          "stat": "intelligence",
+          "delta": 5,
+          "target": "self"
+        }
+      ],
+      "onFail": [
+        {
+          "do": "modStat",
+          "stat": "happiness",
+          "delta": -5,
+          "target": "self"
+        }
+      ]
+    }
+  ]
+}

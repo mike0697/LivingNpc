@@ -10,6 +10,7 @@ export const ID_RE = /^[A-Za-z0-9_.\-]+$/;
 export const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 export const DAY_WORDS = { all: 'Every day', daily: 'Every day', weekdays: 'Mon-Fri', weekend: 'Sat-Sun' };
+export const SEXES = [['m', 'Male'], ['f', 'Female'], ['x', 'Other']];
 export const ITEM_TYPES = [
   ['misc', 'Misc'],
   ['consumable', 'Consumable'],
@@ -246,6 +247,20 @@ function checkNpc(npc, refs, taken, P) {
     }
   }
   heldProblems(npc.inventory, 'inventario', refs, P);
+  for (const k of ['firstName', 'lastName']) if (npc[k] !== undefined && typeof npc[k] !== 'string' && !isObj(npc[k])) P.err(`${k}: must be a text`);
+  if (npc.age !== undefined && (!Number.isInteger(npc.age) || npc.age < 0)) P.err('age: must be a whole number from 0 up');
+  if (npc.sex !== undefined && !SEXES.some(([v]) => v === npc.sex)) P.warn(`sex “${npc.sex}”: the game knows m, f and x`);
+  if (npc.autoQuests !== undefined && typeof npc.autoQuests !== 'boolean') P.err('autoQuests: must be true or false');
+  if (npc.goal !== undefined && npc.goal !== '' && refs.goal && !has(refs.goal, npc.goal)) P.err(`goal “${npc.goal}”: not in rules.json (Rules tab, Goals)`);
+  if (npc.relations !== undefined) {
+    if (!isObj(npc.relations)) P.err('the relations must be { "character": value }');
+    else for (const [who, v] of Object.entries(npc.relations)) {
+      if (who !== 'player' && refs.npc && !has(refs.npc, who)) P.err(`relation with “${who}”: the character does not exist`);
+      if (who === npc.id) P.warn('a relation with itself is ignored');
+      if (!Number.isFinite(v)) P.err(`relation with “${who}”: the value must be a number`);
+      else if (v < -100 || v > 100) P.warn(`relation with “${who}”: goes from -100 to 100`);
+    }
+  }
   if (npc.tags !== undefined && !(Array.isArray(npc.tags) && npc.tags.every((t) => typeof t === 'string'))) P.err('the tags must be a list of words');
   const imgs = npc.images;
   if (imgs !== undefined) {
@@ -329,6 +344,23 @@ function checkRules(r, refs, P) {
     }
   }
   heldProblems(r.playerInventory, 'inventario iniziale', refs, P);
+  const seenG = new Set();
+  if (r.goals !== undefined && !Array.isArray(r.goals)) P.err('goals must be a list');
+  (Array.isArray(r.goals) ? r.goals : []).forEach((g, i) => {
+    if (!isObj(g) || !g.id) { P.err(`goal ${i + 1}: the id is missing`); return; }
+    if (!ID_RE.test(g.id)) P.err(`goal ${g.id}: an id can only have letters, digits, _ - .`);
+    if (seenG.has(g.id)) P.err(`goal ${g.id}: repeated id`);
+    seenG.add(g.id);
+  });
+  const a = r.autoQuests;
+  if (a !== undefined) {
+    if (!isObj(a)) P.err('autoQuests must be an object');
+    else {
+      if (a.checkMinutes !== undefined && (!Number.isInteger(a.checkMinutes) || a.checkMinutes < 1)) P.err('automatic quests, check every: a whole number of minutes from 1 up');
+      if (a.maxActive !== undefined && (!Number.isInteger(a.maxActive) || a.maxActive < 0)) P.err('automatic quests, at most: a whole number from 0 up');
+      if (a.pauseDays !== undefined && (!Number.isFinite(a.pauseDays) || a.pauseDays < 0)) P.err('automatic quests, pause: a number of days from 0 up');
+    }
+  }
 }
 
 // ====================================================================== effects as script lines
@@ -355,6 +387,7 @@ export function effectsFromText(text, refs) {
 
 const ID_KEYS = {
   quest: ['quest'],
+  template: ['template'],
   item: ['item'],
   npc: ['npc', 'who', 'giver', 'target'],
   schedule: ['schedule'],

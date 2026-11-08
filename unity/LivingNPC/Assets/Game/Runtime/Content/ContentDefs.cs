@@ -53,8 +53,20 @@ namespace LivingNPC.Content
     public class NpcDef
     {
         public string Id;
+        /// <summary>The name the game shows. Omitted: first name and last name.</summary>
         public JToken Name;
+        public JToken FirstName;
+        public JToken LastName;
+        public int? Age;
+        /// <summary>"m" (male), "f" (female), "x" (other); used by the {slot:a|b|c} forms of the texts.</summary>
+        public string Sex;
         public JToken Description;
+        /// <summary>Picks automatic quests (templates/) by itself when it is free.</summary>
+        public bool AutoQuests;
+        /// <summary>What it wants: an id of rules.json "goals". Templates weigh it.</summary>
+        public string Goal;
+        /// <summary>What it thinks of the others at the start: npc id or "player" -> -100..100.</summary>
+        public Dictionary<string, float> Relations = new Dictionary<string, float>();
         /// <summary>Named places: "home", "work", "school"... usable in schedules as "$home", "$work".</summary>
         public Dictionary<string, string> Places = new Dictionary<string, string>();
         /// <summary>Schedule template ids and/or inline blocks.</summary>
@@ -130,6 +142,7 @@ namespace LivingNPC.Content
         public JToken Text;          // journal text
         public JToken Complete;      // condition
         public JToken Fail;          // condition
+        public JToken OnStart;       // effects, when the stage begins
         public JToken OnComplete;    // effects
         public JToken OnFail;        // effects
         public string Next;          // stage id; empty = next in list; "end" = finish quest
@@ -147,6 +160,75 @@ namespace LivingNPC.Content
         public List<StageDef> Stages = new List<StageDef>();
         [JsonIgnore] public string Source;
         [JsonIgnore] public string PackDir;     // images used by showImage effects live in <PackDir>/images
+    }
+
+    /// <summary>
+    /// An automatic quest: a quest an npc picks and runs by itself (templates/&lt;id&gt;.json). Conditions and effects can name
+    /// "self" (the npc) and the slots; texts can say {self}, {slot}, {slot.first}, {slot:his|her}.
+    /// </summary>
+    public class TemplateDef
+    {
+        public string Id;
+        public JToken Title;
+        /// <summary>Who can pick it (condition on self).</summary>
+        public JToken When;
+        public WeightDef Weight;
+        public List<SlotDef> Slots = new List<SlotDef>();
+        /// <summary>Days before the npc picks another quest; omitted = rules.json autoQuests.pauseDays.</summary>
+        public float? PauseDays;
+        /// <summary>group name -> variants [{ "when": cond, "lines": [text, ...] }] (or a single list of lines).</summary>
+        public Dictionary<string, JToken> Texts = new Dictionary<string, JToken>();
+        public JToken OnStart;
+        public JToken OnComplete;
+        public JToken OnFail;
+        public List<StageDef> Stages = new List<StageDef>();
+        [JsonIgnore] public string Source;
+        [JsonIgnore] public string PackDir;
+    }
+
+    /// <summary>Score of a template: base + stat × k + k for the npc's goal + relation to a slot × k. A score of 0 or less is not picked.</summary>
+    public class WeightDef
+    {
+        public float Base = 10;
+        public Dictionary<string, float> Stats = new Dictionary<string, float>();
+        public Dictionary<string, float> Goals = new Dictionary<string, float>();
+        public Dictionary<string, float> Relations = new Dictionary<string, float>();
+    }
+
+    /// <summary>npc | place | node | item (see Simulation.SlotRule).</summary>
+    public class SlotDef
+    {
+        public string Id;
+        public string Type = "npc";
+        public JToken When;
+        public bool Free;
+        public string Of;
+        public string Place;
+        public List<string> Nodes;
+        public List<string> Items;
+    }
+
+    /// <summary>Shared lines (lines/&lt;id&gt;.json) the templates say with tell(id).</summary>
+    public class LinesDef
+    {
+        public string Id;
+        public JToken Variants;
+        [JsonIgnore] public string Source;
+    }
+
+    public class GoalDef
+    {
+        public string Id;
+        public JToken Name;
+    }
+
+    public class AutoQuestsDef
+    {
+        /// <summary>How often (minutes) a free npc looks for a quest to do.</summary>
+        public int CheckMinutes = 60;
+        /// <summary>At most this many automatic quests at the same time in the world.</summary>
+        public int MaxActive = 3;
+        public float PauseDays = 1;
     }
 
     public class ChoiceDef
@@ -258,5 +340,7 @@ namespace LivingNPC.Content
         public List<ActivityDef> Activities = new List<ActivityDef>();
         public List<DayPartDef> DayParts = new List<DayPartDef>();
         public SleepDef Sleep = new SleepDef();
+        public List<GoalDef> Goals = new List<GoalDef>();
+        public AutoQuestsDef AutoQuests = new AutoQuestsDef();
     }
 }
