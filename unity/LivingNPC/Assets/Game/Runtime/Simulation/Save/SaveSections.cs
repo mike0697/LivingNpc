@@ -371,6 +371,25 @@ namespace LivingNPC.Simulation
         }
     }
 
+    // ---------------------------------------------------------------- debug ({"used": true} once the debug console changed the game)
+    /// <summary>
+    /// Whether the debug console changed this game. It stays true for good, through saves and loads: a bug report from such
+    /// a game may come from the change rather than from the content.
+    /// </summary>
+    class DebugSection : ISaveSection
+    {
+        public string Id => "debug";
+
+        public JToken Capture(SaveContext c) => new JObject { ["used"] = c.Em.GetComponentData<WorldState>(c.World).DebugUsed != 0 };
+
+        public void Apply(SaveContext c, JToken data)
+        {
+            var ws = c.Em.GetComponentData<WorldState>(c.World);
+            ws.DebugUsed = (byte)(SaveJson.Obj(data).Value<bool?>("used") == true ? 1 : 0);
+            c.Em.SetComponentData(c.World, ws);
+        }
+    }
+
     // ---------------------------------------------------------------- message log
     /// <summary>
     /// The log, oldest first: [{"at": 605, "kind": "questUpdated", "text": "quest:q_id:stage:stage_id", "npc": "lia"}].

@@ -24,6 +24,7 @@ namespace LivingNPC.Simulation
         public int DialogEventIdx;  // index into RuleBlob.Events of the open dialog
         public int DialogStep;      // absolute index into RuleBlob.Script of the line on screen, -1 before the first line
         public uint Version;        // bumped on every visible change; the UI polls this
+        public byte DebugUsed;      // the debug console changed this game at least once (kept in the saves)
     }
 
     public struct ClockState : IComponentData

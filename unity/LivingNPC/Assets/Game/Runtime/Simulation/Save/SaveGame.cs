@@ -76,7 +76,7 @@ namespace LivingNPC.Simulation
         public static readonly List<ISaveSection> Sections = new List<ISaveSection>
         {
             new ClockSection(), new FlagsSection(), new LinksSection(), new ImagesSection(), new SoundsSection(), new QuestsSection(),
-            new EventsSection(), new MessagesSection(), new PlayerSection(), new NpcsSection(),
+            new EventsSection(), new MessagesSection(), new PlayerSection(), new NpcsSection(), new DebugSection(),
         };
 
         /// <summary>Sections of the loaded save that this build does not know: written back on the next save.</summary>
@@ -172,6 +172,7 @@ namespace LivingNPC.Simulation
                 ["questsActive"] = active,
                 ["questsCompleted"] = done,
                 ["packs"] = packs,
+                ["debugUsed"] = ctx.Em.GetComponentData<WorldState>(ctx.World).DebugUsed != 0,
             };
         }
 

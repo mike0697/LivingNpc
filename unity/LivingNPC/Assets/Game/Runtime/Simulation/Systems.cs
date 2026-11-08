@@ -187,18 +187,30 @@ namespace LivingNPC.Simulation
         /// </summary>
         public static void Resolve(DynamicBuffer<ScheduleBlock> blocks, DynamicBuffer<NpcPlace> places, int t, int startDow, int home, out int node, out int activity)
         {
+            int i = ActiveBlock(blocks, places, t, startDow, out node);
+            if (i < 0) { node = home; activity = 0; }
+            else activity = blocks[i].Activity;
+        }
+
+        /// <summary>
+        /// Index of the block <see cref="Resolve"/> follows at time <paramref name="t"/> (the first of the highest priority),
+        /// with the node it leads to; -1 when none applies and the npc goes home.
+        /// </summary>
+        public static int ActiveBlock(DynamicBuffer<ScheduleBlock> blocks, DynamicBuffer<NpcPlace> places, int t, int startDow, out int node)
+        {
             int m = t % GameTime.MinutesPerDay;
             int dow = GameTime.DayOfWeek(t, startDow);
-            node = home; activity = 0;
-            int best = int.MinValue;
+            node = 0;
+            int best = int.MinValue, found = -1;
             for (int i = 0; i < blocks.Length; i++)
             {
                 var b = blocks[i];
                 if (((b.DayMask >> dow) & 1) == 0 || m < b.Start || m >= b.End) continue;
                 int target = b.Place != 0 ? PlaceNode(places, b.Place, b.Node) : b.Node;
                 if (target == 0) continue;
-                if (b.Priority > best) { best = b.Priority; node = target; activity = b.Activity; }
+                if (b.Priority > best) { best = b.Priority; node = target; found = i; }
             }
+            return found;
         }
     }
 

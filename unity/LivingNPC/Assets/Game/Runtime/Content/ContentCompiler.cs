@@ -97,6 +97,20 @@ namespace LivingNPC.Content
         /// <summary>Flag keys (Ids.MusicKey / Ids.AmbientKey) of every looping sound a startMusic / startAmbient effect can play.</summary>
         public List<int> SoundKeys = new List<int>();
         public bool Valid;
+        /// <summary>The compiler that built this content, kept to compile the debug console's effects with the same checks.</summary>
+        internal ContentCompiler Compiler;
+
+        /// <summary>
+        /// Compiles one effect written while the game runs (the debug console) with the checks of the content. Only the
+        /// effects of <see cref="ContentCompiler.ConsoleEffects"/>: the others need texts, pictures, sounds or routine
+        /// blocks that must be in the rule blob built at load.
+        /// </summary>
+        public bool TryCompileConsoleEffect(JObject effect, out FxNode fx, out string error)
+        {
+            fx = default;
+            if (Compiler == null) { error = "no content loaded"; return false; }
+            return Compiler.TryCompileConsoleEffect(effect, out fx, out error);
+        }
 
         /// <summary>Releases the blobs. Call when the ECS world built from this content is destroyed/reloaded.</summary>
         public void Dispose()
@@ -167,7 +181,7 @@ namespace LivingNPC.Content
 
         CompiledContent Run()
         {
-            var result = new CompiledContent { Db = _db };
+            var result = new CompiledContent { Db = _db, Compiler = this };
             TextTable.Language = _db.Rules.Language ?? "en";
 
             if (_db.MapList.Count == 0)
@@ -1158,6 +1172,30 @@ namespace LivingNPC.Content
             }
             _fx.AddRange(local);
             return (start, local.Count);
+        }
+
+        /// <summary>The effects the debug console can run (JSON "do" names): the ones made only of ids and numbers.</summary>
+        public static readonly string[] ConsoleEffects =
+        {
+            "setFlag", "addFlag", "startQuest", "advanceQuest", "completeQuest", "failQuest", "modStat", "setStat",
+            "giveItem", "takeItem", "moveNpc", "setPlace", "removeRoutine", "advanceTime", "advanceTimeTo", "teleportPlayer",
+            "showLink", "hideLink", "openLink", "closeLink",
+        };
+
+        internal bool TryCompileConsoleEffect(JObject o, out FxNode fx, out string error)
+        {
+            fx = default; error = null;
+            string d = (string)o["do"] ?? "";
+            if (Array.FindIndex(ConsoleEffects, e => string.Equals(e, d, StringComparison.OrdinalIgnoreCase)) < 0)
+            {
+                error = $"'{d}' cannot be run from the console";
+                return false;
+            }
+            try { fx = CompileEffect(o, "console"); return true; }
+            catch (CondException e) { error = e.Message; }
+            // a value of the wrong type: (float?)o["value"] on a word, (int?)o["count"] on "abc"...
+            catch (Exception e) when (e is FormatException || e is InvalidCastException || e is ArgumentException || e is OverflowException) { error = e.Message; }
+            return false;
         }
 
         FxNode CompileEffect(JToken t, string textKey)

@@ -168,10 +168,19 @@ namespace LivingNPC.Simulation
         public bool Eval(int root)
         {
             if (root < 0) return true;
+            var res = new FixedList512Bytes<byte>();
+            return EvalTree(root, ref res);
+        }
+
+        /// <summary>
+        /// Like <see cref="Eval"/>, and leaves in <paramref name="res"/> the result of every node of the tree: node i
+        /// (from Conds[root].Lo to root) at res[i - Lo], 1 true / 0 false. The debug panel shows them branch by branch.
+        /// </summary>
+        public bool EvalTree(int root, ref FixedList512Bytes<byte> res)
+        {
             ref var rules = ref Rules.Value;
             int lo = rules.Conds[root].Lo;
             int len = root - lo + 1;
-            var res = new FixedList512Bytes<byte>();
             res.Length = len;
 
             var clock = Clock;
@@ -255,69 +264,71 @@ namespace LivingNPC.Simulation
 
         public void Apply(int start, int count)
         {
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) ApplyOne(Rules.Value.Fx[start + i]);
+        }
+
+        /// <summary>Runs one effect. The compiled content's effects go through <see cref="Apply"/>; the debug console builds its own.</summary>
+        public void ApplyOne(in FxNode fx)
+        {
+            switch (fx.Type)
             {
-                var fx = Rules.Value.Fx[start + i];
-                switch (fx.Type)
-                {
-                    case FxType.Message: PushMessage(fx.A, MsgKind.Event); break;
-                    case FxType.SetFlag: SetFlag(fx.A, fx.F); break;
-                    case FxType.AddFlag: SetFlag(fx.A, GetFlag(fx.A) + fx.F); break;
-                    case FxType.StartQuest: StartQuest(fx.A); break;
-                    case FxType.AdvanceQuest: AdvanceQuest(fx.A); break;
-                    case FxType.CompleteQuest: CompleteQuest(fx.A); break;
-                    case FxType.FailQuest: FailQuest(fx.A, false); break;
-                    case FxType.ModStat: SetStat(fx.A, fx.B, GetStat(fx.A, fx.B) + fx.F); break;
-                    case FxType.SetStat: SetStat(fx.A, fx.B, fx.F); break;
-                    case FxType.GiveItem: AddItem(fx.A, fx.B, (int)fx.F); break;
-                    case FxType.TakeItem: AddItem(fx.A, fx.B, -(int)fx.F); break;
-                    case FxType.MoveNpc:
-                        {
-                            var e = FindNpc(fx.A);
-                            if (e == Entity.Null) break;
-                            var loc = Em.GetComponentData<NpcLocation>(e);
-                            loc.OverrideNode = fx.B;
-                            loc.OverrideUntil = Clock.Now + (int)fx.F;
-                            Em.SetComponentData(e, loc);
-                            Touch();
-                            break;
-                        }
-                    case FxType.SetPlace: SetNpcPlace(fx.A, fx.B, fx.C, fx.F != 0); break;
-                    case FxType.AddRoutine: ApplyRoutineSet(fx.A, fx.B, false); break;
-                    case FxType.SetRoutine: ApplyRoutineSet(fx.A, fx.B, true); break;
-                    case FxType.RemoveRoutine: RemoveRoutineTag(fx.A, fx.B); break;
-                    case FxType.AdvanceTime:
-                        {
-                            var clock = Clock;
-                            clock.Pending += fx.B;
-                            Em.SetComponentData(World, clock);
-                            break;
-                        }
-                    case FxType.AdvanceTimeTo:
-                        {
-                            var clock = Clock;
-                            int ahead = MinutesUntil(clock.Now + clock.Pending, fx.B);
-                            if (ahead > 0) { clock.Pending += ahead; Em.SetComponentData(World, clock); }
-                            break;
-                        }
-                    case FxType.ShowLink:
-                    case FxType.OpenLink: SetFlag(fx.A, 1); break;
-                    case FxType.HideLink:
-                    case FxType.CloseLink: SetFlag(fx.A, 2); break;
-                    case FxType.ShowImage: SetFlag(fx.A, fx.B + 1); break;      // value = compiled image index + 1
-                    case FxType.HideImage: SetFlag(fx.A, 0); break;
-                    case FxType.PlaySound: PushCue(fx.A); break;
-                    case FxType.StartLoop: SetFlag(fx.A, fx.B + 1); break;      // value = compiled sound index + 1; the view starts / changes the loop
-                    case FxType.StopLoop: SetFlag(fx.A, 0); break;
-                    case FxType.TeleportPlayer:
-                        {
-                            var p = PlayerData;
-                            p.FromNode = p.Node; p.Node = fx.A; p.PendingNode = 0; p.Arrived = 1;
-                            Em.SetComponentData(Player, p);
-                            Touch();
-                            break;
-                        }
-                }
+                case FxType.Message: PushMessage(fx.A, MsgKind.Event); break;
+                case FxType.SetFlag: SetFlag(fx.A, fx.F); break;
+                case FxType.AddFlag: SetFlag(fx.A, GetFlag(fx.A) + fx.F); break;
+                case FxType.StartQuest: StartQuest(fx.A); break;
+                case FxType.AdvanceQuest: AdvanceQuest(fx.A); break;
+                case FxType.CompleteQuest: CompleteQuest(fx.A); break;
+                case FxType.FailQuest: FailQuest(fx.A, false); break;
+                case FxType.ModStat: SetStat(fx.A, fx.B, GetStat(fx.A, fx.B) + fx.F); break;
+                case FxType.SetStat: SetStat(fx.A, fx.B, fx.F); break;
+                case FxType.GiveItem: AddItem(fx.A, fx.B, (int)fx.F); break;
+                case FxType.TakeItem: AddItem(fx.A, fx.B, -(int)fx.F); break;
+                case FxType.MoveNpc:
+                    {
+                        var e = FindNpc(fx.A);
+                        if (e == Entity.Null) break;
+                        var loc = Em.GetComponentData<NpcLocation>(e);
+                        loc.OverrideNode = fx.B;
+                        loc.OverrideUntil = Clock.Now + (int)fx.F;
+                        Em.SetComponentData(e, loc);
+                        Touch();
+                        break;
+                    }
+                case FxType.SetPlace: SetNpcPlace(fx.A, fx.B, fx.C, fx.F != 0); break;
+                case FxType.AddRoutine: ApplyRoutineSet(fx.A, fx.B, false); break;
+                case FxType.SetRoutine: ApplyRoutineSet(fx.A, fx.B, true); break;
+                case FxType.RemoveRoutine: RemoveRoutineTag(fx.A, fx.B); break;
+                case FxType.AdvanceTime:
+                    {
+                        var clock = Clock;
+                        clock.Pending += fx.B;
+                        Em.SetComponentData(World, clock);
+                        break;
+                    }
+                case FxType.AdvanceTimeTo:
+                    {
+                        var clock = Clock;
+                        int ahead = MinutesUntil(clock.Now + clock.Pending, fx.B);
+                        if (ahead > 0) { clock.Pending += ahead; Em.SetComponentData(World, clock); }
+                        break;
+                    }
+                case FxType.ShowLink:
+                case FxType.OpenLink: SetFlag(fx.A, 1); break;
+                case FxType.HideLink:
+                case FxType.CloseLink: SetFlag(fx.A, 2); break;
+                case FxType.ShowImage: SetFlag(fx.A, fx.B + 1); break;      // value = compiled image index + 1
+                case FxType.HideImage: SetFlag(fx.A, 0); break;
+                case FxType.PlaySound: PushCue(fx.A); break;
+                case FxType.StartLoop: SetFlag(fx.A, fx.B + 1); break;      // value = compiled sound index + 1; the view starts / changes the loop
+                case FxType.StopLoop: SetFlag(fx.A, 0); break;
+                case FxType.TeleportPlayer:
+                    {
+                        var p = PlayerData;
+                        p.FromNode = p.Node; p.Node = fx.A; p.PendingNode = 0; p.Arrived = 1;
+                        Em.SetComponentData(Player, p);
+                        Touch();
+                        break;
+                    }
             }
         }
 
