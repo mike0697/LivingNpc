@@ -280,6 +280,7 @@ to give its blocks another id.
 | Field | Meaning |
 |---|---|
 | `title`, `summary`, `giver` | Journal title, summary, character who gives it. |
+| `busyGiver` | `true`: while the quest is active the `giver` is **busy**: it picks no [automatic quest](#automatic-quests-templatesidjson) and is not a `free` slot of anybody else's. One it is already doing goes on (add `stopAuto` to `onStart` to drop it); `startAuto` still starts one. Default `false`. |
 | `autoStart` | Condition: the quest starts by itself when it becomes true. Without it, use the `startQuest` effect. |
 | `onStart`, `onComplete` | Effects. |
 | `stages[]` | Steps in order. `text` = journal text; `complete` / `fail` = conditions; `onStart` / `onComplete` / `onFail` = effects (`onStart` runs when the stage begins); `next` = next stage id or `"end"` (omitted = the following stage). A stage without `complete` only advances with the `advanceQuest` effect (typically from a conversation). |
@@ -410,6 +411,7 @@ Used in `when`, `autoStart`, `complete`, `fail`, `requires`, `if` and `choices[]
 { "type": "sex",           "npc": "lia", "sex": "m|f|x" }
 { "type": "doing",         "npc": "lia", "template": "t_id", "stage": "stage_id" }   template and stage optional
 { "type": "did",           "npc": "lia", "template": "t_id", "status": "completed|failed|stopped", "days": 7 }
+{ "type": "busy",          "npc": "elena" }                                  doing / part of an automatic quest, or giving a busyGiver quest
 { "type": "chance",        "percent": 70 }                                   only in the stages of a template
 ```
 
@@ -422,7 +424,9 @@ Used in `when`, `autoStart`, `complete`, `fail`, `requires`, `if` and `choices[]
   `"complete": { "type": "elapsed", "days": 2 }`.
 - `date` and `after` count days from 0 (the first day, shown as "Day 1"). `after` is a fixed moment of the calendar.
 - `doing`: the character is running an automatic quest (that one, at that stage). `did`: it finished one (that one, that
-  way, in the last `days` days; omitted = ever).
+  way, in the last `days` days; omitted = ever). `busy`: the character runs an automatic quest, is a character slot
+  of someone else's, or is the giver of an active quest with `busyGiver`. Put `{ "not": { "type": "busy", … } }` in the
+  `when` of the message that offers a quest, so a busy character does not offer it.
 - `chance`: a number from 0 to 99 is drawn when the stage begins and stays the same for the whole stage, so
   `"complete": [elapsed, chance 70]` with `"fail": [elapsed, not chance 70]` is a 70% success after that time.
 

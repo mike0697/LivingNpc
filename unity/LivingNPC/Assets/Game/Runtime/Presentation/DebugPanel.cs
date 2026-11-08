@@ -503,6 +503,8 @@ namespace LivingNPC.Presentation
                 if (sr.FailCond >= 0) Condition(b, rt, "Fails when", sr.FailCond, true);
                 rt.RestoreCtx(saved);
             }
+            else if (rt.BusyQuest(n.Id) is int busy && busy >= 0)
+                b.Line($"Doing: <color={Gold}>busy with the quest {Esc(Ids.Name(rules.Quests[busy].Id))}</color>  <color={Grey}>(busyGiver: it picks no automatic quest and is no free slot until the quest ends)</color>");
             else
             {
                 int check = Math.Max(1, rules.AutoCheckMinutes);
@@ -622,6 +624,7 @@ namespace LivingNPC.Presentation
                         case QuestStatus.Active:
                             {
                                 b.Row(header, ("Advance", $"advanceQuest({id})"), ("Complete", $"completeQuest({id})"), ("Fail", $"failQuest({id})"), ("Reset", $"resetQuest({id})"));
+                                if (q.BusyNpc != 0) b.Line($"<color={Grey}>keeps {Esc(NpcName(q.BusyNpc))} busy (busyGiver): no automatic quests for {Esc(NpcName(q.BusyNpc))}</color>");
                                 var sr = rules.Stages[q.StageStart + st.Stage];
                                 b.Line($"Stage <b>{Esc(Ids.Name(sr.Id))}</b> ({st.Stage + 1} of {q.StageCount}) for {Duration(now - st.StageAt)}; quest started {Duration(now - st.StartedAt)} ago");
                                 string text = TextTable.Get(sr.TextId);
@@ -809,6 +812,7 @@ namespace LivingNPC.Presentation
                         string stage = c.C < 0 ? "" : $" at stage {Esc(Ids.Name(rules.Stages[rules.Templates[c.B - 1].StageStart + c.C].Id))}";
                         return $"{Esc(NpcName(V(c.A)))} doing {what}{stage}{Now(AutoDoing(AutoOf(V(c.A)), ref rules))}";
                     }
+                case CondType.Busy: return $"{Esc(NpcName(V(c.A)))} is busy{Now(BusyText(V(c.A), rt, ref rules))}";
                 case CondType.Did:
                     {
                         string what = c.B == 0 ? "an automatic quest" : Esc(Ids.Name(rules.Templates[c.B - 1].Id));
@@ -866,6 +870,17 @@ namespace LivingNPC.Presentation
         static string SexName(byte sex) => sex == 1 ? "male" : sex == 2 ? "female" : sex == 3 ? "other" : "not said";
 
         static string OutcomeName(int outcome) => outcome == (int)QuestStatus.Completed ? "completed" : outcome == (int)QuestStatus.Failed ? "failed" : outcome == RuleRuntime.AutoStopped ? "stopped" : "?";
+
+        /// <summary>Why an npc is busy now, or "free".</summary>
+        string BusyText(int npc, RuleRuntime rt, ref RuleBlob rules)
+        {
+            var a = AutoOf(npc);
+            if (a.Template > 0) return "doing " + AutoDoing(a, ref rules);
+            int q = rt.BusyQuest(npc);
+            if (q >= 0) return $"giving the quest {Esc(Ids.Name(rules.Quests[q].Id))}";
+            if (rt.IsBusy(npc)) return "part of someone else's automatic quest";
+            return "free";
+        }
 
         string AutoDoing(in NpcAuto a, ref RuleBlob rules)
         {

@@ -1,0 +1,12 @@
+{
+  "id": "q_smoke_busy_bruno",
+  "title": "Smoke: a quest Bruno gives",
+  "giver": "bruno",
+  "busyGiver": true,
+  "stages": [
+    {
+      "id": "wait",
+      "text": "Bruno waits for the player."
+    }
+  ]
+}

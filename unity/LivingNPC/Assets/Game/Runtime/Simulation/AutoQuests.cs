@@ -215,7 +215,7 @@ namespace LivingNPC.Simulation
                 var r = Em.GetBuffer<EntityRef>(World)[(j + offset) % n];
                 if (!Em.HasComponent<NpcAuto>(r.Entity)) continue;
                 var a = Em.GetComponentData<NpcAuto>(r.Entity);
-                if (a.Enabled == 0 || a.Template != 0 || now < a.NextAt) continue;
+                if (a.Enabled == 0 || a.Template != 0 || now < a.NextAt || BusyQuest(r.Id) >= 0) continue;
                 var rng = new Random(math.hash(new int3(now, r.Id, slot)) | 1u);
                 if (!PickTemplate(r.Entity, r.Id, ref rng, out int ti, out var bind)) continue;
                 Begin(r.Entity, ti, bind, rng.NextUInt() | 1u);
@@ -350,9 +350,25 @@ namespace LivingNPC.Simulation
             return ok;
         }
 
-        /// <summary>The npc runs an automatic quest of its own, or is a character slot of someone else's.</summary>
+        /// <summary>The active quest (index) with busyGiver whose giver is <paramref name="npc"/>, or -1: while it runs, the npc is busy.</summary>
+        public int BusyQuest(int npc)
+        {
+            ref var rules = ref Rules.Value;
+            var states = Em.GetBuffer<QuestState>(World);
+            for (int qi = 0; qi < rules.Quests.Length && qi < states.Length; qi++)
+                if (rules.Quests[qi].BusyNpc == npc && npc != 0 && states[qi].Status == (byte)QuestStatus.Active) return qi;
+            return -1;
+        }
+
+        /// <summary>
+        /// The npc is busy (the busy condition, and what "free" slots avoid): it runs an automatic quest of its own, is a
+        /// character slot of someone else's, or gives a busyGiver quest that is active.
+        /// </summary>
+        public bool IsBusy(int npc) => npc != 0 && npc != BindRef.None && IsTaken(npc);
+
         bool IsTaken(int id)
         {
+            if (BusyQuest(id) >= 0) return true;
             var refs = Em.GetBuffer<EntityRef>(World);
             for (int i = 0; i < refs.Length; i++)
             {

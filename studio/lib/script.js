@@ -676,6 +676,8 @@ export class Parser {
     for (const k of Object.keys(QUEST_BLOCKS)) if (blocks[k] !== undefined) q[k] = blocks[k];
     q.stages = stages;
     if (!stages.length) this.error(node.no, `the quest “${id}” has no stages (stage …:)`);
+    if (q.busyGiver !== undefined && typeof q.busyGiver !== 'boolean') this.warnings.push({ line: node.no, message: 'busyGiver is true or false' });
+    else if (q.busyGiver && !q.giver) this.error(node.no, `the quest “${id}” has busyGiver = true but no giver: who should be busy?`);
     return q;
   }
 

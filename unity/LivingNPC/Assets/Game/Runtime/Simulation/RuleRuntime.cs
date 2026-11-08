@@ -287,6 +287,7 @@ namespace LivingNPC.Simulation
                             break;
                         }
                     case CondType.Did: r = Remembers(R(c.A), c.B, c.C, c.F, clock.Now); break;
+                    case CondType.Busy: r = IsBusy(R(c.A)); break;
                 }
                 res[i - lo] = (byte)(r ? 1 : 0);
             }

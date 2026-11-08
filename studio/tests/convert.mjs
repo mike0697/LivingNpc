@@ -199,6 +199,14 @@ await test('errors point at their line', () => {
   assert.deepEqual(lines, [1, 4, 5, 6, 7, 11], JSON.stringify(r.errors, null, 1));
 });
 
+await test('busyGiver needs a giver', () => {
+  const bad = fromScript('quest q:\n    busyGiver = true\n    stage s:\n        text = "x"\n');
+  assert.deepEqual(bad.errors.map((e) => e.line), [1]);
+  const good = fromScript('quest q:\n    giver = elena\n    busyGiver = true\n    stage s:\n        text = "x"\n');
+  assert.deepEqual(good.errors, []);
+  assert.equal(good.units[0].json.busyGiver, true);
+});
+
 await test('effect blocks of a quest refuse dialogue', () => {
   const r = fromScript('quest q:\n    onStart:\n        choice:\n            option "a":\n                pass\n    stage s:\n        text = "x"\n');
   assert.equal(r.errors.length, 1);

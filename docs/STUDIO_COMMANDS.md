@@ -122,6 +122,7 @@ quest q_lost_notebook:
 | In a quest | Kind | Meaning |
 |---|---|---|
 | `title`, `summary`, `giver` | properties | Journal title, short summary, character who gives it. |
+| `busyGiver` | property | `true`: while the quest is active the giver is busy and does no automatic quests. |
 | `autoStart:` | conditions | Starts the quest by itself. Without it, a `startQuest(...)` command starts it. |
 | `onStart:`, `onComplete:` | game commands | Run when the quest starts / is completed. |
 | `stage <id>:` | block | One step of the quest, in order. A quest needs at least one stage. |
@@ -442,6 +443,7 @@ On one line the same groups are written `all(a, b)`, `any(a, b)` and `not(a)`.
 | `age(npc, op, value)` / `sex(npc, sex)` | age and sex (`m`, `f`, `x`) of a character. |
 | `doing(npc, template, stage)` | the character is doing an automatic quest (that one, at that stage; both optional). |
 | `did(npc, template, status, days=)` | it finished one: `completed`, `failed`, `stopped` (optional), in the last `days` (omitted = ever). |
+| `busy(npc)` | the character is busy: it does an automatic quest (its own, or as a slot of someone else's) or gives a quest with `busyGiver` that is active. `not: busy(elena)` in the `when:` of the message that offers a quest. |
 | `chance(percent)` | only in the stages of a template: true for that percent of the times, decided when the stage begins. |
 
 `op` is one of `>=`, `>`, `==`, `!=`, `<`, `<=` and is written in quotes: `flag(gold_given, "==", 0)`.

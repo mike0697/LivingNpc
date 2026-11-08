@@ -110,7 +110,7 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   replaced or removed; blocks added by effects are compiled into `RuleBlob.RoutineBlocks / RoutineSets`.
 - **Conditions** (`RuleRuntime.Eval`): a flattened tree, evaluated iteratively (no recursion, Burst-friendly). Types:
   `all/any/not`, `always`, `time`, `day`, `date`, `after`, `elapsed`, `playerAt`, `npcAt`, `npcWithPlayer`, `stat`,
-  `flag`, `quest`, `activity`, `hasItem`, `relation`, `goal`, `age`, `sex`, `chance`, `doing`, `did`.
+  `flag`, `quest`, `activity`, `hasItem`, `relation`, `goal`, `age`, `sex`, `chance`, `doing`, `did`, `busy`.
 - **Effects** (`RuleRuntime.Apply`): `message`, `setFlag/addFlag`, `startQuest/advanceQuest/completeQuest/failQuest`,
   `modStat/setStat`, `giveItem/takeItem`, `moveNpc`, `setPlace/addRoutine/removeRoutine/setRoutine`,
   `advanceTime/advanceTimeTo`, `teleportPlayer`, `showLink/hideLink/openLink/closeLink`, `showImage/hideImage`,
@@ -138,7 +138,9 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   `BindRef` values (`int.MinValue + k`, a range `Ids.Hash` never returns) in place of ids; `RuleRuntime.R()` replaces
   them with the instance's values (`RuleRuntime.Bind`, set by `Enter` / `RestoreCtx`). Texts are groups of variants
   (`TextGroupRule` / `TextVariantRule`), said by `tell` into the log (`MsgKind.Npc`) or when the player talks to a
-  busy npc (`TalkAuto`). When it ends the npc remembers it (`NpcMemory`, last 16) and rests (`NextAt`).
+  busy npc (`TalkAuto`). When it ends the npc remembers it (`NpcMemory`, last 16) and rests (`NextAt`). The giver of
+  an active quest with `busyGiver` (`QuestRule.BusyNpc`, `RuleRuntime.BusyQuest`) picks none and is no free slot;
+  the `busy` condition (`RuleRuntime.IsBusy`) is the same test free slots use.
 
 ## Saves (`Assets/Game/Runtime/Simulation/Save`)
 

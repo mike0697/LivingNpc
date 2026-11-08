@@ -1,0 +1,14 @@
+{
+  "id": "q_smoke_busy_check",
+  "title": "Smoke: Bruno is busy",
+  "autoStart": {
+    "type": "busy",
+    "npc": "bruno"
+  },
+  "stages": [
+    {
+      "id": "seen",
+      "text": "Bruno was busy."
+    }
+  ]
+}

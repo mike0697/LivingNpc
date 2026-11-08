@@ -671,6 +671,12 @@ namespace LivingNPC.Content
                 var rule = new QuestRule { Id = Ids.Hash(q.Id), AutoStartCond = -1 };
                 rule.TitleText = TextTable.Register($"quest:{q.Id}:title", q.Title ?? new JValue(q.Id));
                 if (q.Stages.Count == 0) _rep.Error(src, $"quest '{q.Id}' has no stages");
+                if (!string.IsNullOrEmpty(q.Giver) && !_db.Npcs.ContainsKey(q.Giver)) _rep.Warn(src, $"quest '{q.Id}': giver '{q.Giver}' is not a character");
+                if (q.BusyGiver)
+                {
+                    if (string.IsNullOrEmpty(q.Giver)) _rep.Error(src, $"quest '{q.Id}': busyGiver needs a 'giver'");
+                    else if (_db.Npcs.ContainsKey(q.Giver)) rule.BusyNpc = Ids.Hash(q.Giver);
+                }
                 if (q.AutoStart != null) rule.AutoStartCond = CompileCond(q.AutoStart, $"{src}#{q.Id}.autoStart");
                 (rule.StartFxStart, rule.StartFxCount) = CompileEffects(q.OnStart, $"{src}#{q.Id}.onStart", $"quest:{q.Id}:start");
                 (rule.CompleteFxStart, rule.CompleteFxCount) = CompileEffects(q.OnComplete, $"{src}#{q.Id}.onComplete", $"quest:{q.Id}:done");
@@ -1132,6 +1138,8 @@ namespace LivingNPC.Content
                         }
                         return AddCond(new CondNode { Type = CondType.Doing, A = npc, B = ti + 1, C = stage });
                     }
+                case "busy":
+                    return AddCond(new CondNode { Type = CondType.Busy, A = NpcRef(o, "npc") });
                 case "did":
                     {
                         int npc = NpcRef(o, "npc");

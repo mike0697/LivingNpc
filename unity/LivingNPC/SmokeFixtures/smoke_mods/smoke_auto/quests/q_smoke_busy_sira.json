@@ -1,0 +1,12 @@
+{
+  "id": "q_smoke_busy_sira",
+  "title": "Smoke: a quest Sira gives",
+  "giver": "sira",
+  "busyGiver": true,
+  "stages": [
+    {
+      "id": "wait",
+      "text": "Sira waits for the player."
+    }
+  ]
+}

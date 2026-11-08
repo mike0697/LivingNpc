@@ -89,6 +89,7 @@ export const CONDITIONS = {
   sex: { label: 'Sex of a character', params: [P('npc', 'id:npc', 'Character', req), P('sex', 'choice:m|f|x', 'Sex', req)] },
   chance: { label: 'Chance (automatic quest stage)', params: [P('percent', 'number', 'Percent', req)] },
   doing: { label: 'A character is doing an automatic quest', params: [P('npc', 'id:npc', 'Character', req), P('template', 'id:template', 'Automatic quest (empty = any)', pos), P('stage', 'id:tstage', 'Stage', pos)] },
+  busy: { label: 'A character is busy (automatic quest, or gives a busyGiver quest)', params: [P('npc', 'id:npc', 'Character', req)] },
   did: { label: 'A character did an automatic quest', params: [P('npc', 'id:npc', 'Character', req), P('template', 'id:template', 'Automatic quest (empty = any)', pos), P('status', 'choice:completed|failed|stopped', 'How it ended', pos), P('days', 'number', 'In the last days (empty = ever)')] },
 };
 

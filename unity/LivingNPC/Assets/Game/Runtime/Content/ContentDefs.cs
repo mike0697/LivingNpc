@@ -154,6 +154,8 @@ namespace LivingNPC.Content
         public JToken Title;
         public JToken Summary;
         public string Giver;
+        /// <summary>While the quest is active its giver picks no automatic quest and is not a "free" slot of anybody else's.</summary>
+        public bool BusyGiver;
         public JToken AutoStart;     // condition: quest starts by itself when it becomes true
         public JToken OnStart;       // effects
         public JToken OnComplete;    // effects

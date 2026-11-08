@@ -2,6 +2,10 @@
   "id": "t_smoke_luck",
   "title": "{self} tries {self:his|her} luck",
   "pauseDays": 0,
+  "when": {
+    "type": "flag",
+    "key": "smoke_luck_on"
+  },
   "stages": [
     {
       "id": "roll",

@@ -567,10 +567,28 @@ namespace LivingNPC.EditorTools
 
                     em.SetComponentData(h.Player, new PlayerState { Node = Ids.Hash("square_fountain"), Arrived = 1 }); Pump();
                     art.ApplyOne(new FxNode { Type = FxType.SetAutoQuests, A = bruno, B = 1 });
+
+                    // busyGiver: while a quest bruno gives is active he picks nothing; while one sira gives is active she is no free slot
+                    int busyBruno = db.QuestList.FindIndex(x => x.Id == "q_smoke_busy_bruno"), busySira = db.QuestList.FindIndex(x => x.Id == "q_smoke_busy_sira");
+                    if (busyBruno >= 0 && busySira >= 0)
+                    {
+                        art.StartQuest(busyBruno); Pump();
+                        Check("the giver of an active busyGiver quest is busy", art.BusyQuest(bruno) == busyBruno && art.BusyQuest(sira) < 0 && art.IsBusy(bruno) && !art.IsBusy(sira));
+                        int busyCheck = db.QuestList.FindIndex(x => x.Id == "q_smoke_busy_check");
+                        Check("the busy condition starts a quest", busyCheck < 0 || em.GetBuffer<QuestState>(h.World)[busyCheck].Status == (byte)QuestStatus.Active);
+                        Wait(31);
+                        Check("a busy giver picks no automatic quest", Auto(bruno).Template == 0);
+                        art.CompleteQuest(busyBruno); art.StartQuest(busySira); Pump();
+                        Wait(31);
+                        Check("a busy giver is no free slot of someone else's quest", Auto(bruno).Template == 0);
+                        art.CompleteQuest(busySira); Pump();
+                        Check("not busy once the quest ends", art.BusyQuest(bruno) < 0 && art.BusyQuest(sira) < 0);
+                    }
                     Wait(31);
                     var a = Auto(bruno);
                     Check("picks the visit at the next check", a.Template == visitT + 1 && a.Bind.Length == 3 && a.Bind[0] == bruno && a.Bind[1] == sira && a.Bind[2] == Ids.Hash("potion_store"));
                     Check("talking to it while busy gives its talk line", art.TalkAuto(bruno) && Said(bruno, "Sira"));
+                    Check("busy while doing it, and so is its slot", art.IsBusy(bruno) && art.IsBusy(sira));
 
                     // a save while it runs, loaded in a new world: the instance comes back as it was
                     var autoSave = SaveGame.Capture(new SaveContext(em, h.World, h.Player, compiled));
@@ -594,6 +612,7 @@ namespace LivingNPC.EditorTools
                     Check("its effects ran with self and the slots", art.GetRelation(sira, bruno) == 12 && art.GetFlag(Ids.Hash("smoke_visit_done")) == 1);
                     Check("said its line with the names", Said(bruno, "Bruno visited Sira Vale"));
                     Check("rests after it", a.NextAt > Now());
+                    Check("free again after it", !art.IsBusy(bruno) && !art.IsBusy(sira));
                     int q = db.QuestList.FindIndex(x => x.Id == "q_smoke_auto");
                     Check("did / relation conditions start a quest", q < 0 || em.GetBuffer<QuestState>(h.World)[q].Status != (byte)QuestStatus.NotStarted);
 

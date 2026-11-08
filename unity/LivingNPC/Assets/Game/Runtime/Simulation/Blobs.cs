@@ -61,7 +61,7 @@ namespace LivingNPC.Simulation
 
     // ------------------------------------------------------------------ rules: conditions / effects / quests / events
 
-    public enum CondType : byte { Always, All, Any, Not, Time, Day, Date, PlayerAt, NpcAt, NpcWithPlayer, Stat, Flag, Quest, Activity, HasItem, Elapsed, After, Relation, Goal, Age, Sex, Chance, Doing, Did }
+    public enum CondType : byte { Always, All, Any, Not, Time, Day, Date, PlayerAt, NpcAt, NpcWithPlayer, Stat, Flag, Quest, Activity, HasItem, Elapsed, After, Relation, Goal, Age, Sex, Chance, Doing, Did, Busy }
     public enum ItemKind : byte { Misc = 0, Consumable = 1, Equipment = 2, Key = 3, Quest = 4 }
     public enum CmpOp : byte { Eq, Ne, Lt, Le, Gt, Ge }
     public enum FxType : byte { Message, SetFlag, AddFlag, StartQuest, AdvanceQuest, CompleteQuest, FailQuest, ModStat, SetStat, MoveNpc, AdvanceTime, TeleportPlayer, ShowLink, HideLink, OpenLink, CloseLink, GiveItem, TakeItem, ShowImage, HideImage, SetPlace, AddRoutine, RemoveRoutine, SetRoutine, AdvanceTimeTo, PlaySound, StartLoop, StopLoop, Tell, ModRelation, SetRelation, SetGoal, SetAutoQuests, StartAuto, StopAuto }
@@ -111,6 +111,7 @@ namespace LivingNPC.Simulation
     public struct QuestRule
     {
         public int Id, TitleText;
+        public int BusyNpc;                 // busyGiver: the giver, busy while the quest is active (0 = nobody)
         public int AutoStartCond;
         public int StartFxStart, StartFxCount;
         public int CompleteFxStart, CompleteFxCount;
