@@ -16,6 +16,8 @@ namespace LivingNPC.Presentation
         {
             public float master = 1f, music = 0.8f, ambient = 0.8f, effects = 1f;
             public bool? fullscreen;
+            /// <summary>F12 debug panel; unset = on in the Editor and development builds, off in a release build.</summary>
+            public bool? debugPanel;
             /// <summary>The side panels of the game screen moved by the player, by title ("Presenti", "Diario", "Zaino").</summary>
             public Dictionary<string, PanelPlace> panels = new Dictionary<string, PanelPlace>();
         }
@@ -47,6 +49,13 @@ namespace LivingNPC.Presentation
         {
             get => D.fullscreen ?? Screen.fullScreen;
             set { if (D.fullscreen == value) return; D.fullscreen = value; s_Dirty = true; ApplyScreen(); }
+        }
+
+        /// <summary>F12 opens the debug panel (read-only look inside the running game).</summary>
+        public static bool DebugPanel
+        {
+            get => D.debugPanel ?? Debug.isDebugBuild;
+            set { if (DebugPanel == value && D.debugPanel.HasValue) return; D.debugPanel = value; s_Dirty = true; }
         }
 
         static void Set(ref float field, float value)
@@ -82,7 +91,7 @@ namespace LivingNPC.Presentation
         public static void ResetDefaults()
         {
             var old = D;
-            s_Data = new Data { fullscreen = old.fullscreen ?? Screen.fullScreen, panels = old.panels };
+            s_Data = new Data { fullscreen = old.fullscreen ?? Screen.fullScreen, panels = old.panels, debugPanel = old.debugPanel };
             s_Dirty = true;
             Apply();
         }

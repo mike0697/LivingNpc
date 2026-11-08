@@ -6,6 +6,6 @@
   "description": "LivingNPC quests and messages written as code (Python-like) and converted to the game's JSON",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node tests/convert.mjs && node tests/records.mjs"
+    "test": "node tests/convert.mjs && node tests/records.mjs && node tests/console.mjs"
   }
 }

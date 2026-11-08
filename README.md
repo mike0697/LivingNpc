@@ -66,7 +66,8 @@ you write it**: describe a character or a quest, and let it draft the files for 
 
 Controls: click the buttons on the picture to move; click a character (or the *Present* list) to talk;
 **Space / Enter** to continue a dialogue; **Esc** game menu (save, load, settings); **F6** quick save, **F9** quick
-load; **F5** reload all files keeping the game.
+load; **F5** reload all files keeping the game; **F12** debug panel (where every character is, quests, events, flags,
+and a console that runs the quest commands, e.g. `setStat(energy, 80, target=elena)`).
 
 **Open the editors**
 

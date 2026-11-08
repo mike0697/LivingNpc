@@ -296,6 +296,95 @@ namespace LivingNPC.EditorTools
                     Wait(1); Check($"after: done at {GameTime.Format(Clk().Now, Clk().StartDayOfWeek)}", Qs().Status == (byte)QuestStatus.Completed);
                 }
 
+                // debug console: effects written as in the Studio run through RuleRuntime, a mistake changes nothing,
+                // target=all reaches every npc, run fires an event, and the saves remember that the game was changed
+                {
+                    void Check(string label, bool ok) { sb.AppendLine($"console {label}: {(ok ? "ok" : "FAILED")}"); if (!ok) exit = 22; }
+                    var con = new LivingNPC.Presentation.DebugConsole();
+                    con.Bind(em, h.World, h.Player, compiled);
+                    var crt = RuleRuntime.Create(em, h.World, h.Player);
+                    int energy = Ids.Hash("energy"), happiness = Ids.Hash("happiness"), lia = Ids.Hash("lia"), breadId = Ids.Hash("bread");
+                    string Last() => con.Log[con.Log.Count - 1].Text;
+                    bool Used() => em.GetComponentData<WorldState>(h.World).DebugUsed != 0;
+                    em.SetComponentData(h.Player, new PlayerState { Node = Ids.Hash("square_fountain") }); Pump();
+
+                    Check("a game not changed is not marked", !Used());
+                    Check("setStat", con.Execute("setStat(energy, 42)") && crt.GetStat(0, energy) == 42);
+                    Check("setStat clamped to the stat's range", con.Execute("setStat(energy, 500)") && crt.GetStat(0, energy) == 100);
+                    con.Execute("setStat(energy, 50, target=lia)");
+                    Check("modStat on an npc", con.Execute("modStat(energy, -2, target=lia)") && crt.GetStat(lia, energy) == 48);
+                    int breadBefore = crt.GetItemCount(0, breadId);
+                    Check("short form without brackets", con.Execute("giveItem bread 3") && crt.GetItemCount(0, breadId) == breadBefore + 3);
+                    bool allHappy = con.Execute("setStat(happiness, 77, target=all)");
+                    foreach (var r in em.GetBuffer<EntityRef>(h.World).AsNativeArray().ToArray()) allHappy &= crt.GetStat(r.Id, happiness) == 77;
+                    Check("target=all reaches every npc, not the player", allHappy && crt.GetStat(0, happiness) != 77);
+                    Check("setFlag", con.Execute("setFlag(smoke_console, 5)") && crt.GetFlag(Ids.Hash("smoke_console")) == 5);
+                    float energyNow = crt.GetStat(0, energy);
+                    Check("unknown stat refused", !con.Execute("setStat(nonsense, 1)") && Last().Contains("unknown stat"));
+                    Check("unknown tag refused, nothing changed", !con.Execute("setStat(energy, 1, target=tag:nobody)") && crt.GetStat(0, energy) == energyNow);
+                    Check("a quest-only effect refused", !con.Execute("message(\"hello\")") && Last().Contains("works in the quests"));
+                    Check("missing bracket refused", !con.Execute("setStat(energy, 1"));
+                    Check("too many values refused", !con.Execute("startQuest(q_lost_notebook, 2)"));
+                    Check("unknown argument refused", !con.Execute("setStat(energy, 1, who=lia)"));
+                    Check("where", con.Execute("where(lia)") && Last().StartsWith("lia:"));
+
+                    // Tab completion: command names, ids of the kind the argument expects, target=, the short form
+                    string Done(string text) => con.Complete(text, out _);
+                    Check("complete a command", Done("startQ") == "startQuest");
+                    Check("complete a stat", Done("setStat(ene") == "setStat(energy");
+                    Check("complete a target by name", Done("modStat(energy, 1, target=li") == "modStat(energy, 1, target=lia");
+                    Check("complete after the short form", Done("where ans") == "where anselmo");
+                    Check("complete a quest", Done("resetQuest(q_lost") == "resetQuest(q_lost_notebook");
+                    con.Complete("giveItem(", out var itemChoices);
+                    Check("several choices listed", itemChoices.Count == db.ItemList.Count && itemChoices.Contains("bread"));
+                    Check("no completion for a number", Done("setStat(energy, 4") == "setStat(energy, 4");
+
+                    // conditions branch by branch: EvalTree agrees with Eval on every condition of the content
+                    bool treesAgree = true;
+                    var evalRt = RuleRuntime.Create(em, h.World, h.Player);
+                    void Tree(int root)
+                    {
+                        if (root < 0) return;
+                        var res = new Unity.Collections.FixedList512Bytes<byte>();
+                        bool whole = evalRt.EvalTree(root, ref res);
+                        treesAgree &= whole == evalRt.Eval(root) && res.Length == root - compiled.Rules.Value.Conds[root].Lo + 1 && (res[res.Length - 1] != 0) == whole;
+                    }
+                    for (int i = 0; i < compiled.Rules.Value.Events.Length; i++) Tree(compiled.Rules.Value.Events[i].Cond);
+                    for (int i = 0; i < compiled.Rules.Value.Stages.Length; i++) { Tree(compiled.Rules.Value.Stages[i].CompleteCond); Tree(compiled.Rules.Value.Stages[i].FailCond); }
+                    for (int i = 0; i < compiled.Rules.Value.Quests.Length; i++) Tree(compiled.Rules.Value.Quests[i].AutoStartCond);
+                    Check("EvalTree agrees with Eval", treesAgree);
+
+                    // the panel builds every page (all tabs, every npc, conditions branch by branch) without failing
+                    var panel = new LivingNPC.Presentation.DebugPanel();
+                    panel.Bind(em, h.World, h.Player, compiled);
+                    string pages = panel.RenderAllForTests();
+                    Check("the panel builds every page", pages.Contains("=== Npcs lia") && pages.Contains("=== World") && !pages.Contains("Could not read the world"));
+                    Check("the panel shows condition branches", pages.Contains("(now "));
+                    int clockBefore = em.GetComponentData<ClockState>(h.World).Now;
+                    con.Execute("advanceTime(30)"); Pump();
+                    Check("advanceTime lets the world live the time", em.GetComponentData<ClockState>(h.World).Now == clockBefore + 30);
+                    int morning = -1;
+                    for (int i = 0; i < compiled.Rules.Value.Events.Length; i++) if (compiled.Rules.Value.Events[i].Id == Ids.Hash("ev_morning_fountain")) morning = i;
+                    int ranBefore = em.GetBuffer<EventState>(h.World)[morning].Count;
+                    Check("run an event", con.Execute("run(ev_morning_fountain)") && em.GetBuffer<EventState>(h.World)[morning].Count == ranBefore + 1);
+                    Check("unknown event refused", !con.Execute("run(ev_nothing)"));
+                    Check("resetEvent forgets it ran", con.Execute("resetEvent(ev_morning_fountain)") && em.GetBuffer<EventState>(h.World)[morning].Count == 0);
+                    int notebook = db.QuestList.FindIndex(q => q.Id == "q_lost_notebook");
+                    con.Execute("completeQuest(q_lost_notebook)"); Pump();
+                    Check("resetQuest after completing", em.GetBuffer<QuestState>(h.World)[notebook].Status == (byte)QuestStatus.Completed
+                        && con.Execute("resetQuest(q_lost_notebook)") && em.GetBuffer<QuestState>(h.World)[notebook].Status == (byte)QuestStatus.NotStarted);
+                    Check("a reset quest can start again", con.Execute("startQuest(q_lost_notebook)") && em.GetBuffer<QuestState>(h.World)[notebook].Status == (byte)QuestStatus.Active
+                        && em.GetBuffer<QuestState>(h.World)[notebook].Stage == 0);
+                    Pump();
+                    Check("the game is marked as changed", Used());
+
+                    var dbgSave = SaveGame.Capture(new SaveContext(em, h.World, h.Player, compiled));
+                    Check("the save says so", (bool?)dbgSave["sections"]["debug"]?["used"] == true && (bool?)dbgSave["meta"]?["debugUsed"] == true);
+                    var cleared = em.GetComponentData<WorldState>(h.World); cleared.DebugUsed = 0; em.SetComponentData(h.World, cleared);
+                    SaveGame.Apply(new SaveContext(em, h.World, h.Player, compiled), dbgSave); Pump();
+                    Check("loading keeps the mark", Used());
+                }
+
                 // routine changes (setPlace / addRoutine / removeRoutine / setRoutine): runs only when the test quest exists
                 // (LIVINGNPC_MODS=<folder holding the pack smoke_routine: npc smoke_worker + quest q_smoke_routine, see SmokeFixtures/README.md>)
                 int routineQ = db.QuestList.FindIndex(q => q.Id == "q_smoke_routine");

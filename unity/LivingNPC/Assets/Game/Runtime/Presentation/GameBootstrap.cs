@@ -57,6 +57,22 @@ namespace LivingNPC.Presentation
         /// <summary>The selected world has at least one save (read when the title screen is shown, not every frame).</summary>
         bool _anySave;
 
+        /// <summary>F12 in game (when the setting allows it): a read-only look at npcs, quests, events and flags.</summary>
+        readonly DebugPanel _debug = new DebugPanel();
+
+        void OpenDebug()
+        {
+            _debug.Open();
+            _view.SetInteractive(false);        // the map under the panel must not take the clicks meant for it
+        }
+
+        void CloseDebug()
+        {
+            if (!_debug.IsOpen) return;
+            _debug.Close();
+            _view.SetInteractive(true);
+        }
+
         void Start()
         {
             GameSettings.Apply();
@@ -169,6 +185,7 @@ namespace LivingNPC.Presentation
         void BackToMenu()
         {
             if (_saveMenu.IsOpen) CloseGameMenu();
+            CloseDebug();
             SaveTo(SaveGame.AutoSlot, "Autosave", _shot, out _);
             _loaded = false; _inMenu = true; _pickWorld = false; _error = null;
             _view.SetVisible(false);
@@ -532,6 +549,7 @@ namespace LivingNPC.Presentation
             }
 
             _view.Bind(em, h.World, h.Player, db, compiled);
+            _debug.Bind(em, h.World, h.Player, compiled);
             _autoDay = GameTime.DayOf(em.GetComponentData<ClockState>(h.World).Now);
             _loaded = true;
         }
@@ -553,6 +571,9 @@ namespace LivingNPC.Presentation
             bool esc = kb != null && kb.escapeKey.wasPressedThisFrame;
             if (_saveMenu.IsOpen) { if (esc) _saveMenu.Back(); return; }     // the game is paused under the menu
             if (_inMenu) return;
+            bool f12 = kb != null && kb.f12Key.wasPressedThisFrame;
+            if (_debug.IsOpen && (esc || f12 || !_loaded)) { CloseDebug(); return; }     // Esc closes the panel, not the game
+            if (f12 && _loaded && !_shooting && GameSettings.DebugPanel) OpenDebug();
             if (esc) { if (!_shooting && _loaded) OpenGameMenu(); else if (!_loaded) BackToMenu(); return; }
             if (_shooting) return;                                            // the menu opens at the end of this frame
             if (kb != null && kb.f5Key.wasPressedThisFrame)
@@ -580,8 +601,10 @@ namespace LivingNPC.Presentation
             if (_inMenu) { DrawMenu(); return; }
             if (_shooting) return;                                            // the picture of the save shows the game, not the hints
             if (_error != null) GUI.Label(new Rect(20, 20, 1200, 60), _error);
-            else GUI.Label(new Rect(8, Screen.height - 22, 700, 20), "F5: reload content   F6: save   F9: load   Esc: menu");
+            else GUI.Label(new Rect(8, Screen.height - 22, 800, 20),
+                "F5: reload content   F6: save   F9: load   Esc: menu" + (GameSettings.DebugPanel ? "   F12: debug" : ""));
             if (_status != null && Time.unscaledTime < _statusUntil) GUI.Label(new Rect(8, Screen.height - 44, 1200, 20), _status);
+            _debug.Draw();
         }
     }
 }

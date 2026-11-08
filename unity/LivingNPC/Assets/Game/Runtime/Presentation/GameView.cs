@@ -63,9 +63,12 @@ namespace LivingNPC.Presentation
             if (!visible) _audio.StopAll(0.6f);
         }
 
-        /// <summary>False while a menu is drawn over the game: clicks no longer reach the map, links and panels.</summary>
+        bool _interactive = true;
+
+        /// <summary>False while a menu is drawn over the game: clicks and keys no longer reach the map, links, panels and dialogue.</summary>
         public void SetInteractive(bool interactive)
         {
+            _interactive = interactive;      // the keys too: typing in the debug console must not advance a dialogue
             if (_canvasGo != null) _canvasGo.GetComponent<GraphicRaycaster>().enabled = interactive;
         }
 
@@ -248,7 +251,7 @@ namespace LivingNPC.Presentation
         {
             if (_em.World == null || !_em.World.IsCreated || !_em.Exists(_world)) return;
             var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (_dialogOpen && kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame))
+            if (_dialogOpen && _interactive && kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame))
                 Advance();
 
             PlayCues();

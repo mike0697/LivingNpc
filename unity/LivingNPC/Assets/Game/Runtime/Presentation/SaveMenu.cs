@@ -120,6 +120,7 @@ namespace LivingNPC.Presentation
                 info.Title = GameTime.Format(now, dow);
                 var place = meta["place"];
                 info.Place = place != null && place.Type != JTokenType.Null ? TextTable.Localize(place) : meta.Value<string>("node");
+                if (meta.Value<bool?>("debugUsed") == true) info.Place += "  ·  debug";      // changed by the debug console
             }
 
             var thumb = SaveGame.ThumbPath(slot);
@@ -251,6 +252,13 @@ namespace LivingNPC.Presentation
             if (Button(new Rect(sliderX + bw + 20 * u, by, bw, bh), "Windowed", !full)) GameSettings.Fullscreen = false;
             if (Application.isEditor)
                 GUI.Label(new Rect(sliderX + 2 * bw + 50 * u, y, w - (sliderX - x) - 2 * bw - 50 * u, rowH), "no effect in the Editor: applies to the built game", _hintStyle);
+            y += rowH;
+
+            GUI.Label(new Rect(x, y, labelW, rowH), "Debug panel (F12)", _rowStyle);
+            bool debug = GameSettings.DebugPanel;
+            if (Button(new Rect(sliderX, by + rowH, bw, bh), "On", debug)) GameSettings.DebugPanel = true;
+            if (Button(new Rect(sliderX + bw + 20 * u, by + rowH, bw, bh), "Off", !debug)) GameSettings.DebugPanel = false;
+            GUI.Label(new Rect(sliderX + 2 * bw + 50 * u, y, w - (sliderX - x) - 2 * bw - 50 * u, rowH), "shows where NPCs are, quests, events and flags", _hintStyle);
             y += rowH + 50 * u;
 
             float rw = 400 * u, rx = (Screen.width - 2 * rw - 30 * u) / 2f;

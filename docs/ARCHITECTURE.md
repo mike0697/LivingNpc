@@ -65,6 +65,18 @@ slot. `Esc` opens the game menu (`SaveMenu`) and pauses the simulation: Save / L
 window, position of the panels) are in `<persistentDataPath>/settings.json`, outside the saves. The Present, Journal
 and Backpack panels (`DraggablePanel`) can be dragged by their title bar (a click folds them).
 
+**Debug (F12):** `DebugPanel` shows where every npc is and why (the routine block that applies, a forced move), the
+quests and events with their conditions evaluated now branch by branch (`RuleRuntime.EvalTree`), each test with the
+value it reads (`flag door ≥ 1 (now 0)`), the events that ran, the clock, flags and links. Tab in the console completes
+command names and the ids the argument expects. Its buttons and the
+`DebugConsole` below it run commands written as in the Studio (`modStat(energy, -10, target=all)`, `run(ev_id)`,
+`where(lia)`, `help`, and `resetQuest` / `resetEvent` to play a quest or an event again): each line is compiled by `CompiledContent.TryCompileConsoleEffect` with the content's checks
+(only the effects made of ids and numbers: `ContentCompiler.ConsoleEffects`) and run by `RuleRuntime.ApplyOne`, so
+rules react as to a quest's effect. The console's argument table must match `studio/lib/specs.js`
+(`studio/tests/console.mjs` checks it). A game changed this way is marked: `WorldState.DebugUsed`, saved in the
+`debug` section and in `meta.debugUsed` (the save list shows "debug"). The panel is on in the Editor and development
+builds, and in a release build when Settings ▸ Debug panel is On.
+
 The interface written in code (menus, HUD, notices) is in English; the language of the content is chosen by
 `rules.json`. `AudioPlayer` applies the volumes: music = the `Ids.MusicKey()` channel and the title music, ambient =
 the other loops, effects = one-shot sounds.
@@ -154,7 +166,8 @@ stat or an item needs no code.
 Runtime/Core          Ids (string → int), GameTime, TextTable
 Runtime/Content       ContentDefs (DTOs), ContentLoader (packs + merge), ContentCompiler, ValidationReport
 Runtime/Simulation    Components, Blobs, RuleRuntime (Eval / Apply), Systems, WorldBuilder, Save/
-Runtime/Presentation  GameBootstrap (start-up, menus, F5/F6/F9), GameView (uGUI), SaveMenu, UiKit, AudioPlayer
+Runtime/Presentation  GameBootstrap (start-up, menus, F5/F6/F9/F12), GameView (uGUI), SaveMenu, UiKit, AudioPlayer,
+                      DebugPanel + DebugConsole (F12)
 Editor                ContentMenu (Validate Content, Choose World, SmokeTest, SoundSmokeTest)
 ```
 
