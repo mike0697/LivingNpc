@@ -140,6 +140,8 @@ belong to messages.
 
 ## Automatic quests (template) and shared lines
 
+> Step-by-step guide, with how the dialogues are stored and chosen: [AUTO_QUESTS_GUIDE.md](AUTO_QUESTS_GUIDE.md) (also [in Italian](GUIDA_QUEST_AUTOMATICHE.md)).
+
 A `template` is a quest the **characters pick and do by themselves**: every character with *Automatic quests* on (in
 the Characters tab, `"autoQuests": true`) that is free looks at the templates it can do, fills their **slots** and
 picks one at random, weighted by `weight`. The file goes to `templates/<id>.json`.

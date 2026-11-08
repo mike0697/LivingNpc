@@ -48,7 +48,7 @@ you write it**: describe a character or a quest, and let it draft the files for 
 | [`studio`](studio) | **LivingNPC Studio**: quests and messages as code, plus characters, items, rules and title screen. |
 | [`map-editor`](map-editor) | **LivingNPC Map Editor**: places, backgrounds and the links between them. |
 | [`worlds`](worlds) | The worlds. [`aetherhall`](worlds/aetherhall) is a small example: a school of magic. |
-| [`docs`](docs) | Documentation: Studio commands, JSON reference, architecture. |
+| [`docs`](docs) | Documentation: Studio commands, JSON reference, architecture, the [guide to automatic quests](docs/AUTO_QUESTS_GUIDE.md) (also [in Italian](docs/GUIDA_QUEST_AUTOMATICHE.md)). |
 
 ## Requirements
 

@@ -324,6 +324,8 @@ When the player talks to a character and no `talk` message applies, the characte
 
 ## Automatic quests: templates/&lt;id&gt;.json
 
+> A guide that explains them step by step, with the dialogues, is in [AUTO_QUESTS_GUIDE.md](AUTO_QUESTS_GUIDE.md) (also [in Italian](GUIDA_QUEST_AUTOMATICHE.md)).
+
 A quest that the **characters do by themselves**. Every `rules.autoQuests.checkMinutes`, each character with
 `"autoQuests": true` that is free (and past its pause) looks at the templates: those whose `when` holds and whose slots
 can be filled get a score from `weight`, and one is picked at random (a higher score is picked more often; a score of 0
