@@ -4,7 +4,8 @@ Write the game's quests and messages as Python-like code. The program converts t
 (and back).
 
 The other tabs edit the rest of the world's data with a form: **Characters** (NPCs and shared routines), **Items**,
-**Rules** (`rules.json`) and **System** (`title.json`, the game title and `hud.json`, the bar of pictures).
+**Rules** (`rules.json`) and **System** (`title.json`, the game title, `hud.json`, the bar of pictures, and
+`actions.json`, the menu of actions on a character).
 
 ## Starting it
 
@@ -92,6 +93,11 @@ save.
 - **System** (`hud.json`): the bar of pictures at the top of the game screen: position, size, the buttons (id, label,
   picture, what they open, key, when they are shown), the My status screen (title, player name, text, picture, which
   stats) and the Characters screen (title, which stats, which details), with a preview of the bar at game size.
+- **System** (`actions.json`): the actions of the menu that opens when a character is clicked: id, label (`{npc}` =
+  the character), picture, what it does (talk, trade later, or only its messages), for which characters or tags,
+  and when it is offered (a condition where `self` is the character); “+ Sub-actions” gives an action its own list,
+  opened in a second panel in the game (with how many per page), and the words of the Next / Back / Close buttons. The
+  messages of an action are written in Quests & messages with `trigger = action` and `action = <id>`.
 
 Conditions in the forms (when a button is shown, when a character is listed, when a hint appears) are written as in
 the quests, one per line, all of them must hold: `quest(crypt, active)`, `hasItem(map)`. A line with a mistake is an
@@ -105,7 +111,7 @@ from the form yet: the quests and messages would need updating too.
 - `lib/specs.js`: the commands, the conditions and their parameters (it also drives the buttons).
 - `lib/script.js`: JSON → code and code → JSON, with errors per line.
 - `lib/docs.js`: which files make up a document and which files saving writes.
-- `lib/records.js`: characters, routines, items, rules, title.json and hud.json: checks, conditions as lines, routines worked out as in the game,
+- `lib/records.js`: characters, routines, items, rules, title.json, hud.json and actions.json: checks, conditions as lines, routines worked out as in the game,
   where an id is used.
 - `lib/store.js`: reading and writing on disk, list of the world's ids.
 - `server.mjs`: the local server (127.0.0.1 only).

@@ -1,0 +1,14 @@
+{
+  "id": "ev_action_ask_herself",
+  "trigger": "action",
+  "action": "ask_herself",
+  "script": [
+    {
+      "say": {
+        "en": "I came here as a student, like you. I never found a reason to leave.",
+        "it": "Sono arrivata qui da studentessa, come te. Non ho mai trovato un motivo per andarmene."
+      },
+      "who": "self"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "ev_smoke_rob",
+  "trigger": "action",
+  "action": "rob",
+  "when": {
+    "type": "relation",
+    "from": "self",
+    "to": "player",
+    "op": "<",
+    "value": 0
+  },
+  "effects": [
+    {
+      "do": "addFlag",
+      "key": "smoke_robbed",
+      "value": 1
+    },
+    {
+      "do": "modRelation",
+      "from": "self",
+      "to": "player",
+      "delta": -10
+    }
+  ]
+}

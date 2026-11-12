@@ -589,7 +589,7 @@ namespace LivingNPC.Simulation
             // an event with no line and no choice never opens the dialogue: it must not touch one another event opened
             if (ev.HasDialog == 0) { RunSilent(eventIndex); return; }
             var ws = Em.GetComponentData<WorldState>(World);
-            ws.DialogEvent = ev.Id; ws.DialogEventIdx = eventIndex; ws.DialogNpc = ev.NpcForDialog;
+            ws.DialogEvent = ev.Id; ws.DialogEventIdx = eventIndex; ws.DialogNpc = R(ev.NpcForDialog); ws.DialogSelf = Bind.Length > 0 ? Bind[0] : 0;
             ws.DialogText = 0; ws.DialogWho = 0; ws.DialogStep = -1;
             Em.SetComponentData(World, ws);
             Em.GetBuffer<DialogImage>(World).Clear();
@@ -656,7 +656,7 @@ namespace LivingNPC.Simulation
             var s = Rules.Value.Script[step];
             var ws = Em.GetComponentData<WorldState>(World);
             ws.DialogOpen = 1; ws.DialogStep = step;
-            ws.DialogText = s.TextId; ws.DialogNpc = s.WhoNpc; ws.DialogWho = s.WhoText;
+            ws.DialogText = s.TextId; ws.DialogNpc = R(s.WhoNpc); ws.DialogWho = s.WhoText;
             ws.Version++;
             Em.SetComponentData(World, ws);
             if (choiceStep < 0 || !FillChoices(Rules.Value.Script[choiceStep])) Em.GetBuffer<DialogChoice>(World).Clear();
@@ -692,8 +692,18 @@ namespace LivingNPC.Simulation
 
         static void Close(ref WorldState ws)
         {
-            ws.DialogOpen = 0; ws.DialogEvent = 0; ws.DialogText = 0; ws.DialogNpc = 0; ws.DialogWho = 0;
+            ws.DialogOpen = 0; ws.DialogEvent = 0; ws.DialogText = 0; ws.DialogNpc = 0; ws.DialogWho = 0; ws.DialogSelf = 0;
             ws.DialogEventIdx = 0; ws.DialogStep = -1; ws.Dirty = 1; ws.Version++;
+        }
+
+        /// <summary>
+        /// "self" for the conditions and effects that follow: the npc an action event was chosen on (0 = nobody, the Bind of
+        /// an automatic quest is never set here). The dialogue keeps it in WorldState.DialogSelf between lines.
+        /// </summary>
+        public void BindDialog(int self)
+        {
+            Bind = default;
+            if (self != 0) Bind.Add(self);
         }
 
         /// <summary>Click / key on a line: the program goes on (unless a choice is on screen: the player has to pick).</summary>

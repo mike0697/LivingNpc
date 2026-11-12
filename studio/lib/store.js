@@ -70,9 +70,9 @@ export async function readDoc(pack, doc) {
   return out;
 }
 
-/** Only the JSON files the program edits (quests/, events/, templates/, lines/, npcs/, schedules/, items/, rules.json, title.json, hud.json), never above the pack. */
+/** Only the JSON files the program edits (quests/, events/, templates/, lines/, npcs/, schedules/, items/, rules.json, title.json, hud.json, actions.json), never above the pack. */
 export function safePath(pack, r) {
-  const ok = typeof r === 'string' && (r === 'rules.json' || r === 'title.json' || r === 'hud.json' || /^(quests|events|templates|lines|npcs|schedules|items)\/[A-Za-z0-9_.\-/]+\.json$/.test(r));
+  const ok = typeof r === 'string' && (r === 'rules.json' || r === 'title.json' || r === 'hud.json' || r === 'actions.json' || /^(quests|events|templates|lines|npcs|schedules|items)\/[A-Za-z0-9_.\-/]+\.json$/.test(r));
   if (!ok || r.split('/').includes('..')) throw new Error(`path not allowed: ${r}`);
   return join(pack, ...r.split('/'));
 }
@@ -107,7 +107,7 @@ export async function saveImage(pack, r, base64) {
 
 /**
  * The records of a pack: { npc: [{ rel, json, text }], schedule: [...], item: [...], rules: { rel, json, text } | null,
- * title, hud: the same for title.json and hud.json, nodes: [{ id, title, backgrounds: { key: 'nodes/<dir>/<file>' } }], startNode,
+ * title, hud, actions: the same for title.json, hud.json and actions.json, nodes: [{ id, title, backgrounds: { key: 'nodes/<dir>/<file>' } }], startNode,
  * worldName (name of project.json) }. json is null when the file is not valid JSON.
  */
 export async function listRecords(pack) {
@@ -128,6 +128,7 @@ export async function listRecords(pack) {
   const rules = await single('rules.json');
   const title = await single('title.json');
   const hud = await single('hud.json');
+  const actions = await single('actions.json');
   const nodes = [];
   for (const abs of await walk(join(pack, 'nodes'), (n) => n === 'node.json')) {
     const j = await readJson(abs);
@@ -139,7 +140,7 @@ export async function listRecords(pack) {
   }
   const project = (await readJson(join(pack, 'project.json'))) || {};
   return {
-    npc: await read('npcs'), schedule: await read('schedules'), item: await read('items'), rules, title, hud,
+    npc: await read('npcs'), schedule: await read('schedules'), item: await read('items'), rules, title, hud, actions,
     nodes: nodes.sort((a, b) => a.id.localeCompare(b.id)),
     startNode: project.startNode || rules?.json?.startNode || '',
     worldName: typeof project.name === 'string' ? project.name : '',
@@ -201,6 +202,11 @@ export async function saveFiles(pack, write, remove) {
 }
 
 /** The ids of the pack, for the buttons and the checks: { npc, node, link, item, quest, stage: {quest: [...]}, event, stat, activity, goal, template, tstage: {template: [...]}, lines, flag, images, sfx, music }. */
+/** The actions of actions.json with their sub-actions, at any depth. */
+function flatActions(list) {
+  return (Array.isArray(list) ? list : []).flatMap((a) => (a && typeof a === 'object' ? [a, ...flatActions(a.actions)] : []));
+}
+
 export async function refs(pack) {
   const ids = async (dir) => (await Promise.all((await walk(join(pack, dir), isJson)).map(readJson))).filter(Boolean);
   const files = async (dir) => (await walk(join(pack, dir))).map((f) => relative(join(pack, dir), f).split(sep).join('/'));
@@ -211,6 +217,7 @@ export async function refs(pack) {
   const templates = await ids('templates');
   const rules = (await readJson(join(pack, 'rules.json'))) || {};
   const hud = (await readJson(join(pack, 'hud.json'))) || {};
+  const actions = (await readJson(join(pack, 'actions.json'))) || {};
   const flags = new Set();
   const scan = (v) => {
     if (Array.isArray(v)) return v.forEach(scan);
@@ -233,6 +240,7 @@ export async function refs(pack) {
     activity: sorted((rules.activities || []).map((a) => (typeof a === 'string' ? a : a.id))),
     goal: sorted((Array.isArray(rules.goals) ? rules.goals : []).map((g) => g?.id)),
     button: sorted((Array.isArray(hud.buttons) ? hud.buttons : []).map((b) => b?.id)),
+    action: sorted(flatActions(actions.actions).map((a) => a?.id)),
     template: sorted(templates.map((t) => t.id)),
     tstage: Object.fromEntries(templates.map((t) => [t.id, (t.stages || []).map((s, i) => s.id || `stage${i}`)])),
     lines: sorted((await ids('lines')).map((l) => l.id)),

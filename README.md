@@ -36,6 +36,10 @@ you write it**: describe a character or a quest, and let it draft the files for 
 - **A bar of pictures you design.** `hud.json` puts clickable icons at the top of the screen: *My status* (the
   player's stats), *Characters* (pick a character from a list: picture, stats, and hints that unlock as the story
   goes), the journal, the backpack, or any message of yours (a phone, a spell book…).
+- **Actions on characters.** `actions.json` turns a click on a character into a menu: *Talk*, *Ask about the quest*,
+  *Rob*, *Attack*… each one offered to whom you choose and when you choose, and running your own messages where
+  `self` is that character. An action can open a second panel of sub-actions (*Review scenes* → *Scene 1*, *Scene
+  2*…), page by page.
 - **Two editors.** A **map editor** to draw places and links, and **LivingNPC Studio** to write quests and dialogues
   as code and edit characters, items, rules and the title screen with forms – with live error checking.
 - **Data, not code.** Worlds are folders of JSON and pictures: easy to version, to mod (packs can patch each other)
@@ -70,7 +74,8 @@ you write it**: describe a character or a quest, and let it draft the files for 
 3. Press **Play**. The game starts on its own, in any scene, and opens the first world in `worlds/` – Aetherhall.
    To pick another world use the menu **LivingNPC ▸ Choose World…**.
 
-Controls: click the buttons on the picture to move; click a character (or the *Present* list) to talk; click the
+Controls: click the buttons on the picture to move; click a character (or the *Present* list) to talk, or to open
+its menu of actions when the world has one; click the
 icons at the top (or their keys, e.g. **C** status, **N** characters) to open their screens;
 **Space / Enter** to continue a dialogue; **Esc** game menu (save, load, settings); **F6** quick save, **F9** quick
 load; **F5** reload all files keeping the game; **F12** debug panel (where every character is, quests, events, flags,

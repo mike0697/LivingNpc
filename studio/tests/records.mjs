@@ -96,6 +96,22 @@ eq('one condition stays one', condFromText('quest(crypt, completed)', hRefs).con
 eq('empty condition = always', condFromText(['  ', ' '].join('\n'), hRefs).cond, undefined);
 eq('condition with a mistake', condFromText(['quest(crypt', 'flag(a)'].join('\n'), hRefs).errors[0]?.startsWith('line 1:'), true);
 
+// ---------------------------------------------------------------- actions.json (System tab) and action messages
+const aRefs = { npc: ['lia', 'elena'], images: ['a/talk.png'], quest: ['crypt'] };
+eq('actions.json correct', checkRecord('actions', { actions: [{ id: 'talk', label: 'Talk to {npc}', icon: 'a/talk.png', do: 'talk' },
+  { id: 'rob', npcs: ['lia'], tags: ['guard'], when: { type: 'relation', from: 'self', to: 'player', op: '<', value: 0 } }] }, aRefs), { errors: [], warnings: [] });
+const aBad = checkRecord('actions', { actions: [{ id: 'x', do: 'fly', npcs: ['nobody'], icon: 'none.png' }, { id: 'x', do: 'trade' }, { label: 'no id' },
+  { id: 'y', tags: 'guard', when: { type: 'quest', quest: 'nope' } }] }, aRefs);
+eq('actions.json errors', aBad.errors.length, 4);       // do, same id, no id, tags not a list
+eq('actions.json warnings', aBad.warnings.length, 4);   // nobody, picture, trade, unknown quest
+const nested = checkRecord('actions', { pageSize: 4, labels: { next: 'Avanti', back: 'Indietro', close: 'Chiudi' }, actions: [
+  { id: 'scenes', label: 'Review scenes', pageSize: 5, actions: [{ id: 'scene_1' }, { id: 'scene_2', when: { type: 'quest', quest: 'crypt' } }] }] }, aRefs);
+eq('sub-actions correct', nested, { errors: [], warnings: [] });
+const nBad = checkRecord('actions', { labels: { forward: 'x' }, actions: [{ id: 'a', do: 'talk', pageSize: -1, actions: [{ id: 'a' }, { id: 'b', pageSize: 3 }] }, { id: 'c', pageSize: 2 }] }, aRefs);
+eq('sub-actions problems', [nBad.errors.length, nBad.warnings.length], [1, 5]);      // same id in a sub-action; labels, do ignored, pageSize -1, pageSize without sub-actions ×2
+eq('self in an action condition', condFromText('relation(self, player, "<", 0)', aRefs, { self: true }).warnings, []);
+eq('self elsewhere is an unknown character', condFromText('relation(self, player, "<", 0)', aRefs).warnings.length, 1);
+
 // ---------------------------------------------------------------- where a quest is used (Delete in Quests & messages)
 const qFiles = [
   { rel: 'quests/q_a.json', json: { id: 'q_a', stages: [{ id: 's' }] } },
@@ -139,7 +155,7 @@ for (const pack of packs) {
     for (const e of res.errors) console.log(`  ${rec.rel}: ${e}`);
     // the effects of the sleep and every routine survive the trip through the form
   }
-  for (const kind of ['title', 'hud']) if (data[kind]?.json) {
+  for (const kind of ['title', 'hud', 'actions']) if (data[kind]?.json) {
     files++;
     const res = checkRecord(kind, data[kind].json, r);
     errors += res.errors.length; warnings += res.warnings.length;
@@ -148,6 +164,8 @@ for (const pack of packs) {
   // every condition of the profiles and of the bar survives the trip through the form
   for (const c of [...data.npc.flatMap((x) => [x.json?.profile?.when, ...(x.json?.profile?.hints || []).map((hh) => hh?.when)]), ...(data.hud?.json?.buttons || []).map((b) => b?.when)].filter(Boolean))
     eq(`${pack}: condition ${JSON.stringify(c)} as lines and back`, condFromText(condToText(c), r).cond, c);
+  for (const c of (data.actions?.json?.actions || []).map((x) => x?.when).filter(Boolean))
+    eq(`${pack}: action condition ${JSON.stringify(c)} as lines and back`, condFromText(condToText(c), r, { self: true }).cond, c);
   if (data.rules?.json) {
     files++;
     const res = checkRecord('rules', data.rules.json, r);

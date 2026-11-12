@@ -1,0 +1,33 @@
+{
+  "id": "ev_action_ask_crypt",
+  "trigger": "action",
+  "action": "ask_crypt",
+  "npc": "elena",
+  "script": [
+    {
+      "if": {
+        "type": "quest",
+        "quest": "crypt",
+        "stage": "find_passage"
+      },
+      "then": [
+        {
+          "say": {
+            "en": "The old texts speak of a way down hidden in the back garden. Look near the statues.",
+            "it": "I vecchi testi parlano di un passaggio nascosto nel giardino sul retro. Cerca vicino alle statue."
+          },
+          "who": "self"
+        }
+      ],
+      "else": [
+        {
+          "say": {
+            "en": "Be careful down there, and come back to me when you have seen the crypt.",
+            "it": "Stai attento laggiù, e torna da me quando avrai visto la cripta."
+          },
+          "who": "self"
+        }
+      ]
+    }
+  ]
+}

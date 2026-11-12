@@ -1,0 +1,12 @@
+{
+  "id": "ev_smoke_never",
+  "trigger": "action",
+  "action": "never",
+  "effects": [
+    {
+      "do": "setFlag",
+      "key": "smoke_never",
+      "value": 1
+    }
+  ]
+}

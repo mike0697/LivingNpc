@@ -298,3 +298,6 @@ button.danger-link { color: var(--error); }
 .hud-plate img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .ticks { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .profile-thumb { height: 72px; margin-left: 8px; object-fit: contain; vertical-align: middle; }
+pre.code-sample { font-family: var(--code-font); font-size: 12.5px; background: rgba(127, 127, 127, .1); border-radius: 6px; padding: 8px 10px; margin: 4px 0 0; white-space: pre; overflow-x: auto; }
+.sub-block { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.sub-actions { margin-left: 14px; padding-left: 10px; border-left: 3px solid var(--accent-soft); }

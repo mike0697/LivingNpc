@@ -13,7 +13,7 @@ them and builds the world. You can write them by hand, with the editors, or with
 
 - [Worlds and packs](#worlds-and-packs)
 - [Common formats: ids, texts, times, days](#common-formats)
-- [pack.json](#packjson) · [project.json](#projectjson) · [title.json](#titlejson) · [rules.json](#rulesjson) · [hud.json](#the-bar-of-pictures-hudjson)
+- [pack.json](#packjson) · [project.json](#projectjson) · [title.json](#titlejson) · [rules.json](#rulesjson) · [hud.json](#the-bar-of-pictures-hudjson) · [actions.json](#actions-on-a-character-actionsjson)
 - [Places: nodes/&lt;id&gt;/node.json](#places-nodesidnodejson)
 - [Characters: npcs/&lt;id&gt;.json](#characters-npcsidjson) · [Shared routines: schedules/&lt;id&gt;.json](#shared-routines-schedulesidjson)
 - [Items: items/&lt;id&gt;.json](#items-itemsidjson)
@@ -36,6 +36,7 @@ worlds/
       project.json         the world: game title, start place (written by the map editor)
       title.json           title screen and button pictures (optional)
       hud.json             the bar of pictures at the top of the game screen (optional)
+      actions.json         the menu of actions when a character is clicked (optional)
       rules.json           clock, stats, activities, parts of the day, sleep, starting inventory
       nodes/<id>/node.json places (one folder per place, with its background pictures)
       npcs/<id>.json       characters
@@ -43,7 +44,7 @@ worlds/
       items/<id>.json      items
       quests/<id>.json     quests
       events/<id>.json     messages (also in subfolders: events/<quest id>/<id>.json)
-      images/              pictures used by characters, messages, title.json and hud.json
+      images/              pictures used by characters, messages, title.json, hud.json and actions.json
       music/               music (wav, ogg, mp3)
       sfx/                 sound effects and ambient loops
       lore/*.md            free notes about the world (not read by the game; useful for writers and AI)
@@ -170,6 +171,63 @@ passes, not during a dialogue. Later packs merge `hud.json`: `buttons` by id (an
 ```json
 { "id": "ev_phone", "trigger": "button", "button": "phone",
   "script": [ { "say": "No signal down here.", "who": "Phone" } ] }
+```
+
+## Actions on a character: actions.json
+
+The menu that opens when the player clicks a character (its picture on the map or its name in *Present*). Optional:
+without `actions.json` a click talks, as before.
+
+```json
+{ "actions": [
+    { "id": "talk",  "label": { "en": "Talk to {npc}", "it": "Parla con {npc}" }, "icon": "actions/talk.png", "do": "talk" },
+    { "id": "ask_crypt", "label": "Ask about the crypt", "npcs": ["elena"],
+      "when": { "type": "quest", "quest": "crypt", "status": "active" } },
+    { "id": "rob",   "label": "Rob", "tags": ["villager"],
+      "when": { "type": "relation", "from": "self", "to": "player", "op": "<", "value": 0 } },
+    { "id": "trade", "label": "Trade", "do": "trade" } ] }
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `id` | | Required. Messages name it with `"action"`. |
+| `label` | the id | What the menu says; `{npc}` is the character (`"Talk to {npc}"`). |
+| `icon` | | A small picture beside the label (file in `images/`). |
+| `do` | | `talk`: talks to the character (its `talk` messages, or its default line). `trade`: reserved, trading does not exist yet. Omitted: only its messages. |
+| `npcs`, `tags` | everybody | Offered only to these characters, or to the characters with one of these tags. |
+| `when` | always | [Condition](#conditions): on the menu only while it holds. **`self` is the character clicked**. |
+| `actions` | | **Sub-actions** (same fields, nested up to 4 levels): choosing the action opens them in a panel beside the menu, and does nothing else. The action is offered only while one of its sub-actions is. |
+| `pageSize` | `6` | With `actions`: sub-actions per page of that panel (`0` = all on one page). |
+
+At the top of the file, `pageSize` pages the first menu too (default `0`, all on one page) and `labels` gives the
+words of the buttons of the panels: `{ "next": "Avanti ›", "back": "‹ Indietro", "close": "Chiudi" }` (texts, also
+in several languages; default *Next ›*, *‹ Back*, *Close*).
+
+```json
+{ "labels": { "next": { "en": "Next ›", "it": "Avanti ›" }, "back": { "en": "‹ Back", "it": "‹ Indietro" }, "close": "Chiudi" },
+  "actions": [
+    { "id": "talk", "label": "Talk", "do": "talk" },
+    { "id": "scenes", "label": "Review scenes", "pageSize": 5, "actions": [
+        { "id": "scene_1", "label": "The first lesson" },
+        { "id": "scene_2", "label": "The crypt", "when": { "type": "quest", "quest": "crypt", "status": "completed" } } ] } ] }
+```
+
+A panel of sub-actions opens to the right of its menu, level with the action that opened it (to the left when there is
+no room), with *‹ Back* / *Next ›* when its actions do not fit one page, and *Close*. Choosing the same action again,
+Close or Esc closes it; choosing another action with sub-actions replaces it. Ids are shared by all the actions and
+sub-actions: every one runs its own `action` messages.
+
+The menu lists, top to bottom, the actions offered to the character whose `when` holds ("Nothing to do now" when none
+does). Choosing one runs the messages with `"trigger": "action"` and that `action` (plus the talk messages with
+`"do": "talk"`). In those messages **`self` is the character**: in conditions (`relation(self, …)`), in commands
+(`modRelation(self, player, -10)`, `takeItem(gold_coin, target=self)`), as the speaker (`"who": "self"`) and in the
+texts (`{self}`). The menu closes on a click outside it, Esc, a dialogue, or when time passes. Later packs merge
+`actions` by id (`{ "id": "rob", "$op": "delete" }` removes one).
+
+```json
+{ "id": "ev_rob", "trigger": "action", "action": "rob",
+  "script": [ { "say": "Hey! Give that back!", "who": "self" },
+              { "do": "modRelation", "from": "self", "to": "player", "delta": -20 } ] }
 ```
 
 ## rules.json
@@ -352,9 +410,10 @@ A message runs when its trigger happens and its `when` condition is true.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `trigger` | `enterNode` | `enterNode` (the player arrives in `node`), `talk` (the player talks to `npc`; required), `tick` (every step while the player is in `node`), `wake` (the player wakes up; `node` = where), `button` (the player presses the picture `button` of the [bar](#the-bar-of-pictures-hudjson)). |
+| `trigger` | `enterNode` | `enterNode` (the player arrives in `node`), `talk` (the player talks to `npc`; required), `tick` (every step while the player is in `node`), `wake` (the player wakes up; `node` = where), `button` (the player presses the picture `button` of the [bar](#the-bar-of-pictures-hudjson)), `action` (the player chooses the action `action` on a character: see [actions.json](#actions-on-a-character-actionsjson); `npc` = only on that character; `self` = the character). |
 | `node`, `npc` | | Where / with whom. `node` omitted = anywhere. |
 | `button` | | Required with `trigger: button`: the id of a `hud.json` button. The message runs only when the world is still (no trip, wait or dialogue). |
+| `action` | | Required with `trigger: action`: the id of an `actions.json` action. |
 | `when` | always | [Condition](#conditions). |
 | `once` | `false` | Runs only once per game. |
 | `cooldownMinutes` | `0` | Game minutes before it can run again. |

@@ -200,6 +200,7 @@ function autoTemplate(id) {
 function eventTemplate(id, trigger, when = ['always()'], body = ['say("Text of the message")']) {
   const head = trigger === 'talk' ? [`trigger = talk`, `npc = ${firstOf('npc', 'character')}`]
     : trigger === 'button' ? [`trigger = button`, `button = ${firstOf('button', 'button')}`]
+    : trigger === 'action' ? [`trigger = action`, `action = ${firstOf('action', 'action')}`]
     : [`trigger = ${trigger}`, `node = ${firstOf('node', 'place')}`];
   return [`event ${id}:`, ...head.map((l) => IN + l), `${IN}when:`, ...when.map((l) => IN + IN + l), '', ...body.map((l) => IN + l)];
 }
@@ -566,6 +567,7 @@ const TRIGGERS = [
   ['tick', 'While time passes (in a place)', 'node'],
   ['wake', 'When waking up', 'node'],
   ['button', 'When a button of the bar is pressed', 'button'],
+  ['action', 'When an action is chosen on a character', 'action'],
 ];
 
 function categories() {

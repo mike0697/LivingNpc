@@ -1,5 +1,6 @@
 // The records of a world that are not quests or messages: characters (npcs/), shared routines (schedules/), items
-// (items/), the rules of the game (rules.json), the title screen (title.json) and the bar of pictures (hud.json). Used by the page (the forms) and by the tests (Node).
+// (items/), the rules of the game (rules.json), the title screen (title.json), the bar of pictures (hud.json) and the
+// menu of actions on a character (actions.json). Used by the page (the forms) and by the tests (Node).
 //
 // The JSON stays the only truth: a form edits a copy of the file's object, keys it does not know are kept as they are,
 // and the checks below say what Unity would say when it loads the world (ContentLoader / ContentCompiler).
@@ -25,6 +26,10 @@ export const KINDS = {
   schedule: { dir: 'schedules', label: 'Shared routine', fresh: (id) => ({ id, blocks: [] }) },
   item: { dir: 'items', label: 'Item', fresh: (id) => ({ id, name: id, type: 'misc', value: 0 }) },
   title: { dir: '', label: 'System', fresh: () => ({ drawTitle: true, musicOn: true }) },
+  actions: {
+    dir: '', label: 'Actions on a character',
+    fresh: () => ({ actions: [{ id: 'talk', label: { en: 'Talk', it: 'Parla' }, do: 'talk' }] }),
+  },
   hud: {
     dir: '', label: 'Bar of pictures',
     fresh: () => ({
@@ -36,6 +41,9 @@ export const KINDS = {
     }),
   },
 };
+
+/** What an action does besides running its messages (ContentCompiler.Actions). */
+export const ACTION_DOS = [['talk', 'Talk (its talk messages)'], ['trade', 'Trade (not in the game yet)']];
 
 /** What a button of the bar can open (ContentCompiler.Hud: CompiledHud.Screens). */
 export const HUD_SCREENS = [['status', 'My status (the player)'], ['npcs', 'Characters (list and page)'], ['journal', 'Journal panel'], ['backpack', 'Backpack panel'], ['present', 'Present panel']];
@@ -201,13 +209,14 @@ export function checkRecord(kind, json, refs = {}, taken = null) {
   else if (kind === 'rules') checkRules(json, refs, P);
   else if (kind === 'title') checkTitle(json, refs, P);
   else if (kind === 'hud') checkHud(json, refs, P);
+  else if (kind === 'actions') checkActions(json, refs, P);
   return { errors: P.errors, warnings: P.warnings };
 }
 
-/** A condition written in a file: what the script language says of it (unknown ids, wrong commands). */
-function condProblems(c, where, refs, P) {
+/** A condition written in a file: what the script language says of it (unknown ids, wrong commands). self: "self" is a character. */
+function condProblems(c, where, refs, P, self = false) {
   if (c === undefined || c === null) return;
-  const { errors, warnings } = condFromText(condToText(c), refs);
+  const { errors, warnings } = condFromText(condToText(c), refs, { self });
   for (const e of errors) P.err(`${where}: ${e}`);
   for (const w of warnings) P.warn(`${where}: ${w}`);
 }
@@ -264,6 +273,50 @@ function checkHud(hud, refs, P) {
     if (hud.npcs.show !== undefined && !Array.isArray(hud.npcs.show)) P.err('characters, show: must be a list');
     else for (const d of hud.npcs.show || []) if (!HUD_DETAILS.some(([k]) => k === d)) P.warn(`characters, show: “${d}” is not known (${HUD_DETAILS.map(([k]) => k).join(', ')})`);
   }
+}
+
+/** actions.json as ContentCompiler.CompileActions reads it (ids are shared by the sub-actions, at any depth). */
+function checkActions(a, refs, P) {
+  if (!isObj(a)) { P.err('actions.json must contain a JSON object { "actions": [ … ] }'); return; }
+  if (a.actions !== undefined && !Array.isArray(a.actions)) { P.err('actions must be a list'); return; }
+  if (!(a.actions || []).length) P.warn('there are no actions: clicking a character opens an empty menu');
+  if (a.pageSize !== undefined && (!Number.isInteger(a.pageSize) || a.pageSize < 0)) P.warn('pageSize: a whole number, 0 = all on one page');
+  if (a.labels !== undefined) {
+    if (!isObj(a.labels)) P.err('labels must be { "next": …, "back": …, "close": … }');
+    else for (const k of Object.keys(a.labels)) if (!['next', 'back', 'close'].includes(k.toLowerCase())) P.warn(`labels.${k}: unknown (next, back, close)`);
+  }
+  checkActionList(a.actions || [], new Set(), refs, P, 0, '');
+}
+
+function checkActionList(list, ids, refs, P, depth, inside) {
+  list.forEach((x, i) => {
+    if (!isObj(x)) { P.err(`${inside}action ${i + 1}: must be { "id": … }`); return; }
+    const where = `${inside}action ${x.id || i + 1}`;
+    if (typeof x.id !== 'string' || !x.id.trim()) { P.err(`action ${i + 1}: the id is missing`); return; }
+    if (!ID_RE.test(x.id)) P.err(`${where}: an id can only have letters, digits, _ - .`);
+    if (ids.has(x.id)) P.err(`${where}: two actions have this id (also counting the sub-actions)`);
+    ids.add(x.id);
+    if (String(x.$op || '').toLowerCase() === 'delete') return;
+    if (x.icon && refs.images && !has(refs.images, x.icon)) P.warn(`${where}: the picture “${x.icon}” is not in the images folder`);
+    if (x.actions !== undefined) {
+      if (!Array.isArray(x.actions)) P.err(`${where}: the sub-actions must be a list`);
+      else if (depth >= 3) P.err(`${where}: sub-actions go at most 4 levels deep`);
+      else {
+        if (!x.actions.length) P.warn(`${where}: it has no sub-actions, it is never offered`);
+        if (x.do) P.warn(`${where}: an action with sub-actions only opens them, “does” is ignored`);
+        checkActionList(x.actions, ids, refs, P, depth + 1, `${x.id} › `);
+      }
+      if (x.pageSize !== undefined && (!Number.isInteger(x.pageSize) || x.pageSize < 0)) P.warn(`${where}: pageSize: a whole number, 0 = all on one page`);
+    } else if (x.pageSize !== undefined) P.warn(`${where}: pageSize is used only with sub-actions`);
+    if (x.do !== undefined && x.do !== '') {
+      const d = String(x.do).toLowerCase();
+      if (d === 'trade') P.warn(`${where}: trading does not exist yet, the action only runs its messages`);
+      else if (d !== 'talk') P.err(`${where}: do “${x.do}” is not known (talk, trade; empty = only its messages)`);
+    }
+    for (const key of ['npcs', 'tags']) if (x[key] !== undefined && !(Array.isArray(x[key]) && x[key].every((v) => typeof v === 'string'))) P.err(`${where}: ${key} must be a list of words`);
+    for (const n of Array.isArray(x.npcs) ? x.npcs : []) if (refs.npc && !has(refs.npc, n)) P.warn(`${where}: the character “${n}” does not exist`);
+    condProblems(x.when, `${where}, offered when`, refs, P, true);
+  });
 }
 
 /** The page of a character in the characters screen of the bar (npc "profile"). */
@@ -493,13 +546,18 @@ export function condToText(c) {
   return top.map(condText).join('\n');
 }
 
-/** Script lines back to a condition: { cond (undefined when empty), errors, warnings } (texts with their line). */
-export function condFromText(text, refs) {
+/**
+ * Script lines back to a condition: { cond (undefined when empty), errors, warnings } (texts with their line).
+ * self: the condition is about a character clicked (actions), so "self" stands for it.
+ */
+export function condFromText(text, refs, { self = false } = {}) {
   const lines = String(text ?? '').split('\n');
   if (!lines.some((l) => l.trim())) return { cond: undefined, errors: [], warnings: [] };
-  // the "when" of a message: the lines keep their number + 3
-  const script = ['event _:', '    trigger = enterNode', '    when:', ...lines.map((l) => (l.trim() ? '        ' + l.trim() : '')), ''].join('\n');
+  // the "when" of a message (of an action message when self is a character): the lines keep their number + 3
+  const head = self ? ['event _:', '    trigger = action', '    when:'] : ['event _:', '    trigger = enterNode', '    when:'];
+  const script = [...head, ...lines.map((l) => (l.trim() ? '        ' + l.trim() : '')), ''].join('\n');
   const r = fromScript(script, refs);
+  if (self) r.errors = r.errors.filter((e) => !/needs action =/.test(e.message));
   const say = (e) => (lines.length > 1 ? `line ${e.line - 3}: ${e.message}` : e.message);
   // a line with a mistake is skipped, so the block may also be "empty": that second message says nothing more
   const errors = r.errors.filter((e, _, all) => all.length === 1 || !/has no conditions/.test(e.message));

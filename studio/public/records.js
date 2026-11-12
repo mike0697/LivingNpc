@@ -1,10 +1,10 @@
-// The tabs Characters, Items, Rules and System (title.json, hud.json): a list on the left, a form in the middle, problems / uses / JSON on the right.
+// The tabs Characters, Items, Rules and System (title.json, hud.json, actions.json): a list on the left, a form in the middle, problems / uses / JSON on the right.
 // A form edits a copy of the file's object: keys the form does not know are kept, Save writes the JSON (2 spaces, LF).
 // The checks (lib/records.js) say what Unity would say when it loads the world.
 
 import {
   KINDS, ITEM_TYPES, SEXES, DAY_KEYS, DAY_NAMES, ID_RE, checkRecord, jsonText, textOf, parseTime, clock, dayMask, daysOf,
-  whereAt, routineBlocks, effectsToText, effectsFromText, condToText, condFromText, HUD_SCREENS, HUD_DETAILS,
+  whereAt, routineBlocks, effectsToText, effectsFromText, condToText, condFromText, HUD_SCREENS, HUD_DETAILS, ACTION_DOS,
 } from '/lib/records.js';
 
 const $ = (s) => document.querySelector(s);
@@ -66,9 +66,9 @@ function colorOf(key) {
 export function createRecords({ api, query, status, world, refs, reloadRefs, escapeHtml, worldCount = () => 1 }) {
   const st = { view: 'npc', data: null, cur: null, mode: 'form', jsonError: null, preview: null, usages: null };
 
-  const kindsOf = (view) => (view === 'npc' ? ['npc', 'schedule'] : view === 'item' ? ['item'] : view === 'system' ? ['title', 'hud'] : ['rules']);
-  /** rules.json, title.json and hud.json: one file each, no id, nothing uses them by name. */
-  const isSingle = (kind) => kind === 'rules' || kind === 'title' || kind === 'hud';
+  const kindsOf = (view) => (view === 'npc' ? ['npc', 'schedule'] : view === 'item' ? ['item'] : view === 'system' ? ['title', 'hud', 'actions'] : ['rules']);
+  /** rules.json, title.json, hud.json and actions.json: one file each, no id, nothing uses them by name. */
+  const isSingle = (kind) => kind === 'rules' || kind === 'title' || kind === 'hud' || kind === 'actions';
   const records = (kind) => (isSingle(kind) ? (st.data?.[kind] ? [st.data[kind]] : []) : st.data?.[kind] || []);
   const schedulesMap = () => Object.fromEntries(records('schedule').filter((r) => isObj(r.json)).map((r) => [r.json.id, r.json]));
   const lang = () => st.data?.rules?.json?.language || 'it';
@@ -135,23 +135,23 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     } else if (st.view === 'item') {
       head.append(h('button', { type: 'button', onclick: () => newRecord('item') }, '+ Item'));
     } else if (st.view === 'system') {
-      for (const [kind, file] of [['title', 'title.json'], ['hud', 'hud.json']])
+      for (const [kind, file] of [['title', 'title.json'], ['hud', 'hud.json'], ['actions', 'actions.json']])
         if (!st.data?.[kind] && !(st.cur?.isNew && st.cur.kind === kind)) head.append(h('button', { type: 'button', onclick: () => newRecord(kind) }, `+ Create ${file}`));
-      if (!head.childElementCount) head.append(h('span', { class: 'muted' }, 'Main menu, buttons and the bar of pictures'));
+      if (!head.childElementCount) head.append(h('span', { class: 'muted' }, 'Main menu, bar of pictures, actions on characters'));
     } else head.append(h('span', { class: 'muted' }, 'The rules of the world (rules.json)'));
 
-    const groups = st.view === 'npc' ? [['npc', 'Characters (NPC)'], ['schedule', 'Shared routines']] : st.view === 'item' ? [['item', 'Items']] : st.view === 'system' ? [['title', 'Title screen'], ['hud', 'Bar of pictures']] : [['rules', 'Rules']];
+    const groups = st.view === 'npc' ? [['npc', 'Characters (NPC)'], ['schedule', 'Shared routines']] : st.view === 'item' ? [['item', 'Items']] : st.view === 'system' ? [['title', 'Title screen'], ['hud', 'Bar of pictures'], ['actions', 'Actions on a character']] : [['rules', 'Rules']];
     for (const [kind, title] of groups) {
       box.append(h('div', { class: 'doc-group' }, title));
       const list = [...records(kind)];
       if (st.cur?.isNew && st.cur.kind === kind) list.unshift({ rel: st.cur.rel, json: st.cur.model, isNew: true });
-      if (!list.length) box.append(h('div', { class: 'doc muted' }, kind === 'rules' ? 'rules.json is missing' : kind === 'title' ? 'title.json is missing: the game uses the basic menu' : kind === 'hud' ? 'hud.json is missing: the game has no bar of pictures' : 'none'));
+      if (!list.length) box.append(h('div', { class: 'doc muted' }, kind === 'rules' ? 'rules.json is missing' : kind === 'title' ? 'title.json is missing: the game uses the basic menu' : kind === 'hud' ? 'hud.json is missing: the game has no bar of pictures' : kind === 'actions' ? 'actions.json is missing: clicking a character talks' : 'none'));
       for (const r of list) {
         const active = st.cur && st.cur.rel === r.rel;
         const json = active ? st.cur.model : r.json;
         const name = isSingle(kind) ? r.rel : isObj(json) ? textOf(json.name, lang()) || json.id || r.rel : '(file to fix)';
-        const sub = r.isNew ? 'not saved yet' : kind === 'rules' ? 'start, stats, activities, sleep' : kind === 'title' ? 'main menu, music, buttons' : kind === 'hud' ? 'icons at the top, status and characters screens' : (isObj(json) ? json.id : r.rel);
-        const badge = { npc: ['C', 'p'], schedule: ['R', 'r'], item: ['I', 'o'], rules: ['⚙', 'g'], title: ['★', 'g'], hud: ['▦', 'g'] }[kind];
+        const sub = r.isNew ? 'not saved yet' : kind === 'rules' ? 'start, stats, activities, sleep' : kind === 'title' ? 'main menu, music, buttons' : kind === 'hud' ? 'icons at the top, status and characters screens' : kind === 'actions' ? 'the menu when you click a character' : (isObj(json) ? json.id : r.rel);
+        const badge = { npc: ['C', 'p'], schedule: ['R', 'r'], item: ['I', 'o'], rules: ['⚙', 'g'], title: ['★', 'g'], hud: ['▦', 'g'], actions: ['☰', 'g'] }[kind];
         const mark = active && dirty() ? ' •' : '';
         box.append(h('button', {
           type: 'button', class: `doc${active ? ' active' : ''}${r.isNew ? ' unsaved' : ''}${isObj(json) ? '' : ' broken'}`,
@@ -166,7 +166,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   function renderHead() {
     const cur = st.cur;
-    $('#rec-title').textContent = !cur ? 'Nothing open' : cur.kind === 'rules' ? 'Rules of the world' : cur.kind === 'title' ? 'System: main menu and buttons' : cur.kind === 'hud' ? 'System: the bar of pictures' : isObj(cur.model) ? `${KINDS[cur.kind].label}: ${textOf(cur.model.name, lang()) || cur.model.id || ''}` : cur.rel;
+    $('#rec-title').textContent = !cur ? 'Nothing open' : cur.kind === 'rules' ? 'Rules of the world' : cur.kind === 'title' ? 'System: main menu and buttons' : cur.kind === 'hud' ? 'System: the bar of pictures' : cur.kind === 'actions' ? 'System: actions on a character' : isObj(cur.model) ? `${KINDS[cur.kind].label}: ${textOf(cur.model.name, lang()) || cur.model.id || ''}` : cur.rel;
     $('#rec-file').textContent = !cur ? '' : cur.isNew ? `new: will be saved to ${cur.rel}` : cur.rel;
     for (const b of document.querySelectorAll('.rec-mode')) {
       b.classList.toggle('active', b.dataset.mode === st.mode);
@@ -230,7 +230,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   function newRecord(kind) {
     if (!leaveOk()) return;
-    if (kind === 'title' || kind === 'hud') {          // one file with a fixed name: nothing to ask
+    if (kind === 'title' || kind === 'hud' || kind === 'actions') {          // one file with a fixed name: nothing to ask
       st.cur = { kind, rel: `${kind}.json`, original: null, model: KINDS[kind].fresh(), isNew: true };
       st.mode = 'form'; st.jsonError = null; st.preview = null; st.usages = [];
       st.jsonDraft = st.sleepDraft = undefined; st.sleepErrors = []; st.condDrafts = new Map();
@@ -308,7 +308,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     const scroll = box.scrollTop;
     box.innerHTML = '';
     const cur = st.cur;
-    if (!cur) { box.append(h('p', { class: 'muted empty' }, st.view === 'rules' ? 'This world has no rules.json.' : st.view === 'system' ? 'This world has no title.json and no hud.json: the game menu is the basic one and there is no bar of pictures. Press “+ Create title.json” or “+ Create hud.json”.' : 'Choose on the left what to open, or create a new one.'));
+    if (!cur) { box.append(h('p', { class: 'muted empty' }, st.view === 'rules' ? 'This world has no rules.json.' : st.view === 'system' ? 'This world has no title.json, hud.json or actions.json: the basic menu, no bar of pictures, and clicking a character talks. Press a “+ Create …” button above.' : 'Choose on the left what to open, or create a new one.'));
       if (st.view === 'system' && st.data) box.append(sec(null, 'Game title', null, worldNameRow()));
       return;
     }
@@ -319,6 +319,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     else if (cur.kind === 'item') itemForm(box, m);
     else if (cur.kind === 'title') systemForm(box, m);
     else if (cur.kind === 'hud') hudForm(box, m);
+    else if (cur.kind === 'actions') actionsForm(box, m);
     else rulesForm(box, m);
     box.scrollTop = scroll;
     renderTimeline();
@@ -1045,7 +1046,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
    * A condition written as in the quests, one per line (all must hold): quest(crypt, active), flag(met_elena).
    * Empty = always. A line with a mistake is an error in “Problems” and the file keeps the last good condition.
    */
-  function condEditor(path, label, placeholder = 'always (empty)') {
+  function condEditor(path, label, placeholder = 'always (empty)', { self = false } = {}) {
     st.condDrafts ??= new Map();
     const key = JSON.stringify(path);
     const draft = st.condDrafts.get(key);
@@ -1054,7 +1055,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     ta.value = value;
     ta.addEventListener('input', () => {
       ta.rows = Math.max(1, ta.value.split('\n').length);
-      const res = condFromText(ta.value, refs());
+      const res = condFromText(ta.value, refs(), { self });
       if (res.errors.length) st.condDrafts.set(key, { text: ta.value, errors: res.errors, label });
       else { st.condDrafts.delete(key); setAt(st.cur.model, path, res.cond); }
       changed({ list: false });
@@ -1159,6 +1160,70 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     }
     frame.append(bar);
     box.append(frame, h('small', { class: 'muted' }, 'Preview of the bar at game size over the start place (the mouse over a picture shows its label). Conditions are not applied here.'));
+  }
+
+  // ------------------------------------------------------------------------------------------- System (actions.json)
+
+  /** A list of words as one text: "lia, elena" <-> ["lia", "elena"]; empty removes the key. */
+  function wordList(path, list, placeholder) {
+    const v = getAt(st.cur.model, path);
+    return h('input', {
+      type: 'text', value: Array.isArray(v) ? v.join(', ') : '', placeholder, list: list ? datalist(list) : null,
+      oninput: (e) => { const words = e.target.value.split(',').map((s) => s.trim()).filter(Boolean); setAt(st.cur.model, path, words.length ? words : undefined); changed({ list: false }); },
+    });
+  }
+
+  /** Every id of the actions and sub-actions: a new one must not take one of them. */
+  function actionIds(list) { return (Array.isArray(list) ? list : []).flatMap((a) => (isObj(a) ? [a.id, ...actionIds(a.actions)] : [])); }
+  function newActionId() { const taken = actionIds(st.cur.model.actions); let id = 'action', n = 1; while (taken.includes(id)) id = `action${++n}`; return id; }
+
+  /** A list of actions at path (the menu, or the sub-actions of one), with its cards and “+ Action”. */
+  function actionList(path, depth) {
+    const list = getAt(st.cur.model, path);
+    const items = Array.isArray(list) ? list : [];
+    const move = (i, d) => { const a = getAt(st.cur.model, path); const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; relisted(); };
+    return h('div', { class: depth ? 'hud-buttons sub-actions' : 'hud-buttons' },
+      items.map((a, i) => (isObj(a) ? actionCard([...path, i], a, i, items.length, move, depth) : h('code', {}, JSON.stringify(a)))),
+      h('button', { type: 'button', class: 'mini link', onclick: () => { const a = getAt(st.cur.model, path) || []; a.push({ id: newActionId(), label: depth ? 'New sub-action' : 'New action' }); setAt(st.cur.model, path, a); relisted(); } }, depth ? '+ Sub-action' : '+ Action'));
+  }
+
+  function actionsForm(box, m) {
+    box.append(
+      sec(null, 'Actions on a character', 'When the player clicks a character (its picture on the map or its name in Present) a menu opens with these actions, top to bottom: the ones offered to that character whose condition holds. Choosing one runs the messages with trigger = action and action = its id; in them “self” is the character. An action with sub-actions opens them in a second panel beside the menu, page by page. Without actions.json a click talks.',
+        actionList(['actions'], 0),
+        h('p', { class: 'hint' }, 'Example of a message for an action, in Quests & messages:'),
+        h('pre', { class: 'code-sample' }, 'event ev_rob:\n    trigger = action\n    action = rob\n    when:\n        relation(self, player, "<", 0)\n\n    self: "Hey! Give that back!"\n    modRelation(self, player, -20)')),
+      sec(null, 'Pages and buttons', 'A long list is split into pages with Back and Next; a panel of sub-actions also has Close.',
+        row('Actions per page', num(['pageSize'], { int: true, placeholder: '0' }), 'of the first menu; 0 or empty = all on one page'),
+        row('Next', locText(['labels', 'next']), 'empty = “Next ›”'),
+        row('Back', locText(['labels', 'back']), 'empty = “‹ Back”'),
+        row('Close', locText(['labels', 'close']), 'empty = “Close”')));
+  }
+
+  function actionCard(p, a, i, count, move, depth) {
+    const subs = Array.isArray(a.actions);
+    const icon = a.icon ? h('img', { class: 'hud-thumb', src: imageUrl(`images/${a.icon}`), alt: '' }) : null;
+    return h('div', { class: 'img-card hud-card' },
+      h('div', { class: 'img-head' }, icon, h('b', {}, textOf(a.label, lang()) || a.id || `action ${i + 1}`),
+        h('button', { type: 'button', class: 'mini', title: 'Move up', disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
+        h('button', { type: 'button', class: 'mini', title: 'Move down', disabled: i === count - 1, onclick: () => move(i, 1) }, '↓'),
+        h('button', { type: 'button', class: 'mini', title: 'Remove', onclick: () => { if (subs && a.actions.length && !confirm(`Remove “${a.id}” and its ${a.actions.length} sub-actions?`)) return; getAt(st.cur.model, p.slice(0, -1)).splice(i, 1); relisted(); } }, '✕')),
+      row('Id', text([...p, 'id'], { optional: false }), 'messages name it: action = this id'),
+      row('Label', locText([...p, 'label']), 'what the menu says; {npc} is the character: “Talk to {npc}”'),
+      row('Picture', h('span', { class: 'file-row' }, fileSelect([...p, 'icon'], 'images', '(none)'), uploadButton('images', 'actions', [...p, 'icon'], '.png,.jpg,.jpeg,.webp')), 'a small picture beside the label'),
+      subs ? null : row('Does', select([...p, 'do'], ACTION_DOS, { optional: true }), 'empty = only its messages; with Talk the talk messages of the character run too'),
+      row('Only for', wordList([...p, 'npcs'], 'npc', 'everybody (or ids: lia, elena)'), 'characters, separated by commas'),
+      row('Or with the tags', wordList([...p, 'tags'], null, 'e.g. shopkeeper, guard'), 'the tags of the characters (Characters tab)'),
+      row('Offered when', condEditor([...p, 'when'], `action ${a.id || i + 1}, offered when`, 'always (empty), e.g. relation(self, player, "<", 0)', { self: true }),
+        'one condition per line; self = the character clicked'),
+      subs
+        ? h('div', { class: 'sub-block' },
+          h('h4', {}, 'Sub-actions'),
+          h('p', { class: 'hint' }, 'Choosing this action opens them in a panel beside the menu (it does nothing else). It is offered only when at least one of them is.'),
+          row('Per page', num([...p, 'pageSize'], { int: true, placeholder: '6' }), '0 = all on one page'),
+          actionList([...p, 'actions'], depth + 1),
+          h('button', { type: 'button', class: 'mini link danger-link', onclick: () => { if (a.actions.length && !confirm('Remove all the sub-actions?')) return; delete a.actions; delete a.pageSize; relisted(); } }, 'No sub-actions'))
+        : depth < 3 ? h('button', { type: 'button', class: 'mini link', onclick: () => { a.actions = [{ id: newActionId(), label: 'New sub-action' }]; delete a.do; relisted(); } }, '+ Sub-actions (a second panel)') : null);
   }
 
   // ------------------------------------------------------------------------------------------- Characters: profile

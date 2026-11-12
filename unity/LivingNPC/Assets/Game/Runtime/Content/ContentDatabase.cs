@@ -29,6 +29,9 @@ namespace LivingNPC.Content
         public HudDef Hud;
         /// <summary>The last hud.json read (for the content report).</summary>
         public string HudSource;
+        /// <summary>The menu of actions on a character (actions.json), null when no pack has one: a click talks.</summary>
+        public ActionsDef Actions;
+        public string ActionsSource;
 
         public readonly ValidationReport Report = new ValidationReport();
     }

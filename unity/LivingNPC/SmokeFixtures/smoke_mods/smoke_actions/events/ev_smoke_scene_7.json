@@ -1,0 +1,12 @@
+{
+  "id": "ev_smoke_scene_7",
+  "trigger": "action",
+  "action": "scene_7",
+  "effects": [
+    {
+      "do": "setFlag",
+      "key": "smoke_scene_7",
+      "value": 1
+    }
+  ]
+}

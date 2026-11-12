@@ -110,10 +110,23 @@ namespace LivingNPC.Simulation
                             rt.Touch();
                             break;
                         }
+                    case CommandType.Action:
+                        {
+                            // an action of the menu of an npc (actions.json): like talking, the npc must be here
+                            if (cmd.B == 0 || ws.DialogOpen != 0 || clock.Pending > 0 || p.Node == 0) break;
+                            var target = rt.FindNpc(cmd.A);
+                            if (target == Entity.Null || em.GetComponentData<NpcLocation>(target).Node != p.Node) break;
+                            ws.Action = cmd.B; ws.ActionNpc = cmd.A;
+                            em.SetComponentData(world, ws);
+                            rt.Touch();
+                            break;
+                        }
                     case CommandType.Choose:
+                        rt.BindDialog(ws.DialogSelf);
                         rt.Choose(cmd.A);
                         break;
                     case CommandType.Advance:
+                        rt.BindDialog(ws.DialogSelf);
                         rt.Advance();
                         break;
                 }
@@ -364,13 +377,14 @@ namespace LivingNPC.Simulation
                 bool woke = ws.Woke != 0;
                 int talk = ws.TalkNpc;
                 int button = ws.Button;
-                if (!(ticked || arrived || woke || talk != 0 || button != 0 || ws.Dirty != 0)) break;
+                int action = ws.Action, actionNpc = ws.ActionNpc;
+                if (!(ticked || arrived || woke || talk != 0 || button != 0 || action != 0 || ws.Dirty != 0)) break;
                 if (ws.DialogOpen != 0) break;
 
                 if (!created) { rt = RuleRuntime.Create(em, world, player); created = true; }
 
                 // consume the pulses first: effects below may raise new ones, handled by the next pass
-                ws.Dirty = 0; ws.TalkNpc = 0; ws.Button = 0; ws.Woke = 0; p.Arrived = 0;
+                ws.Dirty = 0; ws.TalkNpc = 0; ws.Button = 0; ws.Action = 0; ws.ActionNpc = 0; ws.Woke = 0; p.Arrived = 0;
                 em.SetComponentData(world, ws);
                 em.SetComponentData(player, p);
 
@@ -391,8 +405,11 @@ namespace LivingNPC.Simulation
                         case TriggerType.Talk: match = talk != 0 && ev.TriggerNpc == talk; break;
                         case TriggerType.Wake: match = woke && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
                         case TriggerType.Button: match = button != 0 && ev.TriggerButton == button && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
+                        case TriggerType.Action: match = action != 0 && ev.TriggerButton == action && (ev.TriggerNpc == 0 || ev.TriggerNpc == actionNpc) && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
                     }
                     if (!match) continue;
+                    // "self" in an action event is the npc the action was chosen on; nowhere else
+                    rt.BindDialog(ev.Trigger == TriggerType.Action ? actionNpc : 0);
 
                     var eventStates = em.GetBuffer<EventState>(world);
                     var es = eventStates[ei];
@@ -408,6 +425,7 @@ namespace LivingNPC.Simulation
                     if (em.GetComponentData<WorldState>(world).DialogOpen != 0) dialogOpened = true;
                     if (ev.Trigger == TriggerType.Talk) talkHandled = true;
                 }
+                rt.BindDialog(0);
                 if (talk != 0 && !talkHandled && !rt.TalkAuto(talk)) rt.PushMessage(rt.Rules.Value.DefaultTalkText, MsgKind.Talk, talk);
 
                 for (int i = 0; i < 4; i++) if (!rt.EvaluateQuests() & !rt.EvaluateAuto()) break;

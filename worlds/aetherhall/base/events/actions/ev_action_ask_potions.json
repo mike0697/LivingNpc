@@ -1,0 +1,14 @@
+{
+  "id": "ev_action_ask_potions",
+  "trigger": "action",
+  "action": "ask_potions",
+  "script": [
+    {
+      "say": {
+        "en": "A potion is patience in a bottle. Measure twice, stir once, and never taste before the colour settles.",
+        "it": "Una pozione è pazienza in bottiglia. Misura due volte, mescola una volta, e non assaggiare prima che il colore si posi."
+      },
+      "who": "self"
+    }
+  ]
+}

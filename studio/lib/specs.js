@@ -94,7 +94,7 @@ export const CONDITIONS = {
 };
 
 export const GROUPS = ['all', 'any', 'not'];
-export const TRIGGERS = ['enterNode', 'talk', 'tick', 'wake', 'button'];
+export const TRIGGERS = ['enterNode', 'talk', 'tick', 'wake', 'button', 'action'];
 export const OPS = ['>=', '>', '==', '!=', '<', '<='];
 
 /** The spec for a name, ignoring case (the game reads "do" and "type" without case). */

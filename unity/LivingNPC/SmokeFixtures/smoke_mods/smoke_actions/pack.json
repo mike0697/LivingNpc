@@ -1,0 +1,10 @@
+{
+  "id": "smoke_actions",
+  "name": "Smoke test: menu of actions",
+  "author": "test",
+  "version": "1.0",
+  "priority": 100,
+  "dependsOn": [
+    "base"
+  ]
+}

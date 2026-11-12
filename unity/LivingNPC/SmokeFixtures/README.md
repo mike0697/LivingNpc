@@ -12,7 +12,10 @@ simulation, quests, messages, routines, saves and sounds.
   nested choices), `smoke_auto` (automatic quests: first name, age, sex and relations of two characters, a visit
   template picked by itself, saved and loaded while it runs, `chance`, `startAuto` / `stopAuto`, `did`), `smoke_hud`
   (the bar of pictures: `hud.json` with a missing icon and unknown stats on purpose, a `button` event that rings a
-  bell, Lia's hints, Anselmo listed only after two rings, a button hidden by a flag).
+  bell, Lia's hints, Anselmo listed only after two rings, a button hidden by a flag), `smoke_actions` (the menu of
+  actions on a character: talk, greet with a line that says `{self}` and an effect on self after it, rob only while
+  self dislikes the player, ask only on Lia, a trade action for a tag nobody has, eight scenes in a sub-menu of five
+  per page with one hidden by a flag, a group whose sub-actions are all hidden).
 
 From the Unity project folder (`unity/LivingNPC`), with Unity closed (Git Bash or another POSIX shell):
 

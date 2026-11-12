@@ -7,7 +7,7 @@ namespace LivingNPC.Simulation
 
     public enum QuestStatus : byte { NotStarted = 0, Active = 1, Completed = 2, Failed = 3 }
     public enum MsgKind : byte { Info = 0, Event = 1, QuestStarted = 2, QuestUpdated = 3, QuestCompleted = 4, QuestFailed = 5, Travel = 6, Talk = 7, Npc = 8 }
-    public enum CommandType : byte { Travel = 1, Wait = 2, Choose = 3, Talk = 4, Advance = 5, Sleep = 6, Button = 7 }
+    public enum CommandType : byte { Travel = 1, Wait = 2, Choose = 3, Talk = 4, Advance = 5, Sleep = 6, Button = 7, Action = 8 }
 
     // ------------------------------------------------------------------ singleton entity: "the world"
     // One entity carries everything global; systems fetch it with SystemAPI.GetSingletonEntity<WorldState>().
@@ -18,6 +18,8 @@ namespace LivingNPC.Simulation
         public byte Woke;           // pulse: the player has just woken up, not yet processed by rules
         public int TalkNpc;         // npc id the player just talked to (0 none)
         public int Button;          // pulse: hashed id of the hud.json button just pressed (0 none), for the "button" events
+        public int Action;          // pulse: hashed id of the actions.json action just chosen (0 none), for the "action" events
+        public int ActionNpc;       // the npc it was chosen on ("self" of those events)
         public byte DialogOpen;
         public int DialogEvent;
         public int DialogText;
@@ -25,6 +27,7 @@ namespace LivingNPC.Simulation
         public int DialogWho;       // text id of a free speaker name (script lines), 0 none
         public int DialogEventIdx;  // index into RuleBlob.Events of the open dialog
         public int DialogStep;      // absolute index into RuleBlob.Script of the line on screen, -1 before the first line
+        public int DialogSelf;      // "self" of the open dialogue: the npc an action event was chosen on (0 none)
         public uint Version;        // bumped on every visible change; the UI polls this
         public byte DebugUsed;      // the debug console changed this game at least once (kept in the saves)
         public int AutoCheck;       // the last check of the automatic quests (Now / AutoCheckMinutes); not saved

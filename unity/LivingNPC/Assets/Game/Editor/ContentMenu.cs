@@ -77,7 +77,7 @@ namespace LivingNPC.EditorTools
                 var h = WorldBuilder.Build(em, compiled);
 
                 void Pump(int max = 5000) { for (int i = 0; i < max; i++) { world.Update(); var c = em.GetComponentData<ClockState>(h.World); var w = em.GetComponentData<WorldState>(h.World); if (c.Pending == 0 && w.DialogOpen == 0 && em.GetBuffer<GameCommand>(h.World).Length == 0 && em.GetComponentData<PlayerState>(h.Player).PendingNode == 0 && w.Dirty == 0) { world.Update(); break; } } }
-                void Cmd(CommandType t, int a = 0) => em.GetBuffer<GameCommand>(h.World).Add(new GameCommand { Type = t, A = a });
+                void Cmd(CommandType t, int a = 0, int b = 0) => em.GetBuffer<GameCommand>(h.World).Add(new GameCommand { Type = t, A = a, B = b });
                 void Dump(string title)
                 {
                     var clock = em.GetComponentData<ClockState>(h.World);
@@ -682,6 +682,76 @@ namespace LivingNPC.EditorTools
                     Check("when hides the button", !bar.ShownButtons().Contains("bell") && !bar.PressButton("bell"));
                     Cmd(CommandType.Wait, 30); Cmd(CommandType.Button, Ids.Hash("hud:bell")); Pump(); view.Tick();
                     Check("button refused while time passes", Hrt().GetFlag(Ids.Hash("smoke_hud_bell")) == 2);
+                }
+
+                // the menu of actions on a character: runs only with the pack smoke_actions (talk; greet = a dialogue whose
+                // line says {self} and whose effect after the line changes self's relation; rob only while self dislikes the
+                // player; ask only on lia; sell only for a tag nobody has)
+                if (compiled.Actions != null)
+                {
+                    void Check(string label, bool ok) { sb.AppendLine($"actions {label}: {(ok ? "ok" : "FAILED")}"); if (!ok) exit = 25; }
+                    RuleRuntime Art() => RuleRuntime.Create(em, h.World, h.Player);
+                    var menu = view.Actions;
+                    int lia = Ids.Hash("lia");
+                    for (int i = 0; i < 40 && em.GetComponentData<WorldState>(h.World).DialogOpen != 0; i++)
+                    {
+                        var open = em.GetBuffer<DialogChoice>(h.World);
+                        if (open.Length > 0) Cmd(CommandType.Choose, open[0].ChoiceIndex); else Cmd(CommandType.Advance);
+                        world.Update();
+                    }
+                    Pump();
+                    // go where lia is, and make her neutral towards the player
+                    var liaLoc = em.GetComponentData<NpcLocation>(Art().FindNpc(lia));
+                    for (int i = 0; i < 48 && liaLoc.Node == 0; i++) { Cmd(CommandType.Wait, 30); Pump(); liaLoc = em.GetComponentData<NpcLocation>(Art().FindNpc(lia)); }
+                    em.SetComponentData(h.Player, new PlayerState { Node = liaLoc.Node });
+                    sb.AppendLine($"actions: lia is at {Ids.Name(liaLoc.Node)}, the player goes there");
+                    Art().SetRelation(lia, 0, 0);
+                    Pump(); view.Tick();
+
+                    Check("seven actions compiled, one with eight sub-actions", compiled.Actions.Count == 7 && compiled.Actions[0].Talk && compiled.Actions[3].Npcs.Count == 1 && compiled.Actions[5].Children.Count == 8 && compiled.Actions[5].PageSize == 5);
+                    Check("labels of the buttons", TextTable.Get(compiled.ActionMenu.NextText) == "Avanti" && TextTable.Get(compiled.ActionMenu.CloseText) == "Chiudi");
+                    Check("problems reported (trade, nobody with the tag)", db.Report.Entries.Any(e => e.Message.Contains("trading does not exist yet")) && db.Report.Entries.Any(e => e.Message.Contains("no character matches")));
+                    Check("menu opens on lia", menu.Open(lia) && menu.Npc == lia);
+                    Check($"talk, greet, ask, scenes offered; rob, sell and a group with nothing inside not ({string.Join(", ", menu.Shown)})", string.Join(",", menu.Shown) == "talk,greet,ask,scenes");
+                    Check("scenes opens a second panel with scenes 1-5", menu.Choose("scenes") && menu.Levels == 2 && string.Join(",", menu.ShownAt(1)) == "scene_1,scene_2,scene_3,scene_4,scene_5");
+                    Check($"next shows the rest, scene 8 hidden by its condition ({string.Join(", ", menu.ShownAt(1))})", menu.Turn(1, 1) && string.Join(",", menu.ShownAt(1)) == "scene_6,scene_7" && !menu.Turn(1, 1));
+                    Check("back goes to the first page", menu.Turn(1, -1) && menu.PageAt(1) == 0 && !menu.Turn(1, -1));
+                    Check("choosing scenes again closes the panel", menu.Choose("scenes") && menu.Levels == 1);
+                    menu.Choose("scenes");
+                    Check("Esc closes the sub-menu first", view.CloseScreen() && menu.Levels == 1 && menu.Npc == lia);
+                    menu.Choose("scenes"); menu.Turn(1, 1);
+                    Check("a scene chosen on page two", menu.Choose("scene_7") && menu.Npc == 0);
+                    Pump();
+                    Check("its event ran on lia", Art().GetFlag(Ids.Hash("smoke_scene_7")) == 1);
+                    menu.Open(lia);
+                    Check("Esc closes the menu", view.CloseScreen() && menu.Npc == 0);
+
+                    menu.Open(lia);
+                    Check("greet chosen", menu.Choose("greet") && menu.Npc == 0);
+                    world.Update(); world.Update(); view.Tick();
+                    var gws = em.GetComponentData<WorldState>(h.World);
+                    string line = compiled.Format(TextTable.Get(gws.DialogText), gws.DialogNpc, new Unity.Collections.FixedList32Bytes<int> { lia });
+                    Check($"greet opens a dialogue where lia says her line ({line})", gws.DialogOpen == 1 && gws.DialogNpc == lia && gws.DialogSelf == lia && line == "Lia waves back.");
+                    Cmd(CommandType.Advance); Pump(); view.Tick();
+                    Check("the effect after the line knows self", Art().GetRelation(lia, 0) == -20 && Art().GetFlag(Ids.Hash("smoke_greet")) == 1 && em.GetComponentData<WorldState>(h.World).DialogSelf == 0);
+                    menu.Open(lia);
+                    Check($"rob offered now that lia dislikes the player ({string.Join(", ", menu.Shown)})", menu.Shown.Contains("rob"));
+                    menu.Choose("rob"); Pump();
+                    Check("rob ran on lia", Art().GetFlag(Ids.Hash("smoke_robbed")) == 1 && Art().GetRelation(lia, 0) == -30);
+                    menu.Open(lia); menu.Choose("ask"); Pump();
+                    Check("ask ran", Art().GetFlag(Ids.Hash("smoke_asked")) == 1);
+
+                    int other = 0;
+                    foreach (var r in em.GetBuffer<EntityRef>(h.World).AsNativeArray().ToArray())
+                        if (r.Id != lia && em.GetComponentData<NpcLocation>(r.Entity).Node != liaLoc.Node) { other = r.Id; break; }
+                    if (other != 0)
+                    {
+                        Cmd(CommandType.Action, other, Ids.Hash("action:greet")); world.Update(); world.Update();
+                        Check("an action on a character who is not here is refused", em.GetComponentData<WorldState>(h.World).DialogOpen == 0 && Art().GetFlag(Ids.Hash("smoke_greet")) == 1);
+                    }
+                    menu.Open(lia); Cmd(CommandType.Wait, 30); world.Update(); view.Tick();
+                    Check("the menu closes when time passes", menu.Npc == 0);
+                    Pump();
                 }
 
                 view.Dispose();

@@ -230,10 +230,12 @@ namespace LivingNPC.Content
             result.Nav = CompileNav();
             CompileNpcs(result);
             CompileHud(result);        // after the npcs, before the events: "button" events name its buttons
+            CompileActions(result);    // the same for "action" events
             CompileLines();
             CompileQuests();
             CompileEvents();
             CheckHudButtons(result);
+            CheckActions(result);
             CompileTemplates();
             CompileAutoRules();
             CompileSleep();
@@ -731,8 +733,17 @@ namespace LivingNPC.Content
                     case "talk": r.Trigger = TriggerType.Talk; break;
                     case "wake": r.Trigger = TriggerType.Wake; break;
                     case "button": r.Trigger = TriggerType.Button; break;
-                    default: _rep.Error(src, $"unknown trigger '{e.Trigger}' (enterNode | tick | talk | wake | button)"); continue;
+                    case "action": r.Trigger = TriggerType.Action; break;
+                    default: _rep.Error(src, $"unknown trigger '{e.Trigger}' (enterNode | tick | talk | wake | button | action)"); continue;
                 }
+                if (r.Trigger == TriggerType.Action)
+                {
+                    if (string.IsNullOrWhiteSpace(e.Action)) { _rep.Error(src, "action events need an 'action' (the id of an actions.json action)"); continue; }
+                    r.TriggerButton = Ids.Hash("action:" + e.Action.Trim());
+                    if (!_actionIds.Contains(r.TriggerButton)) _rep.Warn(src, $"action '{e.Action}' is not in actions.json: the event never runs");
+                    _chosenActions.Add(r.TriggerButton);
+                }
+                else if (!string.IsNullOrWhiteSpace(e.Action)) _rep.Warn(src, $"'action' is used only with trigger 'action' (this event has trigger '{e.Trigger}')");
                 if (r.Trigger == TriggerType.Button)
                 {
                     if (string.IsNullOrWhiteSpace(e.Button)) { _rep.Error(src, "button events need a 'button' (the id of a hud.json button)"); continue; }
@@ -753,10 +764,17 @@ namespace LivingNPC.Content
                 }
                 if (r.Trigger == TriggerType.Talk && r.TriggerNpc == 0) { _rep.Error(src, "talk events need an 'npc'"); continue; }
                 r.NpcForDialog = r.TriggerNpc;
+                // an action event knows "self": the npc the action was chosen on (as an automatic quest knows its npc)
+                if (r.Trigger == TriggerType.Action)
+                {
+                    _tpl = new TplCtx { Id = e.Id };
+                    if (r.NpcForDialog == 0) r.NpcForDialog = BindRef.Of(0);
+                }
                 if (e.When != null) r.Cond = CompileCond(e.When, src + ".when");
-                r.TextId = TextTable.Register($"event:{e.Id}:text", e.Text);
+                r.TextId = TextTable.Register($"event:{e.Id}:text", BindTexts(e.Text, src + ".text"));
                 (r.ScriptStart, r.ScriptCount) = CompileProgram(e, r, src, out bool hasDialog);
                 r.HasDialog = (byte)(hasDialog ? 1 : 0);
+                _tpl = null;
                 _events.Add(r);
             }
         }
@@ -895,7 +913,7 @@ namespace LivingNPC.Content
                 string oat = $"{at}.choices[{k}]", okey = $"{key}:choice:{k}";
                 var opt = options[k] as JObject;
                 if (opt == null) { _rep.Error(oat, "an option must be an object"); opt = new JObject(); }
-                var cr = new ChoiceRule { Cond = -1, Target = _script.Count, TextId = TextTable.Register(okey, IsSet(opt["text"]) ? opt["text"] : new JValue("...")) };
+                var cr = new ChoiceRule { Cond = -1, Target = _script.Count, TextId = TextTable.Register(okey, BindTexts(IsSet(opt["text"]) ? opt["text"] : new JValue("..."), oat + ".text")) };
                 if (IsSet(opt["when"])) cr.Cond = CompileCond(opt["when"], oat + ".when");
                 _choices[first + k] = cr;
                 CompileSteps(e, Steps(opt["then"], oat + ".then"), oat + ".then", okey);
@@ -953,10 +971,11 @@ namespace LivingNPC.Content
             if (IsSet(d.Say))
             {
                 any = true;
-                var step = new ScriptStep { Kind = StepKind.Say, TextId = TextTable.Register(key, d.Say) };
+                var step = new ScriptStep { Kind = StepKind.Say, TextId = TextTable.Register(key, BindTexts(d.Say, at)) };
                 if (IsSet(d.Who))
                 {
-                    if (d.Who.Type == JTokenType.String && _db.Npcs.ContainsKey((string)d.Who)) step.WhoNpc = Ids.Hash((string)d.Who);
+                    if (d.Who.Type == JTokenType.String && _tpl != null && (string)d.Who == "self") step.WhoNpc = BindRef.Of(0);
+                    else if (d.Who.Type == JTokenType.String && _db.Npcs.ContainsKey((string)d.Who)) step.WhoNpc = Ids.Hash((string)d.Who);
                     else step.WhoText = TextTable.Register(key + ":who", d.Who);
                 }
                 if (!string.IsNullOrEmpty(d.Pose))

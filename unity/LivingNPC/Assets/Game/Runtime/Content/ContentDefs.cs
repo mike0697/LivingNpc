@@ -175,6 +175,44 @@ namespace LivingNPC.Content
         public List<string> Show;
     }
 
+    /// <summary>
+    /// actions.json: what the player can do with a character, in the menu that opens when the character (picture or name)
+    /// is clicked. Without the file a click talks, as before. Packs merge "actions" by id ("$op": "delete" removes one).
+    /// </summary>
+    public class ActionsDef
+    {
+        public List<ActionDef> Actions = new List<ActionDef>();
+        /// <summary>Entries per page of the first menu; 0 (default) = all on one page.</summary>
+        public int PageSize;
+        /// <summary>The words of the buttons that turn the pages and close a sub-menu: "next", "back", "close" (texts).</summary>
+        public Dictionary<string, JToken> Labels = new Dictionary<string, JToken>();
+    }
+
+    /// <summary>
+    /// An entry of the menu. <see cref="Do"/>: "talk" talks to the character (its talk messages); otherwise (and also with
+    /// talk) choosing it runs the messages with "trigger": "action" and this id, where "self" is the character.
+    /// </summary>
+    public class ActionDef
+    {
+        public string Id;
+        public JToken Label;
+        /// <summary>A small picture beside the label (file in images/).</summary>
+        public string Icon;
+        /// <summary>talk | trade (not yet); omitted = only its messages.</summary>
+        public string Do;
+        /// <summary>Only for these characters; omitted = everybody.</summary>
+        public List<string> Npcs;
+        /// <summary>Only for the characters with one of these tags.</summary>
+        public List<string> Tags;
+        /// <summary>In the menu only while this holds; "self" = the character clicked.</summary>
+        public JToken When;
+        /// <summary>Sub-actions: choosing this action opens them in a panel beside the menu (and does nothing else).</summary>
+        public List<ActionDef> Actions;
+        /// <summary>Sub-actions per page of that panel (default 6; 0 = all on one page).</summary>
+        public int? PageSize;
+        [JsonProperty("__packDir")] public string PackDir;
+    }
+
     /// <summary>An item definition (static data). What each owner holds is runtime state: see InventorySlot.</summary>
     public class ItemDef
     {
@@ -348,6 +386,8 @@ namespace LivingNPC.Content
         public string Npc;
         /// <summary>trigger "button": id of the hud.json button.</summary>
         public string Button;
+        /// <summary>trigger "action": id of the actions.json action ("npc" = only on that npc; "self" = the npc it was chosen on).</summary>
+        public string Action;
         public JToken When;
         public bool Once;
         public int CooldownMinutes;

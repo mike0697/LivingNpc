@@ -65,7 +65,7 @@ namespace LivingNPC.Simulation
     public enum ItemKind : byte { Misc = 0, Consumable = 1, Equipment = 2, Key = 3, Quest = 4 }
     public enum CmpOp : byte { Eq, Ne, Lt, Le, Gt, Ge }
     public enum FxType : byte { Message, SetFlag, AddFlag, StartQuest, AdvanceQuest, CompleteQuest, FailQuest, ModStat, SetStat, MoveNpc, AdvanceTime, TeleportPlayer, ShowLink, HideLink, OpenLink, CloseLink, GiveItem, TakeItem, ShowImage, HideImage, SetPlace, AddRoutine, RemoveRoutine, SetRoutine, AdvanceTimeTo, PlaySound, StartLoop, StopLoop, Tell, ModRelation, SetRelation, SetGoal, SetAutoQuests, StartAuto, StopAuto }
-    public enum TriggerType : byte { EnterNode, Tick, Talk, Wake, Button }
+    public enum TriggerType : byte { EnterNode, Tick, Talk, Wake, Button, Action }
     public enum StepKind : byte { Say, Show, Hide, Sound, Fx, If, Jump, Choice }
 
     /// <summary>
@@ -144,14 +144,14 @@ namespace LivingNPC.Simulation
         public int Id;
         public TriggerType Trigger;
         public int TriggerNode, TriggerNpc;
-        public int TriggerButton;   // trigger Button: hashed id of the hud.json button
+        public int TriggerButton;   // trigger Button: hashed id of the hud.json button; trigger Action: hashed id of the action
         public int Cond;
         public byte Once;
         public byte HasDialog;      // the program has a line or a choice: the event waits while another dialogue is open or the player sleeps
         public int CooldownMin;
         public int TextId;          // written to the log when the event runs
         public int ScriptStart, ScriptCount;
-        public int NpcForDialog;
+        public int NpcForDialog;    // may be BindRef.Of(0): the npc an action was chosen on
     }
 
     // ------------------------------------------------------------------ automatic quests (templates an npc picks and runs by itself)

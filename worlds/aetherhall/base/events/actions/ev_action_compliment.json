@@ -1,0 +1,27 @@
+{
+  "id": "ev_action_compliment",
+  "trigger": "action",
+  "action": "compliment",
+  "cooldownMinutes": 60,
+  "script": [
+    {
+      "say": {
+        "en": "Oh, thank you! That's kind of you.",
+        "it": "Oh, grazie! Che gentile."
+      },
+      "who": "self"
+    },
+    {
+      "do": "modRelation",
+      "from": "self",
+      "to": "player",
+      "delta": 3
+    },
+    {
+      "do": "modStat",
+      "stat": "happiness",
+      "delta": 2,
+      "target": "self"
+    }
+  ]
+}

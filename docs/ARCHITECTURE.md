@@ -91,6 +91,17 @@ their pictures (`OwnedTextures`), because `TextureCache` is trimmed when the pla
 before it opens the game menu; a dialogue closes it. A new screen = a name in `CompiledHud.Screens` and a `Draw…`
 method in `HudScreens` (the map screen is the next one).
 
+**Actions on a character (`actions.json`):** a click on a character (picture or Present list) opens `ActionMenu`
+instead of talking: the actions offered to it (`npcs` / `tags`, resolved by `ContentCompiler.Actions.cs`) whose `when`
+holds. Choosing one sends `CommandType.Action` (npc, hashed id `Ids.Hash("action:" + id)`, plus `CommandType.Talk` for
+`"do": "talk"`); `CommandSystem` checks the npc is here and sets the `WorldState.Action` / `ActionNpc` pulse, and
+`RuleSystem` runs the events with `"trigger": "action"`. Their conditions, effects and texts are compiled like a
+template's with only `self` (`TplCtx`, `BindRef.Of(0)`), and `RuleRuntime.BindDialog(npc)` sets `Bind` = [npc] while
+they are evaluated and run; an open dialogue keeps it in `WorldState.DialogSelf`, so `Advance` / `Choose` bind it
+again and the view formats `{self}` (`{#0}`) with it. The action's own `when` is evaluated by the view the same way. Sub-actions (`CompiledAction.Children`, ids shared with
+the others) are only a matter of the view: `ActionMenu` keeps a stack of panels (`Level`: parent, page), offers a parent
+when one of its children is offered, and pages each panel by its `PageSize`; only a leaf sends commands.
+
 The interface written in code (menus, HUD, notices) is in English; the language of the content is chosen by
 `rules.json`. `AudioPlayer` applies the volumes: music = the `Ids.MusicKey()` channel and the title music, ambient =
 the other loops, effects = one-shot sounds.
@@ -137,7 +148,7 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   state: the simulation adds a `SoundCue` to the world buffer and `GameView.PlayCues` plays and clears them every frame.
 - **Quests** are state machines: `autoStart`, then per stage `complete` / `fail` / `onComplete` / `onFail`, `next` to
   branch. A stage without `complete` only advances with `advanceQuest`.
-- **Messages** (events): triggers `enterNode`, `tick`, `talk`, `wake`, `button`; `when`, `once`, `cooldownMinutes`, `priority`
+- **Messages** (events): triggers `enterNode`, `tick`, `talk`, `wake`, `button`, `action`; `when`, `once`, `cooldownMinutes`, `priority`
   and a `script` of steps (lines, pictures, sounds, effects, `if`, `choices`) compiled into `ScriptStep`s.
 - **Texts** (`TextTable`): a string or `{ "en": "...", "it": "..." }`; ECS only keeps the integer id. Placeholders
   are replaced by the view (`CompiledContent.Format`): `{npc}` (with `.first`, `.last`, `.full`, `.age` and the forms
@@ -197,7 +208,7 @@ Runtime/Core          Ids (string → int), GameTime, TextTable
 Runtime/Content       ContentDefs (DTOs), ContentLoader (packs + merge), ContentCompiler, ValidationReport
 Runtime/Simulation    Components, Blobs, RuleRuntime (Eval / Apply), Systems, WorldBuilder, Save/
 Runtime/Presentation  GameBootstrap (start-up, menus, F5/F6/F9/F12), GameView (uGUI), HudView + HudScreens (the bar
-                      of pictures), SaveMenu, UiKit, AudioPlayer, DebugPanel + DebugConsole (F12)
+                      of pictures), ActionMenu (actions on a character), SaveMenu, UiKit, AudioPlayer, DebugPanel + DebugConsole (F12)
 Editor                ContentMenu (Validate Content, Choose World, SmokeTest, SoundSmokeTest)
 ```
 

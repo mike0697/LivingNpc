@@ -1,0 +1,14 @@
+{
+  "id": "ev_action_ask_john",
+  "trigger": "action",
+  "action": "ask_john",
+  "script": [
+    {
+      "say": {
+        "en": "John? Bright, if he ever woke up before nine. You will find him in the library in the afternoon.",
+        "it": "John? Sveglio, se solo si alzasse prima delle nove. Lo trovi in biblioteca il pomeriggio."
+      },
+      "who": "self"
+    }
+  ]
+}

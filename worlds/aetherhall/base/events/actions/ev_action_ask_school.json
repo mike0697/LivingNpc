@@ -1,0 +1,14 @@
+{
+  "id": "ev_action_ask_school",
+  "trigger": "action",
+  "action": "ask_school",
+  "script": [
+    {
+      "say": {
+        "en": "Aetherhall has trained mages for three hundred years. Mind the old wings: not every door is meant to be opened.",
+        "it": "Aetherhall forma maghi da trecento anni. Attento alle ali vecchie: non tutte le porte vanno aperte."
+      },
+      "who": "self"
+    }
+  ]
+}

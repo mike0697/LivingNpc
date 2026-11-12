@@ -51,6 +51,7 @@ namespace LivingNPC.Presentation
         GameObject _canvasGo;
         readonly AudioPlayer _audio;
         HudView _hud;
+        ActionMenu _actions;
 
         /// <summary>The sound player, for tools and tests (the game only talks to it through this view).</summary>
         public AudioPlayer Audio => _audio;
@@ -60,10 +61,24 @@ namespace LivingNPC.Presentation
         /// <summary>The bar of pictures and its screens (tools and tests).</summary>
         public HudView Hud => _hud;
 
-        /// <summary>Esc in game: closes the open screen of the bar. False when none was open.</summary>
-        public bool CloseScreen() => _hud != null && _hud.CloseScreen();
+        /// <summary>The menu of actions on a character (tools and tests).</summary>
+        public ActionMenu Actions => _actions;
 
-        public void Dispose() { _audio.Dispose(); _hud?.Dispose(); }
+        /// <summary>Esc in game: closes the last panel of the menu of actions, else the open screen of the bar. False when nothing was open.</summary>
+        public bool CloseScreen()
+        {
+            if (_actions != null && _actions.Npc != 0) { _actions.CloseLevel(_actions.Levels - 1); return true; }
+            return _hud != null && _hud.CloseScreen();
+        }
+
+        public void Dispose() { _audio.Dispose(); _hud?.Dispose(); _actions?.Dispose(); }
+
+        /// <summary>A click on a character (its picture or its name): the menu of actions.json, or talking when the world has none.</summary>
+        void NpcClicked(int npc)
+        {
+            if (_hud != null) _hud.CloseScreen();
+            if (!_actions.Open(npc)) Send(CommandType.Talk, npc);
+        }
 
         /// <summary>Hides/shows the whole game UI (the main menu is drawn on top of nothing). Hiding also fades the music and ambient sounds out.</summary>
         public void SetVisible(bool visible)
@@ -192,6 +207,10 @@ namespace LivingNPC.Presentation
             // the screens of the bar: above every panel and picture, below the dialogue (which closes them)
             _hud.BuildScreens(canvasGo.transform);
 
+            // the menu of actions on a character (actions.json): above the screens, below the dialogue
+            _actions = new ActionMenu((type, a, b) => Send(type, a, b));
+            _actions.Build(canvasGo.transform);
+
             // click anywhere outside the text box = next line (invisible, only active while a dialogue is open)
             _catcher = UiKit.Panel(canvasGo.transform, "DialogClick", Vector2.zero, Vector2.one, new Color(0, 0, 0, 0));
             AddClick(_catcher.gameObject, Advance);
@@ -249,6 +268,7 @@ namespace LivingNPC.Presentation
             _statNames.Clear();
             foreach (var s in db.Rules.Stats) _statNames[Ids.Hash(s.Id)] = TextTable.Localize(s.Name) is { Length: > 0 } n ? n : s.Id;
             _hud.Bind(em, world, player, db, compiled);
+            _actions.Bind(em, world, player, compiled);
         }
 
         void Send(CommandType type, int a = 0, int b = 0)
@@ -341,6 +361,7 @@ namespace LivingNPC.Presentation
             RefreshDialog(ws);
             RefreshPortrait(ws, player);
             _hud.Refresh(ws, busy);
+            _actions.Refresh(ws, busy);
         }
 
         void RefreshInventory()
@@ -475,7 +496,7 @@ namespace LivingNPC.Presentation
                 for (int s = 0; s < stats.Length; s++)
                     if (_statNames.TryGetValue(stats[s].Stat, out var sn)) sb.Append($"\n<size=16>{sn}: {stats[s].Value:0}</size>");
                 if (loc.Activity != 0) sb.Append($"\n<size=15><i>{Ids.Name(loc.Activity)}</i></size>");
-                var b = UiKit.Button(_npcList, "Npc_" + id, sb.ToString(), 22, () => Send(CommandType.Talk, id));
+                var b = UiKit.Button(_npcList, "Npc_" + id, sb.ToString(), 22, () => NpcClicked(id));
                 b.interactable = !busy;
                 b.gameObject.AddComponent<LayoutElement>().minHeight = 88;
                 var t = b.GetComponentInChildren<Text>();
@@ -527,7 +548,7 @@ namespace LivingNPC.Presentation
                 b.targetGraphic = raw;
                 b.interactable = !busy;
                 int npcId = id;
-                b.onClick.AddListener(() => Send(CommandType.Talk, npcId));
+                b.onClick.AddListener(() => NpcClicked(npcId));
             }
         }
 
@@ -620,14 +641,16 @@ namespace LivingNPC.Presentation
             string speaker = "";
             if (ws.DialogWho != 0) speaker = $"<color=#f2c75a>{TextTable.Get(ws.DialogWho)}</color>\n";
             else if (ws.DialogNpc != 0) speaker = $"<color=#f2c75a>{NpcName(ws.DialogNpc)}</color>\n";
-            _dialogText.text = speaker + _compiled.Format(TextTable.Get(ws.DialogText), ws.DialogNpc);
+            var self = new Unity.Collections.FixedList32Bytes<int>();     // {self} of an action event: the npc it was chosen on
+            if (ws.DialogSelf != 0) self.Add(ws.DialogSelf);
+            _dialogText.text = speaker + _compiled.Format(TextTable.Get(ws.DialogText), ws.DialogNpc, self);
 
             UiKit.Clear(_dialogChoices);
             var choices = _em.GetBuffer<DialogChoice>(_world, true);
             for (int i = 0; i < choices.Length; i++)
             {
                 int idx = choices[i].ChoiceIndex;
-                string label = idx < 0 ? "OK" : TextTable.Get(choices[i].TextId);
+                string label = idx < 0 ? "OK" : _compiled.Format(TextTable.Get(choices[i].TextId), ws.DialogNpc, self);
                 var b = UiKit.Button(_dialogChoices, "Choice" + i, label, 24, () => Send(CommandType.Choose, idx));
                 b.gameObject.AddComponent<LayoutElement>().minHeight = 56;
             }

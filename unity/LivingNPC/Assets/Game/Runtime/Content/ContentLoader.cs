@@ -16,6 +16,7 @@ namespace LivingNPC.Content
     ///   nodes/ID/node.json + png       (maps, written by the map editor)
     ///   rules.json                     (clock, stats, activities, day parts)
     ///   hud.json                       (the bar of pictures at the top of the game screen)
+    ///   actions.json                   (the menu of actions on a character)
     ///   npcs/*.json schedules/*.json quests/*.json events/*.json templates/*.json lines/*.json
     ///
     /// Later packs override earlier ones by id. A file can also carry "$op": "merge" (deep-merge into the existing
@@ -271,7 +272,7 @@ namespace LivingNPC.Content
             var lines = new Dictionary<string, Raw>();
             var graph = new Dictionary<string, (float x, float y)>();
             var rules = new JObject();
-            JObject hud = null;
+            JObject hud = null, actions = null;
 
             foreach (var pack in packs)
             {
@@ -287,6 +288,12 @@ namespace LivingNPC.Content
                     if (ht is JObject ho) { MergeHud(hud ??= new JObject(), ho, pack.Dir); db.HudSource = hudFile; }
                     else db.Report.Error(hudFile, "expected a JSON object { … }");
                 }
+                var actionsFile = Path.Combine(pack.Dir, "actions.json");
+                if (File.Exists(actionsFile) && TryRead(actionsFile, db.Report, out var at))
+                {
+                    if (at is JObject ao) { MergeById(actions ??= new JObject(), ao, "actions", pack.Dir); db.ActionsSource = actionsFile; }
+                    else db.Report.Error(actionsFile, "expected a JSON object { \"actions\": [ … ] }");
+                }
                 LoadCategory(pack, "npcs", db.Report, npcs);
                 LoadCategory(pack, "schedules", db.Report, schedules);
                 LoadCategory(pack, "quests", db.Report, quests);
@@ -299,6 +306,7 @@ namespace LivingNPC.Content
             db.Rules = Deserialize<RulesDef>(rules, "rules.json", db.Report) ?? new RulesDef();
             if (string.IsNullOrEmpty(db.StartNode)) db.StartNode = db.Rules.StartNode;
             if (hud != null) db.Hud = Deserialize<HudDef>(hud, db.HudSource, db.Report);
+            if (actions != null) db.Actions = Deserialize<ActionsDef>(actions, db.ActionsSource, db.Report);
 
             foreach (var id in mapOrder)
             {
@@ -461,20 +469,7 @@ namespace LivingNPC.Content
             {
                 string name = p.Name.ToLowerInvariant();
                 var existing = acc.GetValue(p.Name, StringComparison.OrdinalIgnoreCase);
-                if (name == "buttons" && p.Value is JArray na)
-                {
-                    var list = existing as JArray ?? new JArray();
-                    foreach (var item in na.OfType<JObject>())
-                    {
-                        var id = (string)item["id"];
-                        int idx = id == null ? -1 : list.ToList().FindIndex(x => (string)x["id"] == id);
-                        if (string.Equals((string)item["$op"], "delete", StringComparison.OrdinalIgnoreCase)) { if (idx >= 0) list.RemoveAt(idx); continue; }
-                        var copy = (JObject)item.DeepClone();
-                        copy["__packDir"] = packDir;
-                        if (idx >= 0) list[idx] = copy; else list.Add(copy);
-                    }
-                    acc[p.Name] = list;
-                }
+                if (name == "buttons" && p.Value is JArray) MergeById(acc, new JObject { [p.Name] = p.Value }, p.Name, packDir);
                 else if ((name == "status" || name == "npcs") && p.Value is JObject no)
                 {
                     var copy = (JObject)no.DeepClone();
@@ -482,6 +477,32 @@ namespace LivingNPC.Content
                     if (existing is JObject eo) eo.Merge(copy, s_MergeReplaceArrays); else acc[p.Name] = copy;
                 }
                 else acc[p.Name] = p.Value.DeepClone();
+            }
+        }
+
+        /// <summary>
+        /// The list <paramref name="key"/> of a later pack over the earlier one, by id: an entry replaces the one with its id,
+        /// "$op": "delete" removes it, new ones go at the end. Each entry remembers its pack ("__packDir") for its pictures.
+        /// The other properties of <paramref name="next"/> replace the earlier ones.
+        /// </summary>
+        static void MergeById(JObject acc, JObject next, string key, string packDir)
+        {
+            foreach (var p in next.Properties())
+            {
+                if (!string.Equals(p.Name, key, StringComparison.OrdinalIgnoreCase) || !(p.Value is JArray na)) { acc[p.Name] = p.Value.DeepClone(); continue; }
+                var existing = acc.GetValue(p.Name, StringComparison.OrdinalIgnoreCase);
+                var list = existing as JArray ?? new JArray();
+                foreach (var item in na.OfType<JObject>())
+                {
+                    var id = (string)item["id"];
+                    int idx = id == null ? -1 : list.ToList().FindIndex(x => (string)x["id"] == id);
+                    if (string.Equals((string)item["$op"], "delete", StringComparison.OrdinalIgnoreCase)) { if (idx >= 0) list.RemoveAt(idx); continue; }
+                    var copy = (JObject)item.DeepClone();
+                    copy["__packDir"] = packDir;
+                    if (idx >= 0) list[idx] = copy; else list.Add(copy);
+                }
+                if (existing != null) acc.Remove(((JProperty)existing.Parent).Name);
+                acc[p.Name] = list;
             }
         }
 

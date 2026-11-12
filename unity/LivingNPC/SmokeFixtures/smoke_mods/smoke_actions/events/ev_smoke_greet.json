@@ -1,0 +1,22 @@
+{
+  "id": "ev_smoke_greet",
+  "trigger": "action",
+  "action": "greet",
+  "script": [
+    {
+      "say": "{self} waves back.",
+      "who": "self"
+    },
+    {
+      "do": "setRelation",
+      "from": "self",
+      "to": "player",
+      "value": -20
+    },
+    {
+      "do": "addFlag",
+      "key": "smoke_greet",
+      "value": 1
+    }
+  ]
+}

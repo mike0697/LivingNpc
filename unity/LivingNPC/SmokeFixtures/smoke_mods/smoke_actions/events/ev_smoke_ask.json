@@ -1,0 +1,13 @@
+{
+  "id": "ev_smoke_ask",
+  "trigger": "action",
+  "action": "ask",
+  "npc": "lia",
+  "effects": [
+    {
+      "do": "setFlag",
+      "key": "smoke_asked",
+      "value": 1
+    }
+  ]
+}
