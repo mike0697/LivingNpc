@@ -33,5 +33,17 @@
   "goal": "learn",
   "relations": {
     "elena": 40
+  },
+  "profile": {
+    "hints": [
+      {
+        "en": "He sleeps late: don't look for him before nine.",
+        "it": "Dorme fino a tardi: non cercarlo prima delle nove."
+      },
+      {
+        "en": "He admires Elena and wants to learn as much as he can.",
+        "it": "Ammira Elena e vuole imparare il più possibile."
+      }
+    ]
   }
 }

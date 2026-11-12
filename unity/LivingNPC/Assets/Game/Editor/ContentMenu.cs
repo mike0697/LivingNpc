@@ -634,7 +634,57 @@ namespace LivingNPC.EditorTools
                     Pump(); view.Tick();
                 }
 
-                view.Audio.Dispose();
+                // the bar of pictures: runs only with the pack smoke_hud (hud.json with four buttons, a "button" event that rings a bell,
+                // lia's hints, anselmo listed only after two rings, a button hidden by a flag)
+                if (compiled.Hud != null)
+                {
+                    void Check(string label, bool ok) { sb.AppendLine($"hud {label}: {(ok ? "ok" : "FAILED")}"); if (!ok) exit = 24; }
+                    var hud = compiled.Hud;
+                    var bar = view.Hud;
+                    RuleRuntime Hrt() => RuleRuntime.Create(em, h.World, h.Player);
+                    // a dialogue of the parts above may still be open: close it, the bar waits for it
+                    for (int i = 0; i < 40 && em.GetComponentData<WorldState>(h.World).DialogOpen != 0; i++)
+                    {
+                        var open = em.GetBuffer<DialogChoice>(h.World);
+                        if (open.Length > 0) Cmd(CommandType.Choose, open[0].ChoiceIndex); else Cmd(CommandType.Advance);
+                        world.Update();
+                    }
+                    Pump(); view.Tick();
+
+                    Check("four buttons, keys read", hud.Buttons.Count == 4 && hud.Buttons[0].Key == "C" && hud.Buttons[1].Key == "Digit2" && hud.Buttons[2].Key == null);
+                    Check("icon found, a missing one falls back to the label", hud.Buttons[0].Icon != null && hud.Buttons[1].Icon == null);
+                    Check("unknown stats and details skipped", hud.StatusStats.Count == 2 && hud.NpcStats.Count == 1 && hud.NpcDetails.Count == 5);
+                    Check("problems reported", db.Report.Entries.Any(e => e.Message.Contains("no_such_button")) && db.Report.Entries.Any(e => e.Message.Contains("shoe_size")) && db.Report.Entries.Any(e => e.Message.Contains("missing.png")));
+                    var lia = compiled.Npcs.Find(n => n.Id == Ids.Hash("lia"));
+                    Check("hints compiled", lia != null && lia.Profile.Hints.Count == 2 && lia.Profile.DescriptionText != 0);
+                    Check("every button shown", bar.ShownButtons().Count == 4);
+
+                    Check("status opens", bar.PressButton("status") && bar.CurrentScreen == "status" && bar.ScreenRows("Page") > 0);
+                    Check("pressing it again closes it", bar.PressButton("status") && bar.CurrentScreen == null);
+                    bar.PressButton("people");
+                    int listed = bar.ScreenRows("List");
+                    Check($"npcs screen lists everybody but anselmo ({listed} of {compiled.Npcs.Count})", bar.CurrentScreen == "npcs" && listed == compiled.Npcs.Count - 1 && bar.ScreenRows("Page") > 0);
+                    Check("conditional hint hidden before the bell", !Hrt().Eval(lia.Profile.Hints[1].when));
+                    Check("Esc closes the screen, then has nothing to close", view.CloseScreen() && bar.CurrentScreen == null && !view.CloseScreen());
+
+                    Check("bell pressed", bar.PressButton("bell"));
+                    Pump(); view.Tick();
+                    Check("its button event ran", Hrt().GetFlag(Ids.Hash("smoke_hud_bell")) == 1);
+                    Check("conditional hint shown after it", Hrt().Eval(lia.Profile.Hints[1].when));
+                    Cmd(CommandType.Button, Ids.Hash("hud:bell")); Pump(); view.Tick();
+                    bar.PressButton("people");
+                    Check("anselmo listed after the second ring", bar.ScreenRows("List") == compiled.Npcs.Count);
+                    Check("a panel button opens and folds its panel", bar.PressButton("journal") && bar.CurrentScreen == "npcs");
+                    bar.PressButton("journal");
+                    view.CloseScreen();
+
+                    Hrt().SetFlag(Ids.Hash("smoke_hud_hidden"), 1); Pump(); view.Tick();
+                    Check("when hides the button", !bar.ShownButtons().Contains("bell") && !bar.PressButton("bell"));
+                    Cmd(CommandType.Wait, 30); Cmd(CommandType.Button, Ids.Hash("hud:bell")); Pump(); view.Tick();
+                    Check("button refused while time passes", Hrt().GetFlag(Ids.Hash("smoke_hud_bell")) == 2);
+                }
+
+                view.Dispose();
                 Object.DestroyImmediate(uiRoot);
                 LivingNPC.Presentation.TextureCache.Clear();
                 sb.AppendLine("SMOKE OK");

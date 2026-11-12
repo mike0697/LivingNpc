@@ -13,7 +13,7 @@ them and builds the world. You can write them by hand, with the editors, or with
 
 - [Worlds and packs](#worlds-and-packs)
 - [Common formats: ids, texts, times, days](#common-formats)
-- [pack.json](#packjson) · [project.json](#projectjson) · [title.json](#titlejson) · [rules.json](#rulesjson)
+- [pack.json](#packjson) · [project.json](#projectjson) · [title.json](#titlejson) · [rules.json](#rulesjson) · [hud.json](#the-bar-of-pictures-hudjson)
 - [Places: nodes/&lt;id&gt;/node.json](#places-nodesidnodejson)
 - [Characters: npcs/&lt;id&gt;.json](#characters-npcsidjson) · [Shared routines: schedules/&lt;id&gt;.json](#shared-routines-schedulesidjson)
 - [Items: items/&lt;id&gt;.json](#items-itemsidjson)
@@ -35,6 +35,7 @@ worlds/
       pack.json            the pack: id, name, author, priority
       project.json         the world: game title, start place (written by the map editor)
       title.json           title screen and button pictures (optional)
+      hud.json             the bar of pictures at the top of the game screen (optional)
       rules.json           clock, stats, activities, parts of the day, sleep, starting inventory
       nodes/<id>/node.json places (one folder per place, with its background pictures)
       npcs/<id>.json       characters
@@ -42,7 +43,7 @@ worlds/
       items/<id>.json      items
       quests/<id>.json     quests
       events/<id>.json     messages (also in subfolders: events/<quest id>/<id>.json)
-      images/              pictures used by characters, messages and title.json
+      images/              pictures used by characters, messages, title.json and hud.json
       music/               music (wav, ogg, mp3)
       sfx/                 sound effects and ambient loops
       lore/*.md            free notes about the world (not read by the game; useful for writers and AI)
@@ -128,6 +129,48 @@ The title screen and the look of the buttons. Optional; read from the `base` pac
 | `buttons` | Pictures of every button in the game: `normal`, `hover` (also pressed/selected), `textColor`. |
 | `menuButtons` | The same for the main menu buttons (omitted = `buttons`). |
 | `border` | Width in pixels of the left and right ends of the picture that are never stretched (3-slice). For a pill-shaped button: about half the picture's height. Crop transparent margins out of the picture first. |
+
+## The bar of pictures: hud.json
+
+A row of clickable pictures under the top bar of the game screen. Optional: without `hud.json` there is no bar. Each
+button opens a **screen**, opens and folds a **panel**, and runs the **messages** with `"trigger": "button"` that name
+it, so a button can do anything a message can.
+
+```json
+{ "align": "center", "size": 64,
+  "buttons": [
+    { "id": "status",  "icon": "hud/diary.png",  "label": { "en": "My status", "it": "Il mio stato" }, "open": "status", "key": "c" },
+    { "id": "people",  "icon": "hud/person.png", "label": "Characters", "open": "npcs", "key": "n" },
+    { "id": "journal", "icon": "hud/scroll.png", "label": "Journal", "open": "journal" },
+    { "id": "phone",   "icon": "hud/phone.png",  "label": "Phone",
+      "when": { "type": "hasItem", "item": "phone" } } ],
+  "status": { "title": "My status", "name": "Alex", "text": "A new student.", "image": "people/player.png",
+              "stats": ["hp", "mp", "energy"] },
+  "npcs":   { "title": "Characters", "stats": ["happiness", "energy"],
+              "show": ["age", "activity", "where", "relation", "goal"] } }
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `align` | `center` | `left`, `center` or `right`, in the space between the side panels. |
+| `size` | `64` | Side of each picture in pixels of a 1920×1080 screen (24–160). |
+| `buttons[].id` | | Required. Messages name it with `"button"`. |
+| `buttons[].icon` | | Picture in `images/` (png, jpg, webp; square works best). Missing: a button with the label. |
+| `buttons[].label` | the id | Shown when the pointer is on the picture. |
+| `buttons[].open` | | `status` (the player's page), `npcs` (the characters), `journal`, `backpack`, `present` (open / fold that panel). Omitted: the button only runs its messages. Pressing it again closes the screen; so does Esc. |
+| `buttons[].key` | | A key that presses it: a letter, a digit, `F1`–`F4`, `F7`, `F8`, `F10`, `F11` (the other keys belong to the game). |
+| `buttons[].when` | always | [Condition](#conditions): the button is on the bar only while it holds. |
+| `status` | | The **status** screen: `title`, `name` and `text` (texts), `image` (picture of the player), `stats` (the stat ids to show, in order; omitted = all of `rules.json`). |
+| `npcs` | | The **npcs** screen: `title`, `stats` (as above), `show` = what the page says besides name, picture, description, stats and hints: `age`, `activity` (what it is doing now), `where` (where it is now), `relation` (what it thinks of the player), `goal`. Default `["age", "relation"]`. Which characters are listed, and their hints: their [`profile`](#characters-npcsidjson). |
+
+A button runs its messages only when the world is still (no trip, wait or dialogue); screens can be opened while time
+passes, not during a dialogue. Later packs merge `hud.json`: `buttons` by id (an entry `{ "id": "phone", "$op":
+"delete" }` removes a button), `status` and `npcs` field by field.
+
+```json
+{ "id": "ev_phone", "trigger": "button", "button": "phone",
+  "script": [ { "say": "No signal down here.", "who": "Phone" } ] }
+```
 
 ## rules.json
 
@@ -219,6 +262,7 @@ A place is a picture with buttons (links) to other places. Written by the **map 
 | `routine` | A list of **shared routine ids** (from `schedules/`) and **blocks**. |
 | `stats` | Starting values (others start at their `baseline`). |
 | `inventory` | Starting items: `{ item id: count }`. |
+| `profile` | Optional. Its page in the **Characters** screen of the [bar](#the-bar-of-pictures-hudjson): `image` (file in `images/`; omitted = its `talk.default` picture, else its `default` one), `when` (a [condition](#conditions): listed only while true, e.g. after you met it; omitted = always) and `hints`: texts (`"Loves old books."`) or `{ "text": …, "when": condition }`, shown only while their condition holds. Texts can say `{npc}`. The text under the name is `description`. |
 | `images` | Optional. Without pictures the character only appears in the "Present" list; with them it is drawn on the map and **clicking it starts a conversation**. `default` = anywhere; `activity.<id>` = while doing that activity; `nodes.<place id>` = a different position (or file) on that map only; `talk.<pose>` = while speaking (a line can pick a pose, `talk.default` otherwise). Files are in the pack's `images/`. |
 
 ### Routine blocks
@@ -308,8 +352,9 @@ A message runs when its trigger happens and its `when` condition is true.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `trigger` | `enterNode` | `enterNode` (the player arrives in `node`), `talk` (the player talks to `npc`; required), `tick` (every step while the player is in `node`), `wake` (the player wakes up; `node` = where). |
+| `trigger` | `enterNode` | `enterNode` (the player arrives in `node`), `talk` (the player talks to `npc`; required), `tick` (every step while the player is in `node`), `wake` (the player wakes up; `node` = where), `button` (the player presses the picture `button` of the [bar](#the-bar-of-pictures-hudjson)). |
 | `node`, `npc` | | Where / with whom. `node` omitted = anywhere. |
+| `button` | | Required with `trigger: button`: the id of a `hud.json` button. The message runs only when the world is still (no trip, wait or dialogue). |
 | `when` | always | [Condition](#conditions). |
 | `once` | `false` | Runs only once per game. |
 | `cooldownMinutes` | `0` | Game minutes before it can run again. |

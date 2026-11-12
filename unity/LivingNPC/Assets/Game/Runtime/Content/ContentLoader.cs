@@ -15,6 +15,7 @@ namespace LivingNPC.Content
     ///   project.json                   (world: name, startNode, editor graph positions)
     ///   nodes/ID/node.json + png       (maps, written by the map editor)
     ///   rules.json                     (clock, stats, activities, day parts)
+    ///   hud.json                       (the bar of pictures at the top of the game screen)
     ///   npcs/*.json schedules/*.json quests/*.json events/*.json templates/*.json lines/*.json
     ///
     /// Later packs override earlier ones by id. A file can also carry "$op": "merge" (deep-merge into the existing
@@ -270,6 +271,7 @@ namespace LivingNPC.Content
             var lines = new Dictionary<string, Raw>();
             var graph = new Dictionary<string, (float x, float y)>();
             var rules = new JObject();
+            JObject hud = null;
 
             foreach (var pack in packs)
             {
@@ -279,6 +281,12 @@ namespace LivingNPC.Content
                 LoadMaps(pack, db.Report, maps, mapOrder);
                 var rulesFile = Path.Combine(pack.Dir, "rules.json");
                 if (File.Exists(rulesFile) && TryRead(rulesFile, db.Report, out var rt) && rt is JObject ro) MergeRules(rules, ro);
+                var hudFile = Path.Combine(pack.Dir, "hud.json");
+                if (File.Exists(hudFile) && TryRead(hudFile, db.Report, out var ht))
+                {
+                    if (ht is JObject ho) { MergeHud(hud ??= new JObject(), ho, pack.Dir); db.HudSource = hudFile; }
+                    else db.Report.Error(hudFile, "expected a JSON object { … }");
+                }
                 LoadCategory(pack, "npcs", db.Report, npcs);
                 LoadCategory(pack, "schedules", db.Report, schedules);
                 LoadCategory(pack, "quests", db.Report, quests);
@@ -290,6 +298,7 @@ namespace LivingNPC.Content
 
             db.Rules = Deserialize<RulesDef>(rules, "rules.json", db.Report) ?? new RulesDef();
             if (string.IsNullOrEmpty(db.StartNode)) db.StartNode = db.Rules.StartNode;
+            if (hud != null) db.Hud = Deserialize<HudDef>(hud, db.HudSource, db.Report);
 
             foreach (var id in mapOrder)
             {
@@ -436,6 +445,41 @@ namespace LivingNPC.Content
                         var idx = ea.ToList().FindIndex(x => (string)x["id"] == id);
                         if (idx >= 0) ea[idx] = item.DeepClone(); else ea.Add(item.DeepClone());
                     }
+                }
+                else acc[p.Name] = p.Value.DeepClone();
+            }
+        }
+
+        /// <summary>
+        /// hud.json of a later pack over the earlier ones: "buttons" by id (an entry with "$op": "delete" removes it), "status"
+        /// and "npcs" deep-merged, the rest replaced. Pictures belong to the pack that names them: every button and the status
+        /// screen remember it in "__packDir".
+        /// </summary>
+        static void MergeHud(JObject acc, JObject next, string packDir)
+        {
+            foreach (var p in next.Properties())
+            {
+                string name = p.Name.ToLowerInvariant();
+                var existing = acc.GetValue(p.Name, StringComparison.OrdinalIgnoreCase);
+                if (name == "buttons" && p.Value is JArray na)
+                {
+                    var list = existing as JArray ?? new JArray();
+                    foreach (var item in na.OfType<JObject>())
+                    {
+                        var id = (string)item["id"];
+                        int idx = id == null ? -1 : list.ToList().FindIndex(x => (string)x["id"] == id);
+                        if (string.Equals((string)item["$op"], "delete", StringComparison.OrdinalIgnoreCase)) { if (idx >= 0) list.RemoveAt(idx); continue; }
+                        var copy = (JObject)item.DeepClone();
+                        copy["__packDir"] = packDir;
+                        if (idx >= 0) list[idx] = copy; else list.Add(copy);
+                    }
+                    acc[p.Name] = list;
+                }
+                else if ((name == "status" || name == "npcs") && p.Value is JObject no)
+                {
+                    var copy = (JObject)no.DeepClone();
+                    if (name == "status" && copy["image"] != null) copy["__packDir"] = packDir;
+                    if (existing is JObject eo) eo.Merge(copy, s_MergeReplaceArrays); else acc[p.Name] = copy;
                 }
                 else acc[p.Name] = p.Value.DeepClone();
             }

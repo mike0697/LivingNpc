@@ -1,0 +1,18 @@
+{
+  "$op": "merge",
+  "id": "lia",
+  "profile": {
+    "hints": [
+      "Always has her head in a book.",
+      {
+        "text": "Rang the bell: {npc} heard it.",
+        "when": {
+          "type": "flag",
+          "key": "smoke_hud_bell",
+          "op": ">=",
+          "value": 1
+        }
+      }
+    ]
+  }
+}

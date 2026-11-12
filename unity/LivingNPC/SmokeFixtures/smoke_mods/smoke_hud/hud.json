@@ -1,0 +1,58 @@
+{
+  "align": "center",
+  "size": 56,
+  "buttons": [
+    {
+      "id": "status",
+      "icon": "hud/status.png",
+      "label": "My status",
+      "open": "status",
+      "key": "c"
+    },
+    {
+      "id": "people",
+      "icon": "hud/missing.png",
+      "label": "Characters",
+      "open": "npcs",
+      "key": "2"
+    },
+    {
+      "id": "journal",
+      "label": "Journal",
+      "open": "journal"
+    },
+    {
+      "id": "bell",
+      "icon": "hud/status.png",
+      "label": "Bell",
+      "when": {
+        "type": "flag",
+        "key": "smoke_hud_hidden",
+        "op": "<",
+        "value": 1
+      }
+    }
+  ],
+  "status": {
+    "name": "Smoke",
+    "text": "The player of the smoke test.",
+    "stats": [
+      "energy",
+      "happiness",
+      "nonexistent_stat"
+    ]
+  },
+  "npcs": {
+    "stats": [
+      "happiness"
+    ],
+    "show": [
+      "age",
+      "where",
+      "relation",
+      "activity",
+      "goal",
+      "shoe_size"
+    ]
+  }
+}

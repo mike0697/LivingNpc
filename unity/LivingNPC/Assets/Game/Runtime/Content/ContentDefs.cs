@@ -77,6 +77,8 @@ namespace LivingNPC.Content
         public List<string> Tags = new List<string>();
         /// <summary>Pictures of the npc on the map and while it speaks. Optional: without them the npc only appears in the list.</summary>
         public NpcImagesDef Images;
+        /// <summary>What the "npcs" screen of the bar (hud.json) shows about it: picture, when it is listed, hints.</summary>
+        public NpcProfileDef Profile;
         [JsonIgnore] public string Source;
         [JsonIgnore] public string PackDir;     // pictures live in <PackDir>/images
     }
@@ -101,6 +103,76 @@ namespace LivingNPC.Content
         public Dictionary<string, ImageDef> Activity = new Dictionary<string, ImageDef>();
         /// <summary>pose name -> picture while the npc speaks to the player; "default" is used when a line names no pose.</summary>
         public Dictionary<string, ImageDef> Talk = new Dictionary<string, ImageDef>();
+    }
+
+    /// <summary>
+    /// The npc's page in the "npcs" screen: <see cref="Image"/> (file in images/; omitted = its "default" talk picture, else
+    /// its default map picture), <see cref="When"/> (listed only while true; omitted = always) and <see cref="Hints"/>: texts,
+    /// or { "text": …, "when": condition } shown only while the condition holds. The text under the name is the npc's description.
+    /// </summary>
+    public class NpcProfileDef
+    {
+        public string Image;
+        public JToken When;
+        public List<JToken> Hints = new List<JToken>();
+    }
+
+    /// <summary>
+    /// hud.json: the bar of pictures at the top of the game screen. Packs merge it like rules.json; "buttons" are merged by id
+    /// (an entry with "$op": "delete" removes the button).
+    /// </summary>
+    public class HudDef
+    {
+        /// <summary>left | center | right, under the top bar.</summary>
+        public string Align = "center";
+        /// <summary>Side of each picture, in pixels of a 1920×1080 screen.</summary>
+        public float Size = 64;
+        public List<HudButtonDef> Buttons = new List<HudButtonDef>();
+        public HudStatusDef Status = new HudStatusDef();
+        public HudNpcsDef Npcs = new HudNpcsDef();
+    }
+
+    /// <summary>
+    /// A picture of the bar. <see cref="Open"/> names the screen it opens (status | npcs) or the panel it opens and folds
+    /// (journal | backpack | present); every press also runs the events with "trigger": "button" and this button's id.
+    /// </summary>
+    public class HudButtonDef
+    {
+        public string Id;
+        /// <summary>File in images/ (png, jpg, webp). Omitted or missing: a button with the label.</summary>
+        public string Icon;
+        /// <summary>Shown when the pointer is on the picture (and on the button when there is no picture).</summary>
+        public JToken Label;
+        public string Open;
+        /// <summary>A key that presses the button: a letter, a digit or F1…F4 / F7, F8, F10, F11.</summary>
+        public string Key;
+        /// <summary>The button is on the bar only while this holds; omitted = always.</summary>
+        public JToken When;
+        [JsonProperty("__packDir")] public string PackDir;
+    }
+
+    /// <summary>The "status" screen: the player's page.</summary>
+    public class HudStatusDef
+    {
+        public JToken Title;
+        /// <summary>The player's name, written over the stats; omitted = none.</summary>
+        public JToken Name;
+        public JToken Text;
+        /// <summary>Picture of the player (file in images/).</summary>
+        public string Image;
+        /// <summary>Stat ids to show, in this order; omitted = every stat of rules.json.</summary>
+        public List<string> Stats;
+        [JsonProperty("__packDir")] public string PackDir;
+    }
+
+    /// <summary>The "npcs" screen: a list of the npcs and the page of the chosen one.</summary>
+    public class HudNpcsDef
+    {
+        public JToken Title;
+        /// <summary>Stat ids to show, in this order; omitted = every stat.</summary>
+        public List<string> Stats;
+        /// <summary>What else the page says: age, activity, where, relation, goal. Omitted = age and relation.</summary>
+        public List<string> Show;
     }
 
     /// <summary>An item definition (static data). What each owner holds is runtime state: see InventorySlot.</summary>
@@ -270,10 +342,12 @@ namespace LivingNPC.Content
     public class EventDef
     {
         public string Id;
-        /// <summary>enterNode | tick | talk | wake (the player has just woken up; node = where)</summary>
+        /// <summary>enterNode | tick | talk | wake (the player has just woken up; node = where) | button (a picture of the bar was pressed)</summary>
         public string Trigger = "enterNode";
         public string Node;
         public string Npc;
+        /// <summary>trigger "button": id of the hud.json button.</summary>
+        public string Button;
         public JToken When;
         public bool Once;
         public int CooldownMinutes;

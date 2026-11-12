@@ -1,0 +1,12 @@
+{
+  "$op": "merge",
+  "id": "anselmo",
+  "profile": {
+    "when": {
+      "type": "flag",
+      "key": "smoke_hud_bell",
+      "op": ">=",
+      "value": 2
+    }
+  }
+}

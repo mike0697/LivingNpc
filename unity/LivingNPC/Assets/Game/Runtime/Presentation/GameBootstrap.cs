@@ -562,7 +562,7 @@ namespace LivingNPC.Presentation
             catch (Exception e) { Debug.LogException(e); return null; }
         }
 
-        void OnDestroy() { _compiled?.Dispose(); _view?.Audio.Dispose(); _saveMenu.Hide(); if (_shot != null) Destroy(_shot); }
+        void OnDestroy() { _compiled?.Dispose(); _view?.Dispose(); _saveMenu.Hide(); if (_shot != null) Destroy(_shot); }
 
         void Update()
         {
@@ -574,6 +574,7 @@ namespace LivingNPC.Presentation
             bool f12 = kb != null && kb.f12Key.wasPressedThisFrame;
             if (_debug.IsOpen && (esc || f12 || !_loaded)) { CloseDebug(); return; }     // Esc closes the panel, not the game
             if (f12 && _loaded && !_shooting && GameSettings.DebugPanel) OpenDebug();
+            if (esc && _loaded && _view.CloseScreen()) return;                // Esc closes the screen of the bar first
             if (esc) { if (!_shooting && _loaded) OpenGameMenu(); else if (!_loaded) BackToMenu(); return; }
             if (_shooting) return;                                            // the menu opens at the end of this frame
             if (kb != null && kb.f5Key.wasPressedThisFrame)

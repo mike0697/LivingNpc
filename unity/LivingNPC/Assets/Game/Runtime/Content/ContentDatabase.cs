@@ -25,6 +25,10 @@ namespace LivingNPC.Content
         public readonly List<ItemDef> ItemList = new List<ItemDef>();
         public readonly Dictionary<string, ItemDef> Items = new Dictionary<string, ItemDef>();
         public RulesDef Rules = new RulesDef();
+        /// <summary>The bar of pictures (hud.json), null when no pack has one: the game shows no bar.</summary>
+        public HudDef Hud;
+        /// <summary>The last hud.json read (for the content report).</summary>
+        public string HudSource;
 
         public readonly ValidationReport Report = new ValidationReport();
     }

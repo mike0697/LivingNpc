@@ -10,7 +10,9 @@ simulation, quests, messages, routines, saves and sounds.
   effects), `smoke_sound` (music, ambient sounds and sounds in messages; the `.wav` files are generated tones: the
   test checks the state, not the noise), `smoke_sequence` (commands in sequence: effects between lines, if / else,
   nested choices), `smoke_auto` (automatic quests: first name, age, sex and relations of two characters, a visit
-  template picked by itself, saved and loaded while it runs, `chance`, `startAuto` / `stopAuto`, `did`).
+  template picked by itself, saved and loaded while it runs, `chance`, `startAuto` / `stopAuto`, `did`), `smoke_hud`
+  (the bar of pictures: `hud.json` with a missing icon and unknown stats on purpose, a `button` event that rings a
+  bell, Lia's hints, Anselmo listed only after two rings, a button hidden by a flag).
 
 From the Unity project folder (`unity/LivingNPC`), with Unity closed (Git Bash or another POSIX shell):
 

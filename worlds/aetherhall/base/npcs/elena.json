@@ -45,5 +45,35 @@
   },
   "inventory": {
     "bread": 3
+  },
+  "profile": {
+    "hints": [
+      {
+        "en": "She teaches potions in the alchemy room on weekdays, from 8 to 16.",
+        "it": "Insegna pozioni nell'aula di alchimia nei giorni feriali, dalle 8 alle 16."
+      },
+      {
+        "text": {
+          "en": "She is worried about the old crypt under the school.",
+          "it": "È preoccupata per la vecchia cripta sotto la scuola."
+        },
+        "when": {
+          "type": "quest",
+          "quest": "crypt",
+          "status": "active"
+        }
+      },
+      {
+        "text": {
+          "en": "She trusts you since you explored the crypt for her.",
+          "it": "Si fida di te da quando hai esplorato la cripta per lei."
+        },
+        "when": {
+          "type": "quest",
+          "quest": "crypt",
+          "status": "completed"
+        }
+      }
+    ]
   }
 }

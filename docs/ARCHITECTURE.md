@@ -77,6 +77,20 @@ rules react as to a quest's effect. The console's argument table must match `stu
 `debug` section and in `meta.debugUsed` (the save list shows "debug"). The panel is on in the Editor and development
 builds, and in a release build when Settings ▸ Debug panel is On.
 
+**The bar of pictures (`hud.json`):** `HudView` draws a row of clickable pictures under the top bar and `HudScreens`
+the window they open, over the middle of the screen. A button opens a screen (`status`: the player's stats; `npcs`: a
+list of the characters with the page of the chosen one: picture, description, details, stats, hints), opens and folds a
+side panel (`journal`, `backpack`, `present`, through `DraggablePanel.Toggle`), and **every press sends
+`CommandType.Button`** with the button's hashed id (`Ids.Hash("hud:" + id)`): `CommandSystem` sets the
+`WorldState.Button` pulse and `RuleSystem` runs the events with `"trigger": "button"` for it, like `talk` ones, so a
+button can do anything an event can (a phone that opens a dialogue, an item that heals). `ContentCompiler.Hud.cs`
+compiles it all: icons resolved in the pack's `images/`, the `when` conditions (the button is on the bar only while
+true) and the npcs' `profile` (`CompiledNpc.Profile`: picture, `when` = listed, hints with their conditions) go into
+the rule blob like the others, and the view evaluates them with `RuleRuntime.Eval` on every refresh. The screens own
+their pictures (`OwnedTextures`), because `TextureCache` is trimmed when the place changes. Esc closes a screen
+before it opens the game menu; a dialogue closes it. A new screen = a name in `CompiledHud.Screens` and a `Draw…`
+method in `HudScreens` (the map screen is the next one).
+
 The interface written in code (menus, HUD, notices) is in English; the language of the content is chosen by
 `rules.json`. `AudioPlayer` applies the volumes: music = the `Ids.MusicKey()` channel and the title music, ambient =
 the other loops, effects = one-shot sounds.
@@ -123,7 +137,7 @@ System order per frame: `CommandSystem → ClockSystem → NpcSystem (parallel I
   state: the simulation adds a `SoundCue` to the world buffer and `GameView.PlayCues` plays and clears them every frame.
 - **Quests** are state machines: `autoStart`, then per stage `complete` / `fail` / `onComplete` / `onFail`, `next` to
   branch. A stage without `complete` only advances with `advanceQuest`.
-- **Messages** (events): triggers `enterNode`, `tick`, `talk`, `wake`; `when`, `once`, `cooldownMinutes`, `priority`
+- **Messages** (events): triggers `enterNode`, `tick`, `talk`, `wake`, `button`; `when`, `once`, `cooldownMinutes`, `priority`
   and a `script` of steps (lines, pictures, sounds, effects, `if`, `choices`) compiled into `ScriptStep`s.
 - **Texts** (`TextTable`): a string or `{ "en": "...", "it": "..." }`; ECS only keeps the integer id. Placeholders
   are replaced by the view (`CompiledContent.Format`): `{npc}` (with `.first`, `.last`, `.full`, `.age` and the forms
@@ -182,8 +196,8 @@ stat or an item needs no code.
 Runtime/Core          Ids (string → int), GameTime, TextTable
 Runtime/Content       ContentDefs (DTOs), ContentLoader (packs + merge), ContentCompiler, ValidationReport
 Runtime/Simulation    Components, Blobs, RuleRuntime (Eval / Apply), Systems, WorldBuilder, Save/
-Runtime/Presentation  GameBootstrap (start-up, menus, F5/F6/F9/F12), GameView (uGUI), SaveMenu, UiKit, AudioPlayer,
-                      DebugPanel + DebugConsole (F12)
+Runtime/Presentation  GameBootstrap (start-up, menus, F5/F6/F9/F12), GameView (uGUI), HudView + HudScreens (the bar
+                      of pictures), SaveMenu, UiKit, AudioPlayer, DebugPanel + DebugConsole (F12)
 Editor                ContentMenu (Validate Content, Choose World, SmokeTest, SoundSmokeTest)
 ```
 

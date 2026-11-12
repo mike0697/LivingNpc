@@ -49,6 +49,22 @@ namespace LivingNPC.Presentation
             foreach (var p in s_All) if (p != null) p.Load();
         }
 
+        /// <summary>Opens or folds the panel with this title (a button of the bar); false when there is none.</summary>
+        public static bool Toggle(string title)
+        {
+            foreach (var p in s_All)
+                if (p != null && p._title == title) { p.Toggle(); return true; }
+            return false;
+        }
+
+        /// <summary>The panel with this title is open (not folded).</summary>
+        public static bool IsOpen(string title)
+        {
+            foreach (var p in s_All)
+                if (p != null && p._title == title) return p._open;
+            return false;
+        }
+
         void OnDestroy() => s_All.Remove(this);
 
         void Load()

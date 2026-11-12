@@ -6,7 +6,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listRecords, refs as packRefs, allJson } from '../lib/store.js';
-import { whereAt, routineBlocks, dayMask, daysOf, parseTime, checkRecord, effectsToText, effectsFromText, usages } from '../lib/records.js';
+import { whereAt, routineBlocks, dayMask, daysOf, parseTime, checkRecord, effectsToText, effectsFromText, usages, condToText, condFromText } from '../lib/records.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 let failed = 0, passed = 0;
@@ -74,6 +74,28 @@ eq('title.json errors', tBad.errors.length, 5);       // ../, extension, drawTit
 eq('title.json warnings', tBad.warnings.length, 4);     // volume, normal missing, hover not found, colour
 eq('music off: the file is not checked', checkRecord('title', { musicOn: false, music: 'manca.mp3' }, tRefs), { errors: [], warnings: [] });
 
+// ---------------------------------------------------------------- hud.json (System tab) and the character profile
+const hRefs = { images: ['hud/diary.png'], stat: ['energy', 'happiness'], quest: ['crypt'], item: ['map'] };
+eq('hud.json correct', checkRecord('hud', { align: 'left', size: 72,
+  buttons: [{ id: 'status', icon: 'hud/diary.png', label: { en: 'Me' }, open: 'status', key: 'c' },
+    { id: 'map', icon: 'hud/diary.png', when: { type: 'hasItem', item: 'map' } }],
+  status: { stats: ['energy'] }, npcs: { stats: ['happiness'], show: ['age', 'where'] } }, hRefs), { errors: [], warnings: [] });
+const hBad = checkRecord('hud', { align: 'top', size: 500,
+  buttons: [{ id: 'a', icon: 'hud/none.png', open: 'inventory', key: 'F5' }, { id: 'a', icon: 'hud/diary.png', open: 'map', key: 'x' },
+    { label: 'no id' }, { id: 'b', icon: 'hud/diary.png', key: 'X', when: { type: 'quest', quest: 'nope' } }],
+  status: { stats: ['mana'] }, npcs: { show: ['shoe'] } }, hRefs);
+eq('hud.json errors', hBad.errors.length, 4);          // open, key F5, same id, no id
+eq('hud.json warnings', hBad.warnings.length, 8);      // align, size, picture missing, map, key twice, unknown quest, stat, show
+eq('profile correct', checkRecord('npc', { id: 'e', places: { home: 'h' }, profile: { image: 'hud/diary.png', when: { type: 'quest', quest: 'crypt' },
+  hints: ['Plain', { en: 'Two', it: 'Due' }, { text: 'Later', when: { type: 'quest', quest: 'crypt', status: 'active' } }] } }, { ...hRefs, node: ['h'] }), { errors: [], warnings: [] });
+const pBad = checkRecord('npc', { id: 'e', places: { home: 'h' }, profile: { image: 'x.png', hints: [3, '', { text: 'x', when: { type: 'quest', quest: 'nope' } }] } }, { ...hRefs, node: ['h'] });
+eq('profile problems', [pBad.errors.length, pBad.warnings.length], [1, 3]);     // 3 is no text; picture, empty, unknown quest
+const cond = { all: [{ type: 'quest', quest: 'crypt', status: 'active' }, { any: [{ type: 'flag', key: 'met' }, { not: { type: 'hasItem', item: 'map' } }] }] };
+eq('condition as lines and back', condFromText(condToText(cond), hRefs).cond, cond);
+eq('one condition stays one', condFromText('quest(crypt, completed)', hRefs).cond, { type: 'quest', quest: 'crypt', status: 'completed' });
+eq('empty condition = always', condFromText(['  ', ' '].join('\n'), hRefs).cond, undefined);
+eq('condition with a mistake', condFromText(['quest(crypt', 'flag(a)'].join('\n'), hRefs).errors[0]?.startsWith('line 1:'), true);
+
 // ---------------------------------------------------------------- where a quest is used (Delete in Quests & messages)
 const qFiles = [
   { rel: 'quests/q_a.json', json: { id: 'q_a', stages: [{ id: 's' }] } },
@@ -117,12 +139,15 @@ for (const pack of packs) {
     for (const e of res.errors) console.log(`  ${rec.rel}: ${e}`);
     // the effects of the sleep and every routine survive the trip through the form
   }
-  if (data.title?.json) {
+  for (const kind of ['title', 'hud']) if (data[kind]?.json) {
     files++;
-    const res = checkRecord('title', data.title.json, r);
+    const res = checkRecord(kind, data[kind].json, r);
     errors += res.errors.length; warnings += res.warnings.length;
-    for (const e of [...res.errors, ...res.warnings]) console.log(`  title.json: ${e}`);
+    for (const e of [...res.errors, ...res.warnings]) console.log(`  ${kind}.json: ${e}`);
   }
+  // every condition of the profiles and of the bar survives the trip through the form
+  for (const c of [...data.npc.flatMap((x) => [x.json?.profile?.when, ...(x.json?.profile?.hints || []).map((hh) => hh?.when)]), ...(data.hud?.json?.buttons || []).map((b) => b?.when)].filter(Boolean))
+    eq(`${pack}: condition ${JSON.stringify(c)} as lines and back`, condFromText(condToText(c), r).cond, c);
   if (data.rules?.json) {
     files++;
     const res = checkRecord('rules', data.rules.json, r);

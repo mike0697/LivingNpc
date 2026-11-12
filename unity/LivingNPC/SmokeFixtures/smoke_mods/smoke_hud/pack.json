@@ -1,0 +1,10 @@
+{
+  "id": "smoke_hud",
+  "name": "Smoke test: bar of pictures",
+  "author": "test",
+  "version": "1.0",
+  "priority": 100,
+  "dependsOn": [
+    "base"
+  ]
+}

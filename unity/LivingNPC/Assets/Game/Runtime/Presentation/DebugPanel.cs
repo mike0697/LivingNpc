@@ -706,6 +706,9 @@ namespace LivingNPC.Presentation
                 case TriggerType.Tick: return ev.TriggerNode != 0 ? $"every tick at {Esc(MapTitle(ev.TriggerNode))}" : "every tick, anywhere";
                 case TriggerType.Talk: return $"talking to {Esc(NpcName(ev.TriggerNpc))}";
                 case TriggerType.Wake: return ev.TriggerNode != 0 ? $"on waking at {Esc(MapTitle(ev.TriggerNode))}" : "on waking";
+                case TriggerType.Button:
+                    string button = Esc(Ids.Name(ev.TriggerButton).Replace("hud:", ""));
+                    return ev.TriggerNode != 0 ? $"pressing the button {button} at {Esc(MapTitle(ev.TriggerNode))}" : $"pressing the button {button}";
             }
             return "";
         }

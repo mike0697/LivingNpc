@@ -4,7 +4,7 @@ Write the game's quests and messages as Python-like code. The program converts t
 (and back).
 
 The other tabs edit the rest of the world's data with a form: **Characters** (NPCs and shared routines), **Items**,
-**Rules** (`rules.json`) and **System** (`title.json` and the game title).
+**Rules** (`rules.json`) and **System** (`title.json`, the game title and `hud.json`, the bar of pictures).
 
 ## Starting it
 
@@ -76,7 +76,8 @@ save.
   chart and “Where is it?” worked out as in the game (the highest priority wins, on a tie the first block; a block
   that goes past midnight continues the next day); stats and inventory; the images on the map, per activity and when
   talking, with a preview over the background of a place (drag the image to move it) and uploading new pngs to
-  `images/`. **Shared routines** (`schedules/`) are edited in the same tab.
+  `images/`; the **Profile** (their page in the Characters screen of the bar: picture, when they are listed, hints
+  that unlock with a condition). **Shared routines** (`schedules/`) are edited in the same tab.
 - **Items**: name, description, type, value, tags. Icon, use from the inventory and bonuses are not there because the
   game does not support them yet.
 - **Rules**: start time and day, minutes per step and per link, language, starting inventory, stats, activities,
@@ -88,6 +89,13 @@ save.
   “Listen”), images of the game buttons and of the main menu buttons (normal, hover / pressed, ends that keep their
   shape, text colour). The preview draws the menu and some buttons as the game draws them; “Upload…” adds pngs to
   `images/` and music to `music/`.
+- **System** (`hud.json`): the bar of pictures at the top of the game screen: position, size, the buttons (id, label,
+  picture, what they open, key, when they are shown), the My status screen (title, player name, text, picture, which
+  stats) and the Characters screen (title, which stats, which details), with a preview of the bar at game size.
+
+Conditions in the forms (when a button is shown, when a character is listed, when a hint appears) are written as in
+the quests, one per line, all of them must hold: `quest(crypt, active)`, `hasItem(map)`. A line with a mistake is an
+error in the problems and the file keeps the last good condition.
 
 **Delete** warns if quests, messages or characters still use what you are deleting. Renaming an id is not possible
 from the form yet: the quests and messages would need updating too.
@@ -97,7 +105,7 @@ from the form yet: the quests and messages would need updating too.
 - `lib/specs.js`: the commands, the conditions and their parameters (it also drives the buttons).
 - `lib/script.js`: JSON → code and code → JSON, with errors per line.
 - `lib/docs.js`: which files make up a document and which files saving writes.
-- `lib/records.js`: characters, routines, items, rules and title.json: checks, routines worked out as in the game,
+- `lib/records.js`: characters, routines, items, rules, title.json and hud.json: checks, conditions as lines, routines worked out as in the game,
   where an id is used.
 - `lib/store.js`: reading and writing on disk, list of the world's ids.
 - `server.mjs`: the local server (127.0.0.1 only).

@@ -1,10 +1,10 @@
-// The tabs Characters, Items, Rules and System: a list on the left, a form in the middle, problems / uses / JSON on the right.
+// The tabs Characters, Items, Rules and System (title.json, hud.json): a list on the left, a form in the middle, problems / uses / JSON on the right.
 // A form edits a copy of the file's object: keys the form does not know are kept, Save writes the JSON (2 spaces, LF).
 // The checks (lib/records.js) say what Unity would say when it loads the world.
 
 import {
   KINDS, ITEM_TYPES, SEXES, DAY_KEYS, DAY_NAMES, ID_RE, checkRecord, jsonText, textOf, parseTime, clock, dayMask, daysOf,
-  whereAt, routineBlocks, effectsToText, effectsFromText,
+  whereAt, routineBlocks, effectsToText, effectsFromText, condToText, condFromText, HUD_SCREENS, HUD_DETAILS,
 } from '/lib/records.js';
 
 const $ = (s) => document.querySelector(s);
@@ -66,9 +66,9 @@ function colorOf(key) {
 export function createRecords({ api, query, status, world, refs, reloadRefs, escapeHtml, worldCount = () => 1 }) {
   const st = { view: 'npc', data: null, cur: null, mode: 'form', jsonError: null, preview: null, usages: null };
 
-  const kindsOf = (view) => (view === 'npc' ? ['npc', 'schedule'] : view === 'item' ? ['item'] : view === 'system' ? ['title'] : ['rules']);
-  /** rules.json and title.json: one file each, no id, nothing uses them by name. */
-  const isSingle = (kind) => kind === 'rules' || kind === 'title';
+  const kindsOf = (view) => (view === 'npc' ? ['npc', 'schedule'] : view === 'item' ? ['item'] : view === 'system' ? ['title', 'hud'] : ['rules']);
+  /** rules.json, title.json and hud.json: one file each, no id, nothing uses them by name. */
+  const isSingle = (kind) => kind === 'rules' || kind === 'title' || kind === 'hud';
   const records = (kind) => (isSingle(kind) ? (st.data?.[kind] ? [st.data[kind]] : []) : st.data?.[kind] || []);
   const schedulesMap = () => Object.fromEntries(records('schedule').filter((r) => isObj(r.json)).map((r) => [r.json.id, r.json]));
   const lang = () => st.data?.rules?.json?.language || 'it';
@@ -102,6 +102,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     st.usages = null;
     st.jsonDraft = st.sleepDraft = undefined;
     st.sleepErrors = [];
+    st.condDrafts = new Map();
     render();
     loadUsages();
   }
@@ -134,22 +135,23 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     } else if (st.view === 'item') {
       head.append(h('button', { type: 'button', onclick: () => newRecord('item') }, '+ Item'));
     } else if (st.view === 'system') {
-      if (!st.data?.title && !(st.cur?.isNew && st.cur.kind === 'title')) head.append(h('button', { type: 'button', onclick: () => newRecord('title') }, '+ Create title.json'));
-      else head.append(h('span', { class: 'muted' }, 'Main menu and buttons (title.json)'));
+      for (const [kind, file] of [['title', 'title.json'], ['hud', 'hud.json']])
+        if (!st.data?.[kind] && !(st.cur?.isNew && st.cur.kind === kind)) head.append(h('button', { type: 'button', onclick: () => newRecord(kind) }, `+ Create ${file}`));
+      if (!head.childElementCount) head.append(h('span', { class: 'muted' }, 'Main menu, buttons and the bar of pictures'));
     } else head.append(h('span', { class: 'muted' }, 'The rules of the world (rules.json)'));
 
-    const groups = st.view === 'npc' ? [['npc', 'Characters (NPC)'], ['schedule', 'Shared routines']] : st.view === 'item' ? [['item', 'Items']] : st.view === 'system' ? [['title', 'System']] : [['rules', 'Rules']];
+    const groups = st.view === 'npc' ? [['npc', 'Characters (NPC)'], ['schedule', 'Shared routines']] : st.view === 'item' ? [['item', 'Items']] : st.view === 'system' ? [['title', 'Title screen'], ['hud', 'Bar of pictures']] : [['rules', 'Rules']];
     for (const [kind, title] of groups) {
       box.append(h('div', { class: 'doc-group' }, title));
       const list = [...records(kind)];
       if (st.cur?.isNew && st.cur.kind === kind) list.unshift({ rel: st.cur.rel, json: st.cur.model, isNew: true });
-      if (!list.length) box.append(h('div', { class: 'doc muted' }, kind === 'rules' ? 'rules.json is missing' : kind === 'title' ? 'title.json is missing: the game uses the basic menu' : 'none'));
+      if (!list.length) box.append(h('div', { class: 'doc muted' }, kind === 'rules' ? 'rules.json is missing' : kind === 'title' ? 'title.json is missing: the game uses the basic menu' : kind === 'hud' ? 'hud.json is missing: the game has no bar of pictures' : 'none'));
       for (const r of list) {
         const active = st.cur && st.cur.rel === r.rel;
         const json = active ? st.cur.model : r.json;
         const name = isSingle(kind) ? r.rel : isObj(json) ? textOf(json.name, lang()) || json.id || r.rel : '(file to fix)';
-        const sub = r.isNew ? 'not saved yet' : kind === 'rules' ? 'start, stats, activities, sleep' : kind === 'title' ? 'main menu, music, buttons' : (isObj(json) ? json.id : r.rel);
-        const badge = { npc: ['C', 'p'], schedule: ['R', 'r'], item: ['I', 'o'], rules: ['⚙', 'g'], title: ['★', 'g'] }[kind];
+        const sub = r.isNew ? 'not saved yet' : kind === 'rules' ? 'start, stats, activities, sleep' : kind === 'title' ? 'main menu, music, buttons' : kind === 'hud' ? 'icons at the top, status and characters screens' : (isObj(json) ? json.id : r.rel);
+        const badge = { npc: ['C', 'p'], schedule: ['R', 'r'], item: ['I', 'o'], rules: ['⚙', 'g'], title: ['★', 'g'], hud: ['▦', 'g'] }[kind];
         const mark = active && dirty() ? ' •' : '';
         box.append(h('button', {
           type: 'button', class: `doc${active ? ' active' : ''}${r.isNew ? ' unsaved' : ''}${isObj(json) ? '' : ' broken'}`,
@@ -164,7 +166,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   function renderHead() {
     const cur = st.cur;
-    $('#rec-title').textContent = !cur ? 'Nothing open' : cur.kind === 'rules' ? 'Rules of the world' : cur.kind === 'title' ? 'System: main menu and buttons' : isObj(cur.model) ? `${KINDS[cur.kind].label}: ${textOf(cur.model.name, lang()) || cur.model.id || ''}` : cur.rel;
+    $('#rec-title').textContent = !cur ? 'Nothing open' : cur.kind === 'rules' ? 'Rules of the world' : cur.kind === 'title' ? 'System: main menu and buttons' : cur.kind === 'hud' ? 'System: the bar of pictures' : isObj(cur.model) ? `${KINDS[cur.kind].label}: ${textOf(cur.model.name, lang()) || cur.model.id || ''}` : cur.rel;
     $('#rec-file').textContent = !cur ? '' : cur.isNew ? `new: will be saved to ${cur.rel}` : cur.rel;
     for (const b of document.querySelectorAll('.rec-mode')) {
       b.classList.toggle('active', b.dataset.mode === st.mode);
@@ -182,6 +184,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     renderTimeline();
     renderPreview();
     renderTitlePreview();
+    renderHudPreview();
   }
 
   // ------------------------------------------------------------------------------------------- side panel
@@ -193,6 +196,8 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     const taken = cur.isNew ? records(cur.kind).map((r) => r.json?.id) : null;
     const r = checkRecord(cur.kind, cur.model, refs(), taken);
     if (cur.kind === 'rules' && st.sleepErrors?.length) r.errors.push(...st.sleepErrors.map((e) => `sleep effects, ${e}`));
+    // a condition box with a mistake keeps the last good condition in the file: say it, and do not save
+    for (const d of st.condDrafts?.values() || []) r.errors.push(...d.errors.map((e) => `${d.label}: ${e}`));
     return r;
   }
 
@@ -225,10 +230,10 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
 
   function newRecord(kind) {
     if (!leaveOk()) return;
-    if (kind === 'title') {          // one file with a fixed name: nothing to ask
-      st.cur = { kind, rel: 'title.json', original: null, model: KINDS.title.fresh(), isNew: true };
+    if (kind === 'title' || kind === 'hud') {          // one file with a fixed name: nothing to ask
+      st.cur = { kind, rel: `${kind}.json`, original: null, model: KINDS[kind].fresh(), isNew: true };
       st.mode = 'form'; st.jsonError = null; st.preview = null; st.usages = [];
-      st.jsonDraft = st.sleepDraft = undefined; st.sleepErrors = [];
+      st.jsonDraft = st.sleepDraft = undefined; st.sleepErrors = []; st.condDrafts = new Map();
       render();
       return;
     }
@@ -249,7 +254,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
       dlg.close();
       st.cur = { kind, rel: `${KINDS[kind].dir}/${id}.json`, original: null, model, isNew: true };
       st.mode = 'form'; st.jsonError = null; st.preview = null; st.usages = [];
-      st.jsonDraft = st.sleepDraft = undefined; st.sleepErrors = [];
+      st.jsonDraft = st.sleepDraft = undefined; st.sleepErrors = []; st.condDrafts = new Map();
       render();
     };
     dlg.showModal();
@@ -303,7 +308,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     const scroll = box.scrollTop;
     box.innerHTML = '';
     const cur = st.cur;
-    if (!cur) { box.append(h('p', { class: 'muted empty' }, st.view === 'rules' ? 'This world has no rules.json.' : st.view === 'system' ? 'This world has no title.json: the game menu is the basic one. Press “+ Create title.json” to choose its look.' : 'Choose on the left what to open, or create a new one.'));
+    if (!cur) { box.append(h('p', { class: 'muted empty' }, st.view === 'rules' ? 'This world has no rules.json.' : st.view === 'system' ? 'This world has no title.json and no hud.json: the game menu is the basic one and there is no bar of pictures. Press “+ Create title.json” or “+ Create hud.json”.' : 'Choose on the left what to open, or create a new one.'));
       if (st.view === 'system' && st.data) box.append(sec(null, 'Game title', null, worldNameRow()));
       return;
     }
@@ -313,11 +318,13 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     else if (cur.kind === 'schedule') scheduleForm(box, m);
     else if (cur.kind === 'item') itemForm(box, m);
     else if (cur.kind === 'title') systemForm(box, m);
+    else if (cur.kind === 'hud') hudForm(box, m);
     else rulesForm(box, m);
     box.scrollTop = scroll;
     renderTimeline();
     renderPreview();
     renderTitlePreview();
+    renderHudPreview();
   }
 
   function jsonEditor() {
@@ -694,7 +701,8 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
         h('div', { class: 'two' },
           h('div', {}, h('h4', {}, 'Stats'), mapEditor(['stats'], { keyLabel: 'Stat', valueLabel: 'Value', keyList: 'stat', addLabel: '+ Stat', fresh: 0 })),
           h('div', {}, h('h4', {}, 'Inventory'), mapEditor(['inventory'], { keyLabel: 'Item', valueLabel: 'Amount', keyList: 'item', addLabel: '+ Item', fresh: 1 })))),
-      imagesSection(m));
+      imagesSection(m),
+      profileSection(m));
   }
 
   function imagesSection(m) {
@@ -844,7 +852,7 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
   /** A select of the files of a folder (refs.images / refs.music) the game can read, "(none)" removes the key. */
   function fileSelect(path, kind, noneLabel = '(none)') {
     const v = getAt(st.cur.model, path);
-    const ok = kind === 'music' ? /\.(mp3|ogg|wav)$/i : /\.(png|jpe?g)$/i;
+    const ok = kind === 'music' ? /\.(mp3|ogg|wav)$/i : /\.(png|jpe?g|webp)$/i;
     const list = (refs()?.[kind] || []).filter((f) => ok.test(f));
     const el = h('select', { class: 'file-select', onchange: (e) => { setAt(st.cur.model, path, e.target.value || undefined); renderForm(); changed({ list: false }); } },
       h('option', { value: '' }, noneLabel), list.map((f) => h('option', { value: f }, f)));
@@ -1031,11 +1039,169 @@ export function createRecords({ api, query, status, world, refs, reloadRefs, esc
     }
   }
 
+  // ------------------------------------------------------------------------------------------- conditions in a form
+
+  /**
+   * A condition written as in the quests, one per line (all must hold): quest(crypt, active), flag(met_elena).
+   * Empty = always. A line with a mistake is an error in “Problems” and the file keeps the last good condition.
+   */
+  function condEditor(path, label, placeholder = 'always (empty)') {
+    st.condDrafts ??= new Map();
+    const key = JSON.stringify(path);
+    const draft = st.condDrafts.get(key);
+    const value = draft?.text ?? condToText(getAt(st.cur.model, path));
+    const ta = h('textarea', { class: 'code-lines', rows: Math.max(1, value.split('\n').length), spellcheck: 'false', placeholder });
+    ta.value = value;
+    ta.addEventListener('input', () => {
+      ta.rows = Math.max(1, ta.value.split('\n').length);
+      const res = condFromText(ta.value, refs());
+      if (res.errors.length) st.condDrafts.set(key, { text: ta.value, errors: res.errors, label });
+      else { st.condDrafts.delete(key); setAt(st.cur.model, path, res.cond); }
+      changed({ list: false });
+    });
+    return ta;
+  }
+
+  /** A list was changed (an item added, moved, removed): the condition boxes start again from the file. */
+  function relisted() { st.condDrafts = new Map(); renderForm(); changed({ list: false }); }
+
+  /** Ticks for the stats of rules.json; "all" = the key is left out (the game shows every stat, also new ones). */
+  function statsPicker(path) {
+    const all = refs()?.stat || [];
+    const v = getAt(st.cur.model, path);
+    const chosen = Array.isArray(v) ? v : null;
+    const names = Object.fromEntries((st.data.rules?.json?.stats || []).filter(isObj).map((s) => [s.id, textOf(s.name, lang()) || s.id]));
+    const box = h('div', { class: 'ticks' },
+      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !chosen, onchange: (e) => { setAt(st.cur.model, path, e.target.checked ? undefined : [...all]); renderForm(); changed({ list: false }); } }), ' all the stats'));
+    if (chosen) {
+      for (const s of all) box.append(h('label', { class: 'check' }, h('input', {
+        type: 'checkbox', checked: chosen.includes(s),
+        onchange: (e) => { const now = all.filter((x) => (x === s ? e.target.checked : chosen.includes(x))); setAt(st.cur.model, path, now); renderForm(); changed({ list: false }); },
+      }), ` ${names[s] || s}`));
+      for (const s of chosen.filter((x) => !all.includes(x))) box.append(h('span', { class: 'muted' }, `${s} (not in rules.json)`));
+    }
+    return box;
+  }
+
+  // ------------------------------------------------------------------------------------------- System (hud.json)
+
+  function hudForm(box, m) {
+    const buttons = Array.isArray(m.buttons) ? m.buttons : [];
+    const move = (i, d) => { const a = m.buttons; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; relisted(); };
+    const newId = () => { let id = 'button', n = 1; while (buttons.some((b) => b?.id === id)) id = `button${++n}`; return id; };
+    const show = isObj(m.npcs) && Array.isArray(m.npcs.show) ? m.npcs.show : ['age', 'relation'];
+    box.append(
+      sec(null, 'Bar of pictures', 'Clickable pictures under the top bar of the game screen (hud.json). Each one opens a screen or a panel, and also runs the messages with trigger = button that name it.',
+        row('Position', select(['align'], [['center', 'In the middle'], ['left', 'On the left'], ['right', 'On the right']], { optional: true }), 'between the side panels; empty = in the middle'),
+        row('Size', num(['size'], { int: true, placeholder: '64' }), 'side of each picture, in pixels of a 1920×1080 screen (24-160)'),
+        h('div', { id: 'hud-preview', class: 'title-preview' })),
+      sec(null, 'Buttons', 'From left to right. A square picture with a transparent background works best (128×128 is plenty).',
+        h('div', { class: 'hud-buttons' }, buttons.map((b, i) => (isObj(b) ? hudButtonCard(b, i, buttons.length, move) : h('code', {}, JSON.stringify(b))))),
+        h('button', { type: 'button', class: 'mini link', onclick: () => { m.buttons = buttons; m.buttons.push({ id: newId(), label: 'New button', open: 'status' }); relisted(); } }, '+ Button')),
+      sec(null, 'My status screen', 'Opened by a button with “Opens: My status”: the player\'s page.',
+        row('Title', locText(['status', 'title']), 'empty = “My status”'),
+        row('Player name', locText(['status', 'name']), 'written over the stats; empty = none'),
+        row('Text', locText(['status', 'text'], { long: true })),
+        row('Picture', h('span', { class: 'file-row' }, fileSelect(['status', 'image'], 'images', '(none)'), uploadButton('images', 'people', ['status', 'image'], '.png,.jpg,.jpeg,.webp')), 'shown on the left of the stats'),
+        row('Stats', statsPicker(['status', 'stats']))),
+      sec(null, 'Characters screen', 'Opened by a button with “Opens: Characters”: a list of the characters and the page of the chosen one. Which characters are listed, their picture and their hints are in each character\'s “Profile” (Characters tab).',
+        row('Title', locText(['npcs', 'title']), 'empty = “Characters”'),
+        row('Stats', statsPicker(['npcs', 'stats'])),
+        row('Also shows', h('div', { class: 'ticks' }, HUD_DETAILS.map(([k, label]) => h('label', { class: 'check' }, h('input', {
+          type: 'checkbox', checked: show.includes(k),
+          onchange: (e) => { const now = HUD_DETAILS.map(([d]) => d).filter((d) => (d === k ? e.target.checked : show.includes(d))); setAt(st.cur.model, ['npcs', 'show'], now); renderForm(); changed({ list: false }); },
+        }), ` ${label}`))), 'besides name, picture, description, stats and hints')));
+  }
+
+  function hudButtonCard(b, i, count, move) {
+    const p = ['buttons', i];
+    const icon = b.icon ? h('img', { class: 'hud-thumb', src: imageUrl(`images/${b.icon}`), alt: '' }) : h('span', { class: 'hud-thumb none' }, 'no picture');
+    return h('div', { class: 'img-card hud-card' },
+      h('div', { class: 'img-head' }, icon, h('b', {}, textOf(b.label, lang()) || b.id || `button ${i + 1}`),
+        h('button', { type: 'button', class: 'mini', title: 'Move left', disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
+        h('button', { type: 'button', class: 'mini', title: 'Move right', disabled: i === count - 1, onclick: () => move(i, 1) }, '↓'),
+        h('button', { type: 'button', class: 'mini', title: 'Remove', onclick: () => { st.cur.model.buttons.splice(i, 1); relisted(); } }, '✕')),
+      row('Id', text([...p, 'id'], { optional: false }), 'messages name it: button = this id'),
+      row('Label', locText([...p, 'label']), 'shown when the mouse is over the picture'),
+      row('Picture', h('span', { class: 'file-row' }, fileSelect([...p, 'icon'], 'images', '(none: a button with the label)'), uploadButton('images', 'hud', [...p, 'icon'], '.png,.jpg,.jpeg,.webp'))),
+      row('Opens', select([...p, 'open'], HUD_SCREENS, { optional: true }), 'empty = nothing: it only runs its messages (trigger = button)'),
+      row('Key', h('input', { type: 'text', class: 'time', maxlength: 3, value: b.key ?? '', placeholder: '—', oninput: (e) => { setAt(st.cur.model, [...p, 'key'], e.target.value.trim() || undefined); changed({ list: false }); } }),
+        'a letter, a digit, F1-F4, F7, F8, F10, F11'),
+      row('Shown when', condEditor([...p, 'when'], `button ${b.id || i + 1}, shown when`), 'one condition per line, as in the quests, e.g. hasItem(map); empty = always'));
+  }
+
+  /** The bar at game size over the start place, as HudView draws it (plates of size + 10, 10 apart, under the top bar). */
+  function renderHudPreview() {
+    const box = document.getElementById('hud-preview');
+    if (!box || !st.cur || st.cur.kind !== 'hud' || !isObj(st.cur.model)) return;
+    const m = st.cur.model;
+    const cq = (v) => `${(v / 1920) * 100}cqw`;
+    box.innerHTML = '';
+    const frame = h('div', { class: 'tframe' });
+    const node = st.data.nodes.find((n) => n.id === st.data.startNode) || st.data.nodes[0];
+    const bg = node?.backgrounds?.day || Object.values(node?.backgrounds || {})[0];
+    if (bg) frame.style.backgroundImage = `url("${imageUrl(bg)}")`;
+    frame.append(h('div', { class: 'hud-top', style: { height: cq(65), fontSize: cq(30), paddingLeft: cq(19) } }, 'Day 1 (Mon) 08:00'));
+    const size = Number.isFinite(m.size) && m.size >= 24 && m.size <= 160 ? m.size : 64;
+    const align = { left: 'flex-start', right: 'flex-end' }[String(m.align || '').toLowerCase()] || 'center';
+    const bar = h('div', { class: 'hud-bar', style: { top: cq(71), gap: cq(10), justifyContent: align } });
+    for (const b of Array.isArray(m.buttons) ? m.buttons : []) {
+      if (!isObj(b) || String(b.$op || '').toLowerCase() === 'delete') continue;
+      const label = textOf(b.label, lang()) || b.id || '';
+      if (b.icon) {
+        bar.append(h('div', { class: 'hud-plate', title: label, style: { width: cq(size + 10), height: cq(size + 10), padding: cq(5) } },
+          h('img', { src: imageUrl(`images/${b.icon}`), alt: label, draggable: 'false' })));
+      } else {
+        const btn = h('div', { class: 'gbtn', title: label, style: { width: cq(Math.max((size + 10) * 1.6, label.length * 13 + 32)), fontSize: cq(22) } }, label);
+        if (!dressButton(btn, st.data.title?.json?.buttons, size + 10)) btn.classList.add('plain');
+        bar.append(btn);
+      }
+    }
+    frame.append(bar);
+    box.append(frame, h('small', { class: 'muted' }, 'Preview of the bar at game size over the start place (the mouse over a picture shows its label). Conditions are not applied here.'));
+  }
+
+  // ------------------------------------------------------------------------------------------- Characters: profile
+
+  function profileSection(m) {
+    const p = isObj(m.profile) ? m.profile : null;
+    const help = 'Their page in the Characters screen of the bar of pictures (System tab, hud.json): picture, when they appear in the list, and hints that unlock as the story goes. The text under the name is the description.';
+    if (!p) return sec(null, 'Profile', help, h('button', { type: 'button', class: 'mini link', onclick: () => { m.profile = { hints: [] }; relisted(); } }, '+ Add a profile'));
+    const hints = Array.isArray(p.hints) ? p.hints : [];
+    const talk = m.images?.talk?.default?.file, onMap = m.images?.default?.file;
+    const shown = p.image || talk || onMap;
+    const hintRow = (hint, i) => {
+      const hp = ['profile', 'hints', i];
+      const withCond = isObj(hint) && hint.text !== undefined;
+      const textPath = withCond ? [...hp, 'text'] : hp;
+      return h('div', { class: 'img-card' },
+        h('div', { class: 'img-head' }, h('b', {}, `Hint ${i + 1}`),
+          // the text may have been typed since the form was drawn: read it from the model, not from `hint`
+          withCond
+            ? h('button', { type: 'button', class: 'mini link', onclick: () => { p.hints[i] = p.hints[i].text; relisted(); } }, 'always shown')
+            : h('button', { type: 'button', class: 'mini link', onclick: () => { p.hints[i] = { text: p.hints[i] }; relisted(); } }, '+ only when…'),
+          h('button', { type: 'button', class: 'mini', title: 'Remove', onclick: () => { p.hints.splice(i, 1); relisted(); } }, '✕')),
+        locText(textPath, { long: true }),
+        withCond ? row('Shown when', condEditor([...hp, 'when'], `hint ${i + 1}, shown when`, 'e.g. quest(crypt, active)'), 'one condition per line; empty = always') : null);
+    };
+    return sec(null, 'Profile', help,
+      row('Picture', h('span', { class: 'file-row' }, fileSelect(['profile', 'image'], 'images', talk ? '(the picture when talking)' : onMap ? '(the picture on the map)' : '(none)'), uploadButton('images', 'people', ['profile', 'image'], '.png,.jpg,.jpeg,.webp')),
+        shown ? h('img', { class: 'profile-thumb', src: imageUrl(`images/${shown}`), alt: '' }) : null),
+      row('In the list when', condEditor(['profile', 'when'], 'profile, listed when', 'always (empty), e.g. flag(met_elena)'), 'one condition per line, e.g. flag(met_elena) after you met them; empty = always'),
+      h('h4', {}, 'Hints'),
+      hints.length ? null : h('p', { class: 'hint' }, 'No hints yet.'),
+      hints.map(hintRow),
+      h('div', {},
+        h('button', { type: 'button', class: 'mini link', onclick: () => { p.hints = hints; p.hints.push(''); relisted(); } }, '+ Hint'),
+        ' ',
+        h('button', { type: 'button', class: 'mini link danger-link', onclick: () => { if (confirm('Remove the profile of this character?')) { delete m.profile; relisted(); } } }, 'Remove the profile')));
+  }
+
   // ------------------------------------------------------------------------------------------- public
 
   return {
     async show(view) {
-      if (st.view !== view) { st.view = view; st.cur = null; st.sleepDraft = st.jsonDraft = undefined; st.sleepErrors = []; }
+      if (st.view !== view) { st.view = view; st.cur = null; st.sleepDraft = st.jsonDraft = undefined; st.sleepErrors = []; st.condDrafts = new Map(); }
       if (!st.data || !st.cur) await load(false); else render();
     },
     async reload() { st.cur = null; st.data = null; st.sleepDraft = st.jsonDraft = undefined; st.sleepErrors = []; },

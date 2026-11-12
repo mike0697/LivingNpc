@@ -101,6 +101,15 @@ namespace LivingNPC.Simulation
                             rt.Touch();
                             break;
                         }
+                    case CommandType.Button:
+                        {
+                            // a picture of the bar: the "button" events run like talk ones, when the world is still
+                            if (cmd.A == 0 || ws.DialogOpen != 0 || clock.Pending > 0 || p.Node == 0) break;
+                            ws.Button = cmd.A;
+                            em.SetComponentData(world, ws);
+                            rt.Touch();
+                            break;
+                        }
                     case CommandType.Choose:
                         rt.Choose(cmd.A);
                         break;
@@ -354,13 +363,14 @@ namespace LivingNPC.Simulation
                 bool arrived = p.Arrived != 0;
                 bool woke = ws.Woke != 0;
                 int talk = ws.TalkNpc;
-                if (!(ticked || arrived || woke || talk != 0 || ws.Dirty != 0)) break;
+                int button = ws.Button;
+                if (!(ticked || arrived || woke || talk != 0 || button != 0 || ws.Dirty != 0)) break;
                 if (ws.DialogOpen != 0) break;
 
                 if (!created) { rt = RuleRuntime.Create(em, world, player); created = true; }
 
                 // consume the pulses first: effects below may raise new ones, handled by the next pass
-                ws.Dirty = 0; ws.TalkNpc = 0; ws.Woke = 0; p.Arrived = 0;
+                ws.Dirty = 0; ws.TalkNpc = 0; ws.Button = 0; ws.Woke = 0; p.Arrived = 0;
                 em.SetComponentData(world, ws);
                 em.SetComponentData(player, p);
 
@@ -380,6 +390,7 @@ namespace LivingNPC.Simulation
                         case TriggerType.Tick: match = ticked && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
                         case TriggerType.Talk: match = talk != 0 && ev.TriggerNpc == talk; break;
                         case TriggerType.Wake: match = woke && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
+                        case TriggerType.Button: match = button != 0 && ev.TriggerButton == button && (ev.TriggerNode == 0 || ev.TriggerNode == p.Node); break;
                     }
                     if (!match) continue;
 

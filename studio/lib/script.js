@@ -32,12 +32,12 @@
 // {...}, [...]); an id can be written without quotes. Names are the JSON names (see specs.js), so nothing is lost.
 // Comments (#) are not kept in the JSON.
 
-import { EFFECTS, STEPS, CONDITIONS, lookup } from './specs.js';
+import { EFFECTS, STEPS, CONDITIONS, TRIGGERS, lookup } from './specs.js';
 
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$.\-]*$/;
 const LITERALS = { true: true, false: false, null: null };
 const IN = '    ';
-const ID_PROPS = new Set(['giver', 'trigger', 'npc', 'node', 'next', 'type', 'of', 'place']);
+const ID_PROPS = new Set(['giver', 'trigger', 'npc', 'node', 'next', 'type', 'of', 'place', 'button']);
 const QUEST_BLOCKS = { autoStart: 'cond', onStart: 'fx', onComplete: 'fx' };
 const STAGE_BLOCKS = { onStart: 'fx', complete: 'cond', fail: 'cond', onComplete: 'fx', onFail: 'fx' };
 const TEMPLATE_BLOCKS = { when: 'cond', onStart: 'fx', onComplete: 'fx', onFail: 'fx' };
@@ -491,6 +491,7 @@ export class Parser {
         case 'link': ok = has(r.link); what = 'link'; break;
         case 'stat': ok = has(r.stat); what = 'stat'; break;
         case 'activity': ok = has(r.activity); what = 'activity'; break;
+        case 'button': ok = has(r.button); what = 'button of the bar (hud.json)'; break;
         case 'goal': ok = has(r.goal) || value === 'none'; what = 'goal (rules.json)'; break;
         case 'template': ok = has(r.template) || this.known.templates.has(value); what = 'automatic quest'; break;
         case 'lines': ok = has(r.lines) || this.known.lines.has(value) || !!this.tpl?.groups?.has(value); what = 'lines (a text group of the automatic quest or a file in lines/)'; break;
@@ -525,8 +526,9 @@ export class Parser {
 
   checkProp(name, value, warn) {
     if (!this.check) return;
-    if (name === 'trigger' && !['enterNode', 'talk', 'tick', 'wake'].includes(value)) warn(`trigger “${value}” does not exist: enterNode, talk, tick or wake`);
+    if (name === 'trigger' && !TRIGGERS.includes(value)) warn(`trigger “${value}” does not exist: ${TRIGGERS.slice(0, -1).join(', ')} or ${TRIGGERS[TRIGGERS.length - 1]}`);
     else if (name === 'npc' || name === 'giver') this.checkId('id:npc', value, warn);
+    else if (name === 'button') this.checkId('id:button', value, warn);
     else if (name === 'node') this.checkId('id:node', value, warn);
     else if (name === 'next' && !this.tpl) this.checkId('id:stage', value, warn);
   }
@@ -855,7 +857,8 @@ export class Parser {
     if (when !== undefined) ev.when = when;
     const script = this.commands(cmds, true);
     if (script.length) ev.script = script;
-    if (ev.trigger === undefined) this.error(node.no, `the message “${id}” does not say when it starts: add trigger = enterNode | talk | tick | wake`);
+    if (ev.trigger === undefined) this.error(node.no, `the message “${id}” does not say when it starts: add trigger = ${TRIGGERS.join(' | ')}`);
+    if (ev.trigger === 'button' && ev.button === undefined) this.error(node.no, `the message “${id}” starts from a button of the bar: it needs button = <id of a hud.json button>`);
     if (ev.trigger === 'talk' && ev.npc === undefined) this.error(node.no, `the message “${id}” starts by talking: it needs npc = <character>`);
     return ev;
   }

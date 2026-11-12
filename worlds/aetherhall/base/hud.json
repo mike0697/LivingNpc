@@ -1,0 +1,71 @@
+{
+  "align": "center",
+  "size": 64,
+  "buttons": [
+    {
+      "id": "status",
+      "icon": "hud/diary.png",
+      "label": {
+        "en": "My status",
+        "it": "Il mio stato"
+      },
+      "open": "status",
+      "key": "c"
+    },
+    {
+      "id": "people",
+      "icon": "hud/person.png",
+      "label": {
+        "en": "Characters",
+        "it": "Personaggi"
+      },
+      "open": "npcs",
+      "key": "n"
+    },
+    {
+      "id": "journal",
+      "icon": "hud/scroll.png",
+      "label": {
+        "en": "Journal",
+        "it": "Diario delle missioni"
+      },
+      "open": "journal",
+      "key": "j"
+    },
+    {
+      "id": "backpack",
+      "icon": "hud/backpack.png",
+      "label": {
+        "en": "Backpack",
+        "it": "Zaino"
+      },
+      "open": "backpack",
+      "key": "b"
+    }
+  ],
+  "status": {
+    "title": {
+      "en": "My status",
+      "it": "Il mio stato"
+    },
+    "text": {
+      "en": "A new student at Aetherhall, the school of magic.",
+      "it": "Un nuovo studente di Aetherhall, la scuola di magia."
+    }
+  },
+  "npcs": {
+    "title": {
+      "en": "Characters",
+      "it": "Personaggi"
+    },
+    "stats": [
+      "happiness",
+      "energy"
+    ],
+    "show": [
+      "age",
+      "activity",
+      "relation"
+    ]
+  }
+}

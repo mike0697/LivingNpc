@@ -67,6 +67,26 @@ namespace LivingNPC.Presentation
             return b;
         }
 
+        /// <summary>
+        /// A vertical list that scrolls with the wheel or by dragging: returns its content (a VerticalLayoutGroup that grows
+        /// with its children, which need a LayoutElement or a preferred height of their own).
+        /// </summary>
+        public static RectTransform Scroll(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, out ScrollRect scroll, float spacing = 6)
+        {
+            var view = Rect(parent, name, anchorMin, anchorMax);
+            view.gameObject.AddComponent<RectMask2D>();
+            view.gameObject.AddComponent<Image>().color = new Color(0, 0, 0, 0);       // catches the wheel between the rows
+            var content = Rect(view, "Content", new Vector2(0, 1), new Vector2(1, 1));
+            content.pivot = new Vector2(0.5f, 1);
+            var v = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            v.spacing = spacing; v.childControlHeight = true; v.childControlWidth = true; v.childForceExpandHeight = false; v.childForceExpandWidth = true;
+            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            scroll = view.gameObject.AddComponent<ScrollRect>();
+            scroll.content = content; scroll.viewport = view;
+            scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 40;
+            return content;
+        }
+
         /// <summary>The pictures every button of the game uses (title.json "buttons"), or null for the plain coloured ones.</summary>
         public static ButtonSkin Skin { get; private set; }
 

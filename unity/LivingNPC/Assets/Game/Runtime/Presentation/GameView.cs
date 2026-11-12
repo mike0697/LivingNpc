@@ -50,11 +50,20 @@ namespace LivingNPC.Presentation
 
         GameObject _canvasGo;
         readonly AudioPlayer _audio;
+        HudView _hud;
 
         /// <summary>The sound player, for tools and tests (the game only talks to it through this view).</summary>
         public AudioPlayer Audio => _audio;
 
         public GameView(Transform root) { Build(root); _audio = new AudioPlayer(root); }
+
+        /// <summary>The bar of pictures and its screens (tools and tests).</summary>
+        public HudView Hud => _hud;
+
+        /// <summary>Esc in game: closes the open screen of the bar. False when none was open.</summary>
+        public bool CloseScreen() => _hud != null && _hud.CloseScreen();
+
+        public void Dispose() { _audio.Dispose(); _hud?.Dispose(); }
 
         /// <summary>Hides/shows the whole game UI (the main menu is drawn on top of nothing). Hiding also fades the music and ambient sounds out.</summary>
         public void SetVisible(bool visible)
@@ -156,6 +165,10 @@ namespace LivingNPC.Presentation
             var bottom = UiKit.Panel(canvasGo.transform, "Log", new Vector2(0.23f, 0.0f), new Vector2(0.77f, 0.2f));
             _logText = UiKit.Label(bottom, "LogText", 22, TextAnchor.LowerLeft, new Vector2(0.015f, 0.03f), new Vector2(0.985f, 0.97f));
 
+            // the bar of pictures (hud.json), under the top bar
+            _hud = new HudView(hash => Send(CommandType.Button, hash));
+            _hud.BuildBar(canvasGo.transform);
+
             // images from showImage effects (quests, events): same rect as the map, they stay until hidden
             _overlayLayer = UiKit.Rect(canvasGo.transform, "OverlayImages", Vector2.zero, Vector2.one);
             _overlayAspect = _overlayLayer.gameObject.AddComponent<AspectRatioFitter>();
@@ -175,6 +188,9 @@ namespace LivingNPC.Presentation
             _imageAspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             _imageAspect.aspectRatio = 16f / 9f;
             _dialogSlots[3] = _imageLayer;
+
+            // the screens of the bar: above every panel and picture, below the dialogue (which closes them)
+            _hud.BuildScreens(canvasGo.transform);
 
             // click anywhere outside the text box = next line (invisible, only active while a dialogue is open)
             _catcher = UiKit.Panel(canvasGo.transform, "DialogClick", Vector2.zero, Vector2.one, new Color(0, 0, 0, 0));
@@ -232,6 +248,7 @@ namespace LivingNPC.Presentation
             foreach (var n in compiled.Npcs) _npcById[n.Id] = n;
             _statNames.Clear();
             foreach (var s in db.Rules.Stats) _statNames[Ids.Hash(s.Id)] = TextTable.Localize(s.Name) is { Length: > 0 } n ? n : s.Id;
+            _hud.Bind(em, world, player, db, compiled);
         }
 
         void Send(CommandType type, int a = 0, int b = 0)
@@ -255,6 +272,7 @@ namespace LivingNPC.Presentation
                 Advance();
 
             PlayCues();
+            _hud.Tick(_interactive);
             var ws = _em.GetComponentData<WorldState>(_world);
             if (ws.Version == _lastVersion) return;
             _lastVersion = ws.Version;
@@ -322,6 +340,7 @@ namespace LivingNPC.Presentation
             RefreshSounds();
             RefreshDialog(ws);
             RefreshPortrait(ws, player);
+            _hud.Refresh(ws, busy);
         }
 
         void RefreshInventory()

@@ -1,0 +1,12 @@
+{
+  "id": "ev_smoke_bell",
+  "trigger": "button",
+  "button": "bell",
+  "effects": [
+    {
+      "do": "addFlag",
+      "key": "smoke_hud_bell",
+      "value": 1
+    }
+  ]
+}

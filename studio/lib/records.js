@@ -1,10 +1,10 @@
 // The records of a world that are not quests or messages: characters (npcs/), shared routines (schedules/), items
-// (items/) and the rules of the game (rules.json). Used by the page (the forms) and by the tests (Node).
+// (items/), the rules of the game (rules.json), the title screen (title.json) and the bar of pictures (hud.json). Used by the page (the forms) and by the tests (Node).
 //
 // The JSON stays the only truth: a form edits a copy of the file's object, keys it does not know are kept as they are,
 // and the checks below say what Unity would say when it loads the world (ContentLoader / ContentCompiler).
 
-import { toScript, fromScript } from './script.js';
+import { toScript, fromScript, condText } from './script.js';
 
 export const ID_RE = /^[A-Za-z0-9_.\-]+$/;
 export const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -25,7 +25,24 @@ export const KINDS = {
   schedule: { dir: 'schedules', label: 'Shared routine', fresh: (id) => ({ id, blocks: [] }) },
   item: { dir: 'items', label: 'Item', fresh: (id) => ({ id, name: id, type: 'misc', value: 0 }) },
   title: { dir: '', label: 'System', fresh: () => ({ drawTitle: true, musicOn: true }) },
+  hud: {
+    dir: '', label: 'Bar of pictures',
+    fresh: () => ({
+      align: 'center', size: 64,
+      buttons: [
+        { id: 'status', label: 'My status', open: 'status', key: 'c' },
+        { id: 'people', label: 'Characters', open: 'npcs', key: 'n' },
+      ],
+    }),
+  },
 };
+
+/** What a button of the bar can open (ContentCompiler.Hud: CompiledHud.Screens). */
+export const HUD_SCREENS = [['status', 'My status (the player)'], ['npcs', 'Characters (list and page)'], ['journal', 'Journal panel'], ['backpack', 'Backpack panel'], ['present', 'Present panel']];
+/** What the characters screen can say besides name, picture, description, stats and hints (CompiledHud.Details). */
+export const HUD_DETAILS = [['age', 'Age'], ['activity', 'What they are doing'], ['where', 'Where they are'], ['relation', 'What they think of you'], ['goal', 'Their goal']];
+/** Keys a button can use: the game keeps F5, F6, F9, F12, Esc, Space and Enter for itself. */
+export const HUD_KEY_RE = /^(?:[A-Za-z]|[0-9]|F(?:[1-4]|7|8|10|11))$/;
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -183,7 +200,90 @@ export function checkRecord(kind, json, refs = {}, taken = null) {
   else if (kind === 'item') checkItem(json, refs, taken, P);
   else if (kind === 'rules') checkRules(json, refs, P);
   else if (kind === 'title') checkTitle(json, refs, P);
+  else if (kind === 'hud') checkHud(json, refs, P);
   return { errors: P.errors, warnings: P.warnings };
+}
+
+/** A condition written in a file: what the script language says of it (unknown ids, wrong commands). */
+function condProblems(c, where, refs, P) {
+  if (c === undefined || c === null) return;
+  const { errors, warnings } = condFromText(condToText(c), refs);
+  for (const e of errors) P.err(`${where}: ${e}`);
+  for (const w of warnings) P.warn(`${where}: ${w}`);
+}
+
+/** hud.json as ContentCompiler.CompileHud reads it: what it skips or replaces is a warning here, what it refuses an error. */
+function checkHud(hud, refs, P) {
+  if (!isObj(hud)) { P.err('hud.json must contain a JSON object { … }'); return; }
+  if (hud.align !== undefined && !['left', 'center', 'centre', 'right'].includes(String(hud.align).toLowerCase())) P.warn(`align “${hud.align}”: write left, center or right (the game uses center)`);
+  if (hud.size !== undefined && (!Number.isFinite(hud.size) || hud.size < 24 || hud.size > 160)) P.warn('size: between 24 and 160 pixels (the game uses 64)');
+  const IMG = /\.(png|jpe?g|webp)$/i;
+  const picture = (value, where) => {
+    if (value === undefined || value === null || value === '') return;
+    if (typeof value !== 'string') { P.err(`${where}: must be a file name`); return; }
+    if (value.split(/[\\/]/).includes('..')) { P.err(`${where}: “${value}” cannot point outside the pack`); return; }
+    if (!IMG.test(value)) { P.warn(`${where}: “${value}” must be png, jpg or webp`); return; }
+    if (refs.images && !has(refs.images, value.replace(/\\/g, '/'))) P.warn(`${where}: “${value}” is not in the images folder`);
+  };
+  if (hud.buttons !== undefined && !Array.isArray(hud.buttons)) P.err('buttons must be a list');
+  const buttons = Array.isArray(hud.buttons) ? hud.buttons : [];
+  if (!buttons.length) P.warn('the bar has no buttons');
+  const ids = new Set(), keys = new Set();
+  buttons.forEach((b, i) => {
+    if (!isObj(b)) { P.err(`button ${i + 1}: must be { "id": … }`); return; }
+    const where = `button ${b.id || i + 1}`;
+    if (typeof b.id !== 'string' || !b.id.trim()) { P.err(`button ${i + 1}: the id is missing`); return; }
+    if (!ID_RE.test(b.id)) P.err(`${where}: an id can only have letters, digits, _ - .`);
+    if (ids.has(b.id)) P.err(`${where}: two buttons have this id (the second replaces the first)`);
+    ids.add(b.id);
+    if (String(b.$op || '').toLowerCase() === 'delete') return;
+    if (b.icon) picture(b.icon, `${where}, picture`);
+    else P.warn(`${where}: no picture, the game shows a button with its label`);
+    if (b.open !== undefined && b.open !== '') {
+      const open = String(b.open).toLowerCase();
+      if (open === 'map') P.warn(`${where}: the map screen does not exist yet, the button only runs its messages`);
+      else if (!HUD_SCREENS.some(([s]) => s === open)) P.err(`${where}: open “${b.open}” is not a screen (${HUD_SCREENS.map(([s]) => s).join(', ')})`);
+    }
+    if (b.key !== undefined && b.key !== '') {
+      if (!HUD_KEY_RE.test(String(b.key).trim())) P.err(`${where}: key “${b.key}”: a letter, a digit, F1-F4, F7, F8, F10 or F11 (the other keys belong to the game)`);
+      else if (keys.has(String(b.key).trim().toUpperCase())) P.warn(`${where}: key “${b.key}” is used by another button too (only the first one gets it)`);
+      keys.add(String(b.key).trim().toUpperCase());
+    }
+    condProblems(b.when, `${where}, shown when`, refs, P);
+  });
+  const stats = (list, where) => {
+    if (list === undefined) return;
+    if (!Array.isArray(list)) { P.err(`${where}: must be a list of stat ids`); return; }
+    for (const s of list) if (refs.stat && !has(refs.stat, s)) P.warn(`${where}: the stat “${s}” is not in rules.json`);
+  };
+  if (hud.status !== undefined && !isObj(hud.status)) P.err('status must be { … }');
+  if (isObj(hud.status)) { picture(hud.status.image, 'my status, picture'); stats(hud.status.stats, 'my status, stats'); }
+  if (hud.npcs !== undefined && !isObj(hud.npcs)) P.err('npcs must be { … }');
+  if (isObj(hud.npcs)) {
+    stats(hud.npcs.stats, 'characters, stats');
+    if (hud.npcs.show !== undefined && !Array.isArray(hud.npcs.show)) P.err('characters, show: must be a list');
+    else for (const d of hud.npcs.show || []) if (!HUD_DETAILS.some(([k]) => k === d)) P.warn(`characters, show: “${d}” is not known (${HUD_DETAILS.map(([k]) => k).join(', ')})`);
+  }
+}
+
+/** The page of a character in the characters screen of the bar (npc "profile"). */
+function profileProblems(p, refs, P) {
+  if (p === undefined) return;
+  if (!isObj(p)) { P.err('profile must be { "image": …, "when": …, "hints": [ … ] }'); return; }
+  if (p.image !== undefined && p.image !== '') {
+    if (typeof p.image !== 'string') P.err('profile picture: must be a file name');
+    else if (refs.images && !has(refs.images, p.image)) P.warn(`profile picture: “${p.image}” is not in the images folder`);
+  }
+  condProblems(p.when, 'profile, listed when', refs, P);
+  if (p.hints !== undefined && !Array.isArray(p.hints)) { P.err('profile hints: must be a list'); return; }
+  (p.hints || []).forEach((hint, i) => {
+    const where = `hint ${i + 1}`;
+    if (typeof hint === 'string') { if (!hint.trim()) P.warn(`${where}: it is empty`); return; }
+    if (!isObj(hint)) { P.err(`${where}: must be a text or { "text": …, "when": … }`); return; }
+    if (hint.text === undefined) return;          // a text in several languages
+    if (typeof hint.text !== 'string' && !isObj(hint.text)) P.err(`${where}: the text must be a text`);
+    condProblems(hint.when, `${where}, shown when`, refs, P);
+  });
 }
 
 /** Colours Unity's ColorUtility.TryParseHtmlString reads: #rgb, #rrggbb, #rgba, #rrggbbaa (and a few names). */
@@ -247,6 +347,7 @@ function checkNpc(npc, refs, taken, P) {
     }
   }
   heldProblems(npc.inventory, 'inventario', refs, P);
+  profileProblems(npc.profile, refs, P);
   for (const k of ['firstName', 'lastName']) if (npc[k] !== undefined && typeof npc[k] !== 'string' && !isObj(npc[k])) P.err(`${k}: must be a text`);
   if (npc.age !== undefined && (!Number.isInteger(npc.age) || npc.age < 0)) P.err('age: must be a whole number from 0 up');
   if (npc.sex !== undefined && !SEXES.some(([v]) => v === npc.sex)) P.warn(`sex “${npc.sex}”: the game knows m, f and x`);
@@ -381,6 +482,28 @@ export function effectsFromText(text, refs) {
   const r = fromScript(script, refs);
   const errors = [...r.errors, ...r.warnings].map((e) => `line ${e.line - 2}: ${e.message}`);
   return { effects: r.units[0]?.json?.onStart ?? [], errors: r.errors.length ? errors : [], warnings: r.errors.length ? [] : errors };
+}
+
+// ====================================================================== conditions as script lines
+
+/** A condition as lines of the script language: one line per condition of the top "all", e.g. quest(crypt, active). */
+export function condToText(c) {
+  if (c === undefined || c === null) return '';
+  const top = Array.isArray(c) ? c : isObj(c) && Object.keys(c).length === 1 && Array.isArray(c.all) ? c.all : [c];
+  return top.map(condText).join('\n');
+}
+
+/** Script lines back to a condition: { cond (undefined when empty), errors, warnings } (texts with their line). */
+export function condFromText(text, refs) {
+  const lines = String(text ?? '').split('\n');
+  if (!lines.some((l) => l.trim())) return { cond: undefined, errors: [], warnings: [] };
+  // the "when" of a message: the lines keep their number + 3
+  const script = ['event _:', '    trigger = enterNode', '    when:', ...lines.map((l) => (l.trim() ? '        ' + l.trim() : '')), ''].join('\n');
+  const r = fromScript(script, refs);
+  const say = (e) => (lines.length > 1 ? `line ${e.line - 3}: ${e.message}` : e.message);
+  // a line with a mistake is skipped, so the block may also be "empty": that second message says nothing more
+  const errors = r.errors.filter((e, _, all) => all.length === 1 || !/has no conditions/.test(e.message));
+  return { cond: r.errors.length ? undefined : r.units[0]?.json?.when, errors: errors.map(say), warnings: r.warnings.map(say) };
 }
 
 // ====================================================================== where an id is used

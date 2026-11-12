@@ -7,7 +7,7 @@ namespace LivingNPC.Simulation
 
     public enum QuestStatus : byte { NotStarted = 0, Active = 1, Completed = 2, Failed = 3 }
     public enum MsgKind : byte { Info = 0, Event = 1, QuestStarted = 2, QuestUpdated = 3, QuestCompleted = 4, QuestFailed = 5, Travel = 6, Talk = 7, Npc = 8 }
-    public enum CommandType : byte { Travel = 1, Wait = 2, Choose = 3, Talk = 4, Advance = 5, Sleep = 6 }
+    public enum CommandType : byte { Travel = 1, Wait = 2, Choose = 3, Talk = 4, Advance = 5, Sleep = 6, Button = 7 }
 
     // ------------------------------------------------------------------ singleton entity: "the world"
     // One entity carries everything global; systems fetch it with SystemAPI.GetSingletonEntity<WorldState>().
@@ -17,6 +17,7 @@ namespace LivingNPC.Simulation
         public byte Dirty;          // something changed outside the clock: re-evaluate rules once
         public byte Woke;           // pulse: the player has just woken up, not yet processed by rules
         public int TalkNpc;         // npc id the player just talked to (0 none)
+        public int Button;          // pulse: hashed id of the hud.json button just pressed (0 none), for the "button" events
         public byte DialogOpen;
         public int DialogEvent;
         public int DialogText;

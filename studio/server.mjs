@@ -1,5 +1,5 @@
 // LivingNPC Studio: the program serves its page and reads / writes the quests, events, npcs, schedules, items and
-// rules.json and title.json of a world, the title of the game in project.json (and new pictures in images/, new music in music/).
+// rules.json, title.json and hud.json of a world, the title of the game in project.json (and new pictures in images/, new music in music/).
 // node server.mjs  (or start.bat) -> http://127.0.0.1:5180
 // The worlds are in ../worlds (env LIVINGNPC_WORLDS to use another folder, e.g. a copy for tests); each world's files are
 // in <world>/base. Only 127.0.0.1 is served, and writes need the header the page sends.

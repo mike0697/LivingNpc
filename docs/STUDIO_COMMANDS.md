@@ -39,7 +39,7 @@ quest q_chest:
             message("The key turns with a click.")
 
 event ev_chest:
-    trigger = enterNode          # when it starts: enterNode, talk, tick, wake
+    trigger = enterNode          # when it starts: enterNode, talk, tick, wake, button
     node = bed_1
     once = true
     when:                        # every condition must be true
@@ -229,7 +229,7 @@ with a **trigger** and only runs when its **when:** conditions are true.
 
 ```python
 event ev_elena_lesson:
-    trigger = talk               # enterNode | talk | tick | wake   (required)
+    trigger = talk               # enterNode | talk | tick | wake | button   (required)
     npc = elena                  # required with talk: the character you talk to
     node = alchimia_1            # optional: only in this place
     once = false                 # optional: true = runs only once per game
@@ -248,6 +248,7 @@ event ev_elena_lesson:
 | `talk` | the player talks to a character (`npc` is required). |
 | `tick` | every game step (5 minutes by default) while the player is in `node` (or anywhere). |
 | `wake` | the player wakes up after sleeping (`node` = where they wake up, optional). |
+| `button` | the player presses a picture of the bar at the top of the screen (`button` = the id of a `hud.json` button, required; `node` = only in that place). |
 
 Properties go **at the top**, then `when:`, then the commands in the order the game runs them. A message can use
 everything: game commands, dialogue lines, images, sounds, `if` and `choice`. Only one dialogue opens at a time, and

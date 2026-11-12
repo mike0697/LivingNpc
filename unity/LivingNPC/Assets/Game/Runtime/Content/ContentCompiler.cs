@@ -42,7 +42,7 @@ namespace LivingNPC.Content
         }
     }
 
-    public class CompiledNpc
+    public partial class CompiledNpc
     {
         public CompiledNpcImages Images = new CompiledNpcImages();
         public NpcDef Def;
@@ -229,9 +229,11 @@ namespace LivingNPC.Content
 
             result.Nav = CompileNav();
             CompileNpcs(result);
+            CompileHud(result);        // after the npcs, before the events: "button" events name its buttons
             CompileLines();
             CompileQuests();
             CompileEvents();
+            CheckHudButtons(result);
             CompileTemplates();
             CompileAutoRules();
             CompileSleep();
@@ -454,6 +456,7 @@ namespace LivingNPC.Content
 
                 npc.Items = CompileHeld(def.Inventory, def.Source, $"npc '{def.Id}'");
                 npc.Images = CompileNpcImages(def);
+                npc.Profile = CompileProfile(def, npc);
                 _npcPoses[npc.Id] = new HashSet<int>(npc.Images.Talk.Keys);
 
                 result.Npcs.Add(npc);
@@ -727,8 +730,17 @@ namespace LivingNPC.Content
                     case "tick": case "time": r.Trigger = TriggerType.Tick; break;
                     case "talk": r.Trigger = TriggerType.Talk; break;
                     case "wake": r.Trigger = TriggerType.Wake; break;
-                    default: _rep.Error(src, $"unknown trigger '{e.Trigger}' (enterNode | tick | talk | wake)"); continue;
+                    case "button": r.Trigger = TriggerType.Button; break;
+                    default: _rep.Error(src, $"unknown trigger '{e.Trigger}' (enterNode | tick | talk | wake | button)"); continue;
                 }
+                if (r.Trigger == TriggerType.Button)
+                {
+                    if (string.IsNullOrWhiteSpace(e.Button)) { _rep.Error(src, "button events need a 'button' (the id of a hud.json button)"); continue; }
+                    r.TriggerButton = Ids.Hash("hud:" + e.Button.Trim());
+                    if (!_hudButtons.Contains(r.TriggerButton)) _rep.Warn(src, $"button '{e.Button}' is not a button of the bar (hud.json): the event never runs");
+                    _pressedButtons.Add(r.TriggerButton);
+                }
+                else if (!string.IsNullOrWhiteSpace(e.Button)) _rep.Warn(src, $"'button' is used only with trigger 'button' (this event has trigger '{e.Trigger}')");
                 if (!string.IsNullOrEmpty(e.Node))
                 {
                     if (!_db.Maps.ContainsKey(e.Node)) { _rep.Error(src, $"unknown node '{e.Node}'"); continue; }
